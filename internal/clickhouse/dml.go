@@ -236,13 +236,6 @@ func InsertTestReports(ctx context.Context, reports []*pb.TestReport, client *Cl
 	}
 
 	for _, tr := range reports {
-		var (
-			ids    []int64
-			names  []string
-			times  []float64
-			counts []int64
-		)
-
 		err = batch.Append(
 			tr.Id,
 			tr.PipelineId,
@@ -252,10 +245,6 @@ func InsertTestReports(ctx context.Context, reports []*pb.TestReport, client *Cl
 			tr.FailedCount,
 			tr.SkippedCount,
 			tr.ErrorCount,
-			ids,
-			names,
-			times,
-			counts,
 		)
 		if err != nil {
 			return fmt.Errorf("error inserting testreports: %w", err)
@@ -279,18 +268,10 @@ func InsertTestSuites(ctx context.Context, suites []*pb.TestSuite, client *Clien
 	}
 
 	for _, ts := range suites {
-		var (
-			ids      []int64
-			statuses []string
-			names    []string
-		)
-
 		err = batch.Append(
 			ts.Id,
-			map[string]interface{}{
-				"id":          ts.TestreportId,
-				"pipeline_id": ts.PipelineId,
-			},
+			ts.TestreportId,
+			ts.PipelineId,
 			ts.Name,
 			ts.TotalTime,
 			ts.TotalCount,
@@ -298,9 +279,6 @@ func InsertTestSuites(ctx context.Context, suites []*pb.TestSuite, client *Clien
 			ts.FailedCount,
 			ts.SkippedCount,
 			ts.ErrorCount,
-			ids,
-			statuses,
-			names,
 		)
 		if err != nil {
 			return fmt.Errorf("error inserting testsuites: %w", err)
@@ -326,13 +304,9 @@ func InsertTestCases(ctx context.Context, cases []*pb.TestCase, client *Client) 
 	for _, tc := range cases {
 		err = batch.Append(
 			tc.Id,
-			map[string]interface{}{
-				"id": tc.TestsuiteId,
-			},
-			map[string]interface{}{
-				"id":          tc.TestreportId,
-				"pipeline_id": tc.PipelineId,
-			},
+			tc.TestsuiteId,
+			tc.TestreportId,
+			tc.PipelineId,
 			tc.Status,
 			tc.Name,
 			tc.Classname,

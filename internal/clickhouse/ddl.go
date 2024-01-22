@@ -140,7 +140,7 @@ ORDER BY id
 
 	createTestReportsTableSQL = `
 CREATE TABLE IF NOT EXISTS %s.%s (
-    id Int64,
+    id String,
     pipeline_id Int64,
     total_time Float64,
     total_count Int64,
@@ -148,12 +148,6 @@ CREATE TABLE IF NOT EXISTS %s.%s (
     failed_count Int64,
     skipped_count Int64,
     error_count Int64,
-    test_suites Nested(
-        id Int64,
-        name String,
-        total_time Float64,
-        total_count Int64
-    )
 )
 ENGINE ReplacingMergeTree()
 ORDER BY id
@@ -162,11 +156,9 @@ ORDER BY id
 
 	createTestSuitesTableSQL = `
 CREATE TABLE IF NOT EXISTS %s.%s (
-    id Int64,
-    testreport Tuple(
-        id Int64,
-        pipeline_id Int64
-    ),
+    id String,
+    testreport_id String,
+    pipeline_id Int64,
     name String,
     total_time Float64,
     total_count Int64,
@@ -174,11 +166,6 @@ CREATE TABLE IF NOT EXISTS %s.%s (
     failed_count Int64,
     skipped_count Int64,
     error_count Int64,
-    test_cases Nested(
-        id Int64,
-        status String,
-        name String
-    )
 )
 ENGINE ReplacingMergeTree()
 ORDER BY id
@@ -187,14 +174,10 @@ ORDER BY id
 
 	createTestCasesTableSQL = `
 CREATE TABLE IF NOT EXISTS %s.%s (
-    id Int64,
-    testsuite Tuple(
-        id Int64
-    ),
-    testreport Tuple(
-        id Int64,
-        pipeline_id Int64
-    ),
+    id String,
+    testsuite_id String,
+    testreport_id String,
+    pipeline_id Int64,
     status String,
     name String,
     classname String,
