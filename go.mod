@@ -18,6 +18,7 @@ require (
 require (
 	github.com/ClickHouse/ch-go v0.58.2 // indirect
 	github.com/andybalholm/brotli v1.0.6 // indirect
+	github.com/creasty/defaults v1.7.0 // indirect
 	github.com/go-faster/city v1.0.1 // indirect
 	github.com/go-faster/errors v0.6.1 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect

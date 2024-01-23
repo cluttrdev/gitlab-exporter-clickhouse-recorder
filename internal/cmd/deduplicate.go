@@ -10,6 +10,7 @@ import (
 	"github.com/cluttrdev/cli"
 
 	"github.com/cluttrdev/gitlab-clickhouse-exporter/internal/clickhouse"
+	"github.com/cluttrdev/gitlab-clickhouse-exporter/internal/config"
 )
 
 type DeduplicateConfig struct {
@@ -19,6 +20,8 @@ type DeduplicateConfig struct {
 	by          columnList
 	except      columnList
 	throwIfNoop bool
+
+	flags *flag.FlagSet
 }
 
 func NewDeduplicateCmd(out io.Writer) *cli.Command {
@@ -28,8 +31,8 @@ func NewDeduplicateCmd(out io.Writer) *cli.Command {
 		RootConfig: RootConfig{
 			out: out,
 		},
+		flags: fs,
 	}
-
 	cfg.RegisterFlags(fs)
 
 	return &cli.Command{
@@ -55,21 +58,27 @@ func (c *DeduplicateConfig) Exec(ctx context.Context, args []string) error {
 		return fmt.Errorf("invalid number of positional arguments: %v", args)
 	}
 
-	table := args[0]
+	// load configuration
+	cfg := config.Default()
+	if err := loadConfig(c.RootConfig.filename, c.flags, &cfg); err != nil {
+		return fmt.Errorf("error loading configuration: %w", err)
+	}
 
 	ch, err := clickhouse.NewClient(clickhouse.ClientConfig{
-		Host:     c.RootConfig.Host,
-		Port:     c.RootConfig.Port,
-		Database: c.RootConfig.Database,
-		User:     c.RootConfig.User,
-		Password: c.RootConfig.Password,
+		Host:     cfg.ClickHouse.Host,
+		Port:     cfg.ClickHouse.Port,
+		Database: cfg.ClickHouse.Database,
+		User:     cfg.ClickHouse.User,
+		Password: cfg.ClickHouse.Password,
 	})
 	if err != nil {
 		return fmt.Errorf("error creating clickhouse client: %w", err)
 	}
 
+	table := args[0]
+
 	opt := clickhouse.DeduplicateTableOptions{
-		Database:    c.Database,
+		Database:    cfg.ClickHouse.Database,
 		Table:       table,
 		Final:       &c.final,
 		By:          c.by,
