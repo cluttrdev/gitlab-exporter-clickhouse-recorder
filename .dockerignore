@@ -1,0 +1,13 @@
+# ignore everything
+*
+
+# except the following:
+
+## Go module files
+!go.mod
+!go.sum
+
+## Go source files
+!main.go
+!cmd/
+!internal/
