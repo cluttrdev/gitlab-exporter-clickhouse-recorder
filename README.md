@@ -41,7 +41,7 @@ commands.
 To run `gitlab-clickhouse-exporter` in server mode use:
 
 ```shell
-gitlab-clickhouse-exporter --config CONFIG_FILE run
+gitlab-clickhouse-exporter run --config CONFIG_FILE
 ```
 
 This will start a gRPC server that exports recorded data to the configured 
