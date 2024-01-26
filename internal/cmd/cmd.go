@@ -15,6 +15,8 @@ const (
 	envVarPrefix string = "GLCHE"
 )
 
+var Version string
+
 func Execute() error {
 	out := os.Stderr
 
@@ -22,6 +24,7 @@ func Execute() error {
 	root.Subcommands = []*cli.Command{
 		NewRunCmd(out),
 		NewDeduplicateCmd(out),
+		cli.NewVersionCommand(cli.NewBuildInfo(Version), out),
 	}
 
 	args := os.Args[1:]
