@@ -2,12 +2,10 @@ module github.com/cluttrdev/gitlab-clickhouse-exporter
 
 go 1.21.4
 
-replace github.com/cluttrdev/gitlab-exporter => ../gitlab-exporter
-
 require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.17.1
 	github.com/cluttrdev/cli v0.0.0-20240126090120-a44e34c8b0be
-	github.com/cluttrdev/gitlab-exporter v0.4.1
+	github.com/cluttrdev/gitlab-exporter v0.5.0
 	github.com/creasty/defaults v1.7.0
 	github.com/google/go-cmp v0.5.9
 	go.opentelemetry.io/proto/otlp v1.1.0
