@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"sync"
-	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
@@ -102,31 +101,3 @@ func (c *Client) CreateTables(ctx context.Context) error {
 	return createTables(ctx, c.dbName, c)
 }
 
-func (c *Client) QueryProjectPipelinesLatestUpdate(ctx context.Context, projectID int64) (map[int64]time.Time, error) {
-	const (
-		msPerSecond float64 = 1000
-	)
-
-	var results []struct {
-		PipelineID   int64   `ch:"id"`
-		LatestUpdate float64 `ch:"latest_update"`
-	}
-
-	query := fmt.Sprintf(`
-        SELECT id, max(updated_at) AS latest_update
-        FROM %s.pipelines
-        WHERE project_id = %d
-        GROUP BY id
-    `, c.dbName, projectID)
-
-	if err := c.Select(ctx, &results, query); err != nil {
-		return nil, err
-	}
-
-	m := map[int64]time.Time{}
-	for _, r := range results {
-		m[r.PipelineID] = time.UnixMilli(int64(r.LatestUpdate * msPerSecond)).UTC()
-	}
-
-	return m, nil
-}
