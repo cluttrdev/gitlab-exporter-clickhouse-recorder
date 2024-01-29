@@ -22,9 +22,9 @@ func convertDuration(d *durationpb.Duration) float64 {
 	return float64(d.GetSeconds()) + float64(d.GetNanos())*1.0e-09
 }
 
-func InsertPipelines(ctx context.Context, pipelines []*pb.Pipeline, c *Client) error {
+func InsertPipelines(ctx context.Context, pipelines []*pb.Pipeline, c *Client) (int, error) {
 	if c == nil {
-		return errors.New("nil client")
+		return 0, errors.New("nil client")
 	}
 
 	const query string = `INSERT INTO {db: Identifier}.pipelines`
@@ -42,7 +42,7 @@ func InsertPipelines(ctx context.Context, pipelines []*pb.Pipeline, c *Client) e
 
 	batch, err := c.PrepareBatch(ctx, query)
 	if err != nil {
-		return fmt.Errorf("error preparing batch: %w", err)
+		return 0, fmt.Errorf("prepare batch: %w", err)
 	}
 
 	for _, p := range pipelines {
@@ -72,17 +72,17 @@ func InsertPipelines(ctx context.Context, pipelines []*pb.Pipeline, c *Client) e
 			p.WebUrl,
 		)
 		if err != nil {
-			return fmt.Errorf("error inserting pipelines: %w", err)
+			return 0, fmt.Errorf("append batch: %w", err)
 		}
 	}
 
 	if err := batch.Send(); err != nil {
-		return err
+		return -1, fmt.Errorf("send batch: %w", err)
 	}
-	return nil
+	return batch.Rows(), nil
 }
 
-func InsertJobs(ctx context.Context, jobs []*pb.Job, c *Client) error {
+func InsertJobs(ctx context.Context, jobs []*pb.Job, c *Client) (int, error) {
 	const query string = `INSERT INTO {db: Identifier}.jobs`
 	var params = map[string]string{
 		"db": c.dbName,
@@ -98,7 +98,7 @@ func InsertJobs(ctx context.Context, jobs []*pb.Job, c *Client) error {
 
 	batch, err := c.PrepareBatch(ctx, query)
 	if err != nil {
-		return fmt.Errorf("error preparing batch: %w", err)
+		return 0, fmt.Errorf("prepare batch: %w", err)
 	}
 
 	for i, j := range jobs {
@@ -133,14 +133,18 @@ func InsertJobs(ctx context.Context, jobs []*pb.Job, c *Client) error {
 			j.WebUrl,
 		)
 		if err != nil {
-			return fmt.Errorf("error inserting jobs: %w", err)
+			return 0, fmt.Errorf("append batch: %w", err)
 		}
 	}
 
-	return batch.Send()
+	if err := batch.Send(); err != nil {
+		return -1, fmt.Errorf("send batch: %w", err)
+	}
+
+	return batch.Rows(), nil
 }
 
-func InsertBridges(ctx context.Context, bridges []*pb.Bridge, c *Client) error {
+func InsertBridges(ctx context.Context, bridges []*pb.Bridge, c *Client) (int, error) {
 	const query string = `INSERT INTO {db: Identifier}.bridges`
 	var params = map[string]string{
 		"db": c.dbName,
@@ -156,7 +160,7 @@ func InsertBridges(ctx context.Context, bridges []*pb.Bridge, c *Client) error {
 
 	batch, err := c.PrepareBatch(ctx, query)
 	if err != nil {
-		return fmt.Errorf("error inserting bridges: %w", err)
+		return 0, fmt.Errorf("prepare batch: %w", err)
 	}
 
 	for i, b := range bridges {
@@ -207,14 +211,17 @@ func InsertBridges(ctx context.Context, bridges []*pb.Bridge, c *Client) error {
 			},
 		)
 		if err != nil {
-			return fmt.Errorf("[clickhouse.Client.InsertBridges] %w", err)
+			return 0, fmt.Errorf("append batch: %w", err)
 		}
 	}
 
-	return batch.Send()
+	if err := batch.Send(); err != nil {
+		return -1, fmt.Errorf("send batch: %w", err)
+	}
+	return batch.Rows(), nil
 }
 
-func InsertSections(ctx context.Context, sections []*pb.Section, client *Client) error {
+func InsertSections(ctx context.Context, sections []*pb.Section, client *Client) (int, error) {
 	const query string = `INSERT INTO {db: Identifier}.sections`
 	var params = map[string]string{
 		"db": client.dbName,
@@ -230,7 +237,7 @@ func InsertSections(ctx context.Context, sections []*pb.Section, client *Client)
 
 	batch, err := client.PrepareBatch(ctx, query)
 	if err != nil {
-		return fmt.Errorf("error preparing batch: %w", err)
+		return 0, fmt.Errorf("prepare batch: %w", err)
 	}
 
 	for i, s := range sections {
@@ -258,14 +265,17 @@ func InsertSections(ctx context.Context, sections []*pb.Section, client *Client)
 			convertDuration(s.Duration),
 		)
 		if err != nil {
-			return fmt.Errorf("error inserting sections: %w", err)
+			return 0, fmt.Errorf("append batch: %w", err)
 		}
 	}
 
-	return batch.Send()
+	if err := batch.Send(); err != nil {
+		return -1, fmt.Errorf("send batch: %w", err)
+	}
+	return batch.Rows(), nil
 }
 
-func InsertTestReports(ctx context.Context, reports []*pb.TestReport, client *Client) error {
+func InsertTestReports(ctx context.Context, reports []*pb.TestReport, client *Client) (int, error) {
 	const query string = `INSERT INTO {db: Identifier}.testreports`
 	var params = map[string]string{
 		"db": client.dbName,
@@ -281,7 +291,7 @@ func InsertTestReports(ctx context.Context, reports []*pb.TestReport, client *Cl
 
 	batch, err := client.PrepareBatch(ctx, query)
 	if err != nil {
-		return fmt.Errorf("error preparing batch: %w", err)
+		return 0, fmt.Errorf("prepare batch: %w", err)
 	}
 
 	for i, tr := range reports {
@@ -300,14 +310,17 @@ func InsertTestReports(ctx context.Context, reports []*pb.TestReport, client *Cl
 			tr.ErrorCount,
 		)
 		if err != nil {
-			return fmt.Errorf("error inserting testreports: %w", err)
+			return 0, fmt.Errorf("append batch: %w", err)
 		}
 	}
 
-	return batch.Send()
+	if err := batch.Send(); err != nil {
+		return -1, fmt.Errorf("send batch: %w", err)
+	}
+	return batch.Rows(), nil
 }
 
-func InsertTestSuites(ctx context.Context, suites []*pb.TestSuite, client *Client) error {
+func InsertTestSuites(ctx context.Context, suites []*pb.TestSuite, client *Client) (int, error) {
 	const query string = `INSERT INTO {db: Identifier}.testsuites`
 	var params = map[string]string{
 		"db": client.dbName,
@@ -323,7 +336,7 @@ func InsertTestSuites(ctx context.Context, suites []*pb.TestSuite, client *Clien
 
 	batch, err := client.PrepareBatch(ctx, query)
 	if err != nil {
-		return fmt.Errorf("error preparing batch: %w", err)
+		return 0, fmt.Errorf("prepare batch: %w", err)
 	}
 
 	for i, ts := range suites {
@@ -344,14 +357,17 @@ func InsertTestSuites(ctx context.Context, suites []*pb.TestSuite, client *Clien
 			ts.ErrorCount,
 		)
 		if err != nil {
-			return fmt.Errorf("error inserting testsuites: %w", err)
+			return 0, fmt.Errorf("append batch: %w", err)
 		}
 	}
 
-	return batch.Send()
+	if err := batch.Send(); err != nil {
+		return -1, fmt.Errorf("send batch: %w", err)
+	}
+	return batch.Rows(), nil
 }
 
-func InsertTestCases(ctx context.Context, cases []*pb.TestCase, client *Client) error {
+func InsertTestCases(ctx context.Context, cases []*pb.TestCase, client *Client) (int, error) {
 	const query string = `INSERT INTO {db: Identifier}.testcases`
 	var params = map[string]string{
 		"db": client.dbName,
@@ -367,7 +383,7 @@ func InsertTestCases(ctx context.Context, cases []*pb.TestCase, client *Client) 
 
 	batch, err := client.PrepareBatch(ctx, query)
 	if err != nil {
-		return fmt.Errorf("error preparing batch: %w", err)
+		return 0, fmt.Errorf("prepare batch: %w", err)
 	}
 
 	for i, tc := range cases {
@@ -394,14 +410,17 @@ func InsertTestCases(ctx context.Context, cases []*pb.TestCase, client *Client) 
 			},
 		)
 		if err != nil {
-			return fmt.Errorf("[clickhouse.Client.InsertTestCases] %w", err)
+			return 0, fmt.Errorf("append batch: %w", err)
 		}
 	}
 
-	return batch.Send()
+	if err := batch.Send(); err != nil {
+		return -1, fmt.Errorf("send batch: %w", err)
+	}
+	return batch.Rows(), nil
 }
 
-func InsertLogEmbeddedMetrics(ctx context.Context, metrics []*pb.LogEmbeddedMetric, client *Client) error {
+func InsertLogEmbeddedMetrics(ctx context.Context, metrics []*pb.LogEmbeddedMetric, client *Client) (int, error) {
 	const query string = `INSERT INTO {db: Identifier}.{table: Identifier}`
 	var params = map[string]string{
 		"db":    client.dbName,
@@ -418,7 +437,7 @@ func InsertLogEmbeddedMetrics(ctx context.Context, metrics []*pb.LogEmbeddedMetr
 
 	batch, err := client.PrepareBatch(ctx, query)
 	if err != nil {
-		return fmt.Errorf("prepare batch: %w", err)
+		return 0, fmt.Errorf("prepare batch: %w", err)
 	}
 
 	for i, m := range metrics {
@@ -435,17 +454,17 @@ func InsertLogEmbeddedMetrics(ctx context.Context, metrics []*pb.LogEmbeddedMetr
 			m.Job.Name,
 		)
 		if err != nil {
-			return fmt.Errorf("append batch:  %w", err)
+			return 0, fmt.Errorf("append batch:  %w", err)
 		}
 	}
 
 	if err := batch.Send(); err != nil {
-		return fmt.Errorf("send batch: %w", err)
+		return -1, fmt.Errorf("send batch: %w", err)
 	}
-	return nil
+	return batch.Rows(), nil
 }
 
-func InsertTraces(ctx context.Context, traces []*pb.Trace, client *Client) error {
+func InsertTraces(ctx context.Context, traces []*pb.Trace, client *Client) (int, error) {
 	const query string = `INSERT INTO {db: Identifier}.traces`
 	var params = map[string]string{
 		"db": client.dbName,
@@ -476,7 +495,7 @@ func InsertTraces(ctx context.Context, traces []*pb.Trace, client *Client) error
 
 	batch, err := client.PrepareBatch(ctx, query)
 	if err != nil {
-		return fmt.Errorf("error preparing batch: %w", err)
+		return 0, fmt.Errorf("prepare batch: %w", err)
 	}
 
 	var index int = -1
@@ -526,14 +545,17 @@ func InsertTraces(ctx context.Context, traces []*pb.Trace, client *Client) error
 					)
 
 					if err != nil {
-						return fmt.Errorf("error inserting traces: %w", err)
+						return 0, fmt.Errorf("append batch: %w", err)
 					}
 				}
 			}
 		}
 	}
 
-	return batch.Send()
+	if err := batch.Send(); err != nil {
+		return -1, fmt.Errorf("send batch: %w", err)
+	}
+	return batch.Rows(), nil
 }
 
 func timeFromUnixNano(ts int64) time.Time {

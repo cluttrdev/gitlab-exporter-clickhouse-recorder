@@ -39,12 +39,13 @@ func (s *ClickHouseServer) RecordPipelines(stream pb.GitLabExporter_RecordPipeli
 		return err
 	}
 
-	if err := clickhouse.InsertPipelines(context.Background(), data, s.client); err != nil {
+	n, err := clickhouse.InsertPipelines(context.Background(), data, s.client)
+	if err != nil {
 		return err
 	}
 
 	return stream.SendAndClose(&pb.RecordSummary{
-		RecordedCount: int32(len(data)),
+		RecordedCount: int32(n),
 	})
 }
 
@@ -54,12 +55,13 @@ func (s *ClickHouseServer) RecordJobs(stream pb.GitLabExporter_RecordJobsServer)
 		return err
 	}
 
-	if err := clickhouse.InsertJobs(context.Background(), data, s.client); err != nil {
+	n, err := clickhouse.InsertJobs(context.Background(), data, s.client)
+	if err != nil {
 		return err
 	}
 
 	return stream.SendAndClose(&pb.RecordSummary{
-		RecordedCount: int32(len(data)),
+		RecordedCount: int32(n),
 	})
 }
 
@@ -69,12 +71,13 @@ func (s *ClickHouseServer) RecordSections(stream pb.GitLabExporter_RecordSection
 		return err
 	}
 
-	if err := clickhouse.InsertSections(context.Background(), data, s.client); err != nil {
+	n, err := clickhouse.InsertSections(context.Background(), data, s.client)
+	if err != nil {
 		return err
 	}
 
 	return stream.SendAndClose(&pb.RecordSummary{
-		RecordedCount: int32(len(data)),
+		RecordedCount: int32(n),
 	})
 }
 
@@ -84,12 +87,13 @@ func (s *ClickHouseServer) RecordBridges(stream pb.GitLabExporter_RecordBridgesS
 		return err
 	}
 
-	if err := clickhouse.InsertBridges(context.Background(), data, s.client); err != nil {
+	n, err := clickhouse.InsertBridges(context.Background(), data, s.client)
+	if err != nil {
 		return err
 	}
 
 	return stream.SendAndClose(&pb.RecordSummary{
-		RecordedCount: int32(len(data)),
+		RecordedCount: int32(n),
 	})
 }
 
@@ -99,12 +103,13 @@ func (s *ClickHouseServer) RecordTestReports(stream pb.GitLabExporter_RecordTest
 		return err
 	}
 
-	if err := clickhouse.InsertTestReports(context.Background(), data, s.client); err != nil {
+	n, err := clickhouse.InsertTestReports(context.Background(), data, s.client)
+	if err != nil {
 		return err
 	}
 
 	return stream.SendAndClose(&pb.RecordSummary{
-		RecordedCount: int32(len(data)),
+		RecordedCount: int32(n),
 	})
 }
 
@@ -114,12 +119,13 @@ func (s *ClickHouseServer) RecordTestSuites(stream pb.GitLabExporter_RecordTestS
 		return err
 	}
 
-	if err := clickhouse.InsertTestSuites(context.Background(), data, s.client); err != nil {
+	n, err := clickhouse.InsertTestSuites(context.Background(), data, s.client)
+	if err != nil {
 		return err
 	}
 
 	return stream.SendAndClose(&pb.RecordSummary{
-		RecordedCount: int32(len(data)),
+		RecordedCount: int32(n),
 	})
 }
 
@@ -129,12 +135,13 @@ func (s *ClickHouseServer) RecordTestCases(stream pb.GitLabExporter_RecordTestCa
 		return err
 	}
 
-	if err := clickhouse.InsertTestCases(context.Background(), data, s.client); err != nil {
+	n, err := clickhouse.InsertTestCases(context.Background(), data, s.client)
+	if err != nil {
 		return err
 	}
 
 	return stream.SendAndClose(&pb.RecordSummary{
-		RecordedCount: int32(len(data)),
+		RecordedCount: int32(n),
 	})
 }
 
@@ -144,12 +151,13 @@ func (s *ClickHouseServer) RecordLogEmbeddedMetrics(stream pb.GitLabExporter_Rec
 		return err
 	}
 
-	if err := clickhouse.InsertLogEmbeddedMetrics(context.Background(), data, s.client); err != nil {
+	n, err := clickhouse.InsertLogEmbeddedMetrics(context.Background(), data, s.client)
+	if err != nil {
 		return err
 	}
 
 	return stream.SendAndClose(&pb.RecordSummary{
-		RecordedCount: int32(len(data)),
+		RecordedCount: int32(n),
 	})
 }
 
@@ -159,11 +167,12 @@ func (s *ClickHouseServer) RecordTraces(stream pb.GitLabExporter_RecordTracesSer
 		return err
 	}
 
-	if err := clickhouse.InsertTraces(context.Background(), data, s.client); err != nil {
+	n, err := clickhouse.InsertTraces(context.Background(), data, s.client)
+	if err != nil {
 		return err
 	}
 
 	return stream.SendAndClose(&pb.RecordSummary{
-		RecordedCount: int32(len(data)),
+		RecordedCount: int32(n),
 	})
 }
