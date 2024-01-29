@@ -6,8 +6,20 @@ import (
 )
 
 const (
+	PipelinesTable          string = "pipelines"
+	JobsTable               string = "jobs"
+	SectionsTable           string = "sections"
+	BridgesTable            string = "bridges"
+	TestReportsTable        string = "testreports"
+	TestSuitesTable         string = "testsuites"
+	TestCasesTable          string = "testcases"
+	LogEmbeddedMetricsTable string = "metrics"
+	TraceSpansTable         string = "traces"
+)
+
+const (
 	createPipelinesTableSQL = `
-CREATE TABLE IF NOT EXISTS %s.%s (
+CREATE TABLE IF NOT EXISTS {db: Identifier}.{table: Identifier} (
     id Int64,
     iid Int64,
     project_id Int64,
@@ -34,7 +46,7 @@ ORDER BY id
     `
 
 	createJobsTableSQL = `
-CREATE TABLE IF NOT EXISTS %s.%s (
+CREATE TABLE IF NOT EXISTS {db: Identifier}.{table: Identifier} (
     coverage Float64,
     allow_failure Bool,
     created_at Float64,
@@ -66,7 +78,7 @@ ORDER BY id
     `
 
 	createBridgesTableSQL = `
-CREATE TABLE IF NOT EXISTS %s.%s (
+CREATE TABLE IF NOT EXISTS {db: Identifier}.{table: Identifier} (
     coverage Float64,
     allow_failure Bool,
     created_at Float64,
@@ -114,7 +126,7 @@ ORDER BY id
     `
 
 	createSectionsTableSQL = `
-CREATE TABLE IF NOT EXISTS %s.%s (
+CREATE TABLE IF NOT EXISTS {db: Identifier}.{table: Identifier} (
     id Int64,
     name String,
     job Tuple(
@@ -139,7 +151,7 @@ ORDER BY id
     `
 
 	createTestReportsTableSQL = `
-CREATE TABLE IF NOT EXISTS %s.%s (
+CREATE TABLE IF NOT EXISTS {db: Identifier}.{table: Identifier} (
     id String,
     pipeline_id Int64,
     total_time Float64,
@@ -155,7 +167,7 @@ ORDER BY id
     `
 
 	createTestSuitesTableSQL = `
-CREATE TABLE IF NOT EXISTS %s.%s (
+CREATE TABLE IF NOT EXISTS {db: Identifier}.{table: Identifier} (
     id String,
     testreport_id String,
     pipeline_id Int64,
@@ -173,7 +185,7 @@ ORDER BY id
     `
 
 	createTestCasesTableSQL = `
-CREATE TABLE IF NOT EXISTS %s.%s (
+CREATE TABLE IF NOT EXISTS {db: Identifier}.{table: Identifier} (
     id String,
     testsuite_id String,
     testreport_id String,
@@ -196,8 +208,8 @@ ORDER BY id
 ;
     `
 
-	createJobMetricsTableSQL = `
-CREATE TABLE IF NOT EXISTS %s.%s (
+	createLogEmbeddedMetricsTableSQL = `
+CREATE TABLE IF NOT EXISTS {db: Identifier}.{table: Identifier} (
     name String,
     labels Map(String, String),
     value Float64,
@@ -216,7 +228,7 @@ const (
 	// schemas taken from https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/exporter/clickhouseexporter/exporter_traces.go
 
 	createTracesTableSQL = `
-CREATE TABLE IF NOT EXISTS %s.%s (
+CREATE TABLE IF NOT EXISTS {db: Identifier}.{table: Identifier} (
      Timestamp DateTime64(9) CODEC(Delta, ZSTD(1)),
      TraceId String CODEC(ZSTD(1)),
      SpanId String CODEC(ZSTD(1)),
@@ -300,32 +312,32 @@ WHERE TraceId = {trace_id:String}
 )
 
 func createTables(ctx context.Context, db string, client *Client) error {
-	if err := client.Exec(ctx, renderCreatePipelinesTableSQL(db)); err != nil {
+	if err := createPipelinesTable(client, ctx, db); err != nil {
 		return fmt.Errorf("exec create pipelines table: %w", err)
 	}
-	if err := client.Exec(ctx, renderCreateJobsTableSQL(db)); err != nil {
+	if err := createJobsTable(client, ctx, db); err != nil {
 		return fmt.Errorf("exec create jobs table: %w", err)
 	}
-	if err := client.Exec(ctx, renderCreateSectionsTableSQL(db)); err != nil {
+	if err := createSectionsTable(client, ctx, db); err != nil {
 		return fmt.Errorf("exec create sections table: %w", err)
 	}
-	if err := client.Exec(ctx, renderCreateBridgesTableSQL(db)); err != nil {
+	if err := createBridgesTable(client, ctx, db); err != nil {
 		return fmt.Errorf("exec create bridges table: %w", err)
 	}
-	if err := client.Exec(ctx, renderCreateTestReportsTableSQL(db)); err != nil {
+	if err := createTestReportsTable(client, ctx, db); err != nil {
 		return fmt.Errorf("exec create testreports table: %w", err)
 	}
-	if err := client.Exec(ctx, renderCreateTestSuitesTableSQL(db)); err != nil {
+	if err := createTestSuitesTable(client, ctx, db); err != nil {
 		return fmt.Errorf("exec create testsuites table: %w", err)
 	}
-	if err := client.Exec(ctx, renderCreateTestCasesTableSQL(db)); err != nil {
+	if err := createTestCasesTable(client, ctx, db); err != nil {
 		return fmt.Errorf("exec create testcases table: %w", err)
 	}
-	if err := client.Exec(ctx, renderCreateJobMetricsTableSQL(db)); err != nil {
-		return fmt.Errorf("exec create job metrics table: %w", err)
+	if err := createLogEmbeddedMetricsTable(client, ctx, db); err != nil {
+		return fmt.Errorf("exec create metrics table: %w", err)
 	}
 
-	if err := client.Exec(ctx, renderCreateTracesTableSQL(db)); err != nil {
+	if err := createTraceSpansTable(client, ctx, db); err != nil {
 		return fmt.Errorf("exec create traces table: %w", err)
 	}
 	if err := client.Exec(ctx, renderCreateTraceIdTsTableSQL(db)); err != nil {
@@ -341,72 +353,114 @@ func createTables(ctx context.Context, db string, client *Client) error {
 	return nil
 }
 
-func renderCreatePipelinesTableSQL(db string) string {
-	const tableName string = "pipelines"
-	return fmt.Sprintf(createPipelinesTableSQL, db, tableName)
+func createPipelinesTable(c *Client, ctx context.Context, db string) error {
+	return c.Exec(
+		WithParameters(ctx, map[string]string{
+			"db":    db,
+			"table": PipelinesTable,
+		}),
+		createPipelinesTableSQL,
+	)
 }
 
-func renderCreateJobsTableSQL(db string) string {
-	const tableName string = "jobs"
-	return fmt.Sprintf(createJobsTableSQL, db, tableName)
+func createJobsTable(c *Client, ctx context.Context, db string) error {
+	return c.Exec(
+		WithParameters(ctx, map[string]string{
+			"db":    db,
+			"table": JobsTable,
+		}),
+		createJobsTableSQL,
+	)
 }
 
-func renderCreateBridgesTableSQL(db string) string {
-	const tableName string = "bridges"
-	return fmt.Sprintf(createBridgesTableSQL, db, tableName)
+func createSectionsTable(c *Client, ctx context.Context, db string) error {
+	return c.Exec(
+		WithParameters(ctx, map[string]string{
+			"db":    db,
+			"table": SectionsTable,
+		}),
+		createSectionsTableSQL,
+	)
 }
 
-func renderCreateSectionsTableSQL(db string) string {
-	const tableName string = "sections"
-	return fmt.Sprintf(createSectionsTableSQL, db, tableName)
+func createBridgesTable(c *Client, ctx context.Context, db string) error {
+	return c.Exec(
+		WithParameters(ctx, map[string]string{
+			"db":    db,
+			"table": BridgesTable,
+		}),
+		createBridgesTableSQL,
+	)
 }
 
-func renderCreateTestReportsTableSQL(db string) string {
-	const tableName string = "testreports"
-	return fmt.Sprintf(createTestReportsTableSQL, db, tableName)
+func createTestReportsTable(c *Client, ctx context.Context, db string) error {
+	return c.Exec(
+		WithParameters(ctx, map[string]string{
+			"db":    db,
+			"table": TestReportsTable,
+		}),
+		createTestReportsTableSQL,
+	)
 }
 
-func renderCreateTestSuitesTableSQL(db string) string {
-	const tableName string = "testsuites"
-	return fmt.Sprintf(createTestSuitesTableSQL, db, tableName)
+func createTestSuitesTable(c *Client, ctx context.Context, db string) error {
+	return c.Exec(
+		WithParameters(ctx, map[string]string{
+			"db":    db,
+			"table": TestSuitesTable,
+		}),
+		createTestSuitesTableSQL,
+	)
 }
 
-func renderCreateTestCasesTableSQL(db string) string {
-	const tableName string = "testcases"
-	return fmt.Sprintf(createTestCasesTableSQL, db, tableName)
+func createTestCasesTable(c *Client, ctx context.Context, db string) error {
+	return c.Exec(
+		WithParameters(ctx, map[string]string{
+			"db":    db,
+			"table": TestCasesTable,
+		}),
+		createTestCasesTableSQL,
+	)
 }
 
-func renderCreateJobMetricsTableSQL(db string) string {
-	const tableName string = "metrics"
-	return fmt.Sprintf(createJobMetricsTableSQL, db, tableName)
+func createLogEmbeddedMetricsTable(c *Client, ctx context.Context, db string) error {
+	return c.Exec(
+		WithParameters(ctx, map[string]string{
+			"db":    db,
+			"table": LogEmbeddedMetricsTable,
+		}),
+		createLogEmbeddedMetricsTableSQL,
+	)
 }
 
-func renderCreateTracesTableSQL(db string) string {
-	const tableName string = "traces"
-	return fmt.Sprintf(createTracesTableSQL, db, tableName)
+func createTraceSpansTable(c *Client, ctx context.Context, db string) error {
+	return c.Exec(
+		WithParameters(ctx, map[string]string{
+			"db":    db,
+			"table": TraceSpansTable,
+		}),
+		createTracesTableSQL,
+	)
 }
 
 func renderCreateTraceIdTsTableSQL(db string) string {
-	const tracesTableName string = "traces"
-	return fmt.Sprintf(createTraceIdTsTableSQL, db, tracesTableName)
+	return fmt.Sprintf(createTraceIdTsTableSQL, db, TraceSpansTable)
 }
 
 func renderCreateTraceIdTsMaterializedViewSQL(db string) string {
-	const tracesTableName string = "traces"
 	return fmt.Sprintf(
 		createTraceIdTsMaterializedViewSQL,
-		db, tracesTableName,
-		db, tracesTableName,
-		db, tracesTableName,
+		db, TraceSpansTable,
+		db, TraceSpansTable,
+		db, TraceSpansTable,
 	)
 }
 
 func renderTraceViewSQL(db string) string {
 	const viewName string = "trace_view"
-	const tracesTableName string = "traces"
 	return fmt.Sprintf(
 		createTraceViewSQL,
 		db, viewName,
-		db, tracesTableName,
+		db, TraceSpansTable,
 	)
 }

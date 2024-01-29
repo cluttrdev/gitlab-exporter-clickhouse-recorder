@@ -5,11 +5,12 @@ import "context"
 func SelectPipelineMaxUpdatedAt(c *Client, ctx context.Context) (map[int64]float64, error) {
 	const query string = `
         SELECT id, max(updated_at) AS updated_at
-        FROM {db: Identifier}.pipelines
+        FROM {db: Identifier}.{table: Identifier}
         GROUP BY id
         `
 	var params = map[string]string{
-		"db": c.dbName,
+		"db":    c.dbName,
+		"table": PipelinesTable,
 	}
 
 	ctx = WithParameters(ctx, params)
@@ -64,7 +65,7 @@ func SelectTraceSpanIDs(c *Client, ctx context.Context) (map[string]struct{}, er
         `
 	var params = map[string]string{
 		"db":    c.dbName,
-		"table": "traces",
+		"table": TraceSpansTable,
 	}
 
 	ctx = WithParameters(ctx, params)
