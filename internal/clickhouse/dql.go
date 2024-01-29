@@ -32,13 +32,14 @@ func SelectPipelineMaxUpdatedAt(c *Client, ctx context.Context) (map[int64]float
 	return m, nil
 }
 
-func SelectTableIDs[T int64 | string](c *Client, ctx context.Context, table string) (map[T]struct{}, error) {
+func SelectTableIDs[T int64 | string](c *Client, ctx context.Context, table string, column string) (map[T]struct{}, error) {
 	const query string = `
-        SELECT id FROM {db: Identifier}.{table: Identifier}
+        SELECT {column: Identifier} AS id FROM {db: Identifier}.{table: Identifier}
         `
 	var params = map[string]string{
-		"db":    c.dbName,
-		"table": table,
+		"db":     c.dbName,
+		"table":  table,
+		"column": column,
 	}
 
 	ctx = WithParameters(ctx, params)
@@ -52,33 +53,6 @@ func SelectTableIDs[T int64 | string](c *Client, ctx context.Context, table stri
 	}
 
 	m := make(map[T]struct{}, len(results))
-	for _, res := range results {
-		m[res.ID] = struct{}{}
-	}
-
-	return m, nil
-}
-
-func SelectTraceSpanIDs(c *Client, ctx context.Context) (map[string]struct{}, error) {
-	const query string = `
-        SELECT id FROM {db: Identifier}.{table: Identifier}
-        `
-	var params = map[string]string{
-		"db":    c.dbName,
-		"table": TraceSpansTable,
-	}
-
-	ctx = WithParameters(ctx, params)
-
-	var results []struct {
-		ID string `ch:"SpanId"`
-	}
-
-	if err := c.Select(ctx, &results, query); err != nil {
-		return nil, err
-	}
-
-	m := make(map[string]struct{}, len(results))
 	for _, res := range results {
 		m[res.ID] = struct{}{}
 	}

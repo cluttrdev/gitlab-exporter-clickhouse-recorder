@@ -112,49 +112,49 @@ func (c *Client) InitCache(ctx context.Context) error {
 	}
 	c.cache.UpdatePipelines(pipelines)
 
-	jobs, err := SelectTableIDs[int64](c, ctx, JobsTable)
+	jobs, err := SelectTableIDs[int64](c, ctx, JobsTable, "id")
 	if err != nil {
 		return err
 	}
 	c.cache.UpdateJobs(keys(jobs))
 
-	sections, err := SelectTableIDs[int64](c, ctx, SectionsTable)
+	sections, err := SelectTableIDs[int64](c, ctx, SectionsTable, "id")
 	if err != nil {
 		return err
 	}
 	c.cache.UpdateSections(keys(sections))
 
-	bridges, err := SelectTableIDs[int64](c, ctx, BridgesTable)
+	bridges, err := SelectTableIDs[int64](c, ctx, BridgesTable, "id")
 	if err != nil {
 		return err
 	}
 	c.cache.UpdateBridges(keys(bridges))
 
-	reports, err := SelectTableIDs[string](c, ctx, TestReportsTable)
+	reports, err := SelectTableIDs[string](c, ctx, TestReportsTable, "id")
 	if err != nil {
 		return err
 	}
 	c.cache.UpdateTestReports(keys(reports))
 
-	suites, err := SelectTableIDs[string](c, ctx, TestSuitesTable)
+	suites, err := SelectTableIDs[string](c, ctx, TestSuitesTable, "id")
 	if err != nil {
 		return err
 	}
 	c.cache.UpdateTestSuites(keys(suites))
 
-	cases, err := SelectTableIDs[string](c, ctx, TestCasesTable)
+	cases, err := SelectTableIDs[string](c, ctx, TestCasesTable, "id")
 	if err != nil {
 		return err
 	}
 	c.cache.UpdateTestCases(keys(cases))
 
-	metrics, err := SelectTableIDs[int64](c, ctx, LogEmbeddedMetricsTable)
+	metrics, err := SelectTableIDs[int64](c, ctx, LogEmbeddedMetricsTable, "job_id")
 	if err != nil {
 		return err
 	}
 	c.cache.UpdateLogEmbeddedMetrics(keys(metrics))
 
-	spans, err := SelectTraceSpanIDs(c, ctx)
+	spans, err := SelectTableIDs[string](c, ctx, TraceSpansTable, "SpanId")
 	if err != nil {
 		return err
 	}
