@@ -22,7 +22,7 @@ func convertDuration(d *durationpb.Duration) float64 {
 	return float64(d.GetSeconds()) + float64(d.GetNanos())*1.0e-09
 }
 
-func InsertPipelines(ctx context.Context, pipelines []*pb.Pipeline, c *Client) (int, error) {
+func InsertPipelines(c *Client, ctx context.Context, pipelines []*pb.Pipeline) (int, error) {
 	if c == nil {
 		return 0, errors.New("nil client")
 	}
@@ -82,7 +82,7 @@ func InsertPipelines(ctx context.Context, pipelines []*pb.Pipeline, c *Client) (
 	return batch.Rows(), nil
 }
 
-func InsertJobs(ctx context.Context, jobs []*pb.Job, c *Client) (int, error) {
+func InsertJobs(c *Client, ctx context.Context, jobs []*pb.Job) (int, error) {
 	const query string = `INSERT INTO {db: Identifier}.jobs`
 	var params = map[string]string{
 		"db": c.dbName,
@@ -144,7 +144,7 @@ func InsertJobs(ctx context.Context, jobs []*pb.Job, c *Client) (int, error) {
 	return batch.Rows(), nil
 }
 
-func InsertBridges(ctx context.Context, bridges []*pb.Bridge, c *Client) (int, error) {
+func InsertBridges(c *Client, ctx context.Context, bridges []*pb.Bridge) (int, error) {
 	const query string = `INSERT INTO {db: Identifier}.bridges`
 	var params = map[string]string{
 		"db": c.dbName,
@@ -221,21 +221,21 @@ func InsertBridges(ctx context.Context, bridges []*pb.Bridge, c *Client) (int, e
 	return batch.Rows(), nil
 }
 
-func InsertSections(ctx context.Context, sections []*pb.Section, client *Client) (int, error) {
+func InsertSections(c *Client, ctx context.Context, sections []*pb.Section) (int, error) {
 	const query string = `INSERT INTO {db: Identifier}.sections`
 	var params = map[string]string{
-		"db": client.dbName,
+		"db": c.dbName,
 	}
 
 	updates := make([]int64, 0, len(sections))
 	for _, s := range sections {
 		updates = append(updates, s.Id)
 	}
-	updated := client.cache.UpdateSections(updates)
+	updated := c.cache.UpdateSections(updates)
 
 	ctx = WithParameters(ctx, params)
 
-	batch, err := client.PrepareBatch(ctx, query)
+	batch, err := c.PrepareBatch(ctx, query)
 	if err != nil {
 		return 0, fmt.Errorf("prepare batch: %w", err)
 	}
@@ -275,21 +275,21 @@ func InsertSections(ctx context.Context, sections []*pb.Section, client *Client)
 	return batch.Rows(), nil
 }
 
-func InsertTestReports(ctx context.Context, reports []*pb.TestReport, client *Client) (int, error) {
+func InsertTestReports(c *Client, ctx context.Context, reports []*pb.TestReport) (int, error) {
 	const query string = `INSERT INTO {db: Identifier}.testreports`
 	var params = map[string]string{
-		"db": client.dbName,
+		"db": c.dbName,
 	}
 
 	updates := make([]string, 0, len(reports))
 	for _, tr := range reports {
 		updates = append(updates, tr.Id)
 	}
-	updated := client.cache.UpdateTestReports(updates)
+	updated := c.cache.UpdateTestReports(updates)
 
 	ctx = WithParameters(ctx, params)
 
-	batch, err := client.PrepareBatch(ctx, query)
+	batch, err := c.PrepareBatch(ctx, query)
 	if err != nil {
 		return 0, fmt.Errorf("prepare batch: %w", err)
 	}
@@ -320,21 +320,21 @@ func InsertTestReports(ctx context.Context, reports []*pb.TestReport, client *Cl
 	return batch.Rows(), nil
 }
 
-func InsertTestSuites(ctx context.Context, suites []*pb.TestSuite, client *Client) (int, error) {
+func InsertTestSuites(c *Client, ctx context.Context, suites []*pb.TestSuite) (int, error) {
 	const query string = `INSERT INTO {db: Identifier}.testsuites`
 	var params = map[string]string{
-		"db": client.dbName,
+		"db": c.dbName,
 	}
 
 	updates := make([]string, 0, len(suites))
 	for _, ts := range suites {
 		updates = append(updates, ts.Id)
 	}
-	updated := client.cache.UpdateTestSuites(updates)
+	updated := c.cache.UpdateTestSuites(updates)
 
 	ctx = WithParameters(ctx, params)
 
-	batch, err := client.PrepareBatch(ctx, query)
+	batch, err := c.PrepareBatch(ctx, query)
 	if err != nil {
 		return 0, fmt.Errorf("prepare batch: %w", err)
 	}
@@ -367,21 +367,21 @@ func InsertTestSuites(ctx context.Context, suites []*pb.TestSuite, client *Clien
 	return batch.Rows(), nil
 }
 
-func InsertTestCases(ctx context.Context, cases []*pb.TestCase, client *Client) (int, error) {
+func InsertTestCases(c *Client, ctx context.Context, cases []*pb.TestCase) (int, error) {
 	const query string = `INSERT INTO {db: Identifier}.testcases`
 	var params = map[string]string{
-		"db": client.dbName,
+		"db": c.dbName,
 	}
 
 	updates := make([]string, 0, len(cases))
 	for _, tc := range cases {
 		updates = append(updates, tc.Id)
 	}
-	updated := client.cache.UpdateTestCases(updates)
+	updated := c.cache.UpdateTestCases(updates)
 
 	ctx = WithParameters(ctx, params)
 
-	batch, err := client.PrepareBatch(ctx, query)
+	batch, err := c.PrepareBatch(ctx, query)
 	if err != nil {
 		return 0, fmt.Errorf("prepare batch: %w", err)
 	}
@@ -420,10 +420,10 @@ func InsertTestCases(ctx context.Context, cases []*pb.TestCase, client *Client) 
 	return batch.Rows(), nil
 }
 
-func InsertLogEmbeddedMetrics(ctx context.Context, metrics []*pb.LogEmbeddedMetric, client *Client) (int, error) {
+func InsertLogEmbeddedMetrics(c *Client, ctx context.Context, metrics []*pb.LogEmbeddedMetric) (int, error) {
 	const query string = `INSERT INTO {db: Identifier}.{table: Identifier}`
 	var params = map[string]string{
-		"db":    client.dbName,
+		"db":    c.dbName,
 		"table": "log_embedded_metrics",
 	}
 
@@ -431,11 +431,11 @@ func InsertLogEmbeddedMetrics(ctx context.Context, metrics []*pb.LogEmbeddedMetr
 	for _, m := range metrics {
 		updates = append(updates, m.Job.Id)
 	}
-	updated := client.cache.UpdateLogEmbeddedMetrics(updates)
+	updated := c.cache.UpdateLogEmbeddedMetrics(updates)
 
 	ctx = WithParameters(ctx, params)
 
-	batch, err := client.PrepareBatch(ctx, query)
+	batch, err := c.PrepareBatch(ctx, query)
 	if err != nil {
 		return 0, fmt.Errorf("prepare batch: %w", err)
 	}
@@ -464,10 +464,10 @@ func InsertLogEmbeddedMetrics(ctx context.Context, metrics []*pb.LogEmbeddedMetr
 	return batch.Rows(), nil
 }
 
-func InsertTraces(ctx context.Context, traces []*pb.Trace, client *Client) (int, error) {
+func InsertTraces(c *Client, ctx context.Context, traces []*pb.Trace) (int, error) {
 	const query string = `INSERT INTO {db: Identifier}.traces`
 	var params = map[string]string{
-		"db": client.dbName,
+		"db": c.dbName,
 	}
 
 	var spanCountTotal int = 0
@@ -489,11 +489,11 @@ func InsertTraces(ctx context.Context, traces []*pb.Trace, client *Client) (int,
 			}
 		}
 	}
-	updated := client.cache.UpdateTraceSpans(updates)
+	updated := c.cache.UpdateTraceSpans(updates)
 
 	ctx = WithParameters(ctx, params)
 
-	batch, err := client.PrepareBatch(ctx, query)
+	batch, err := c.PrepareBatch(ctx, query)
 	if err != nil {
 		return 0, fmt.Errorf("prepare batch: %w", err)
 	}
