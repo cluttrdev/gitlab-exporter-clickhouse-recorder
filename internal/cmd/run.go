@@ -103,6 +103,10 @@ func (c *RunConfig) Exec(ctx context.Context, args []string) error {
 		return err
 	}
 
+	if err := client.InitCache(ctx); err != nil {
+		return err
+	}
+
 	// setup listener
 	addr := fmt.Sprintf("%s:%s", cfg.Server.Host, cfg.Server.Port)
 	listener, err := net.Listen("tcp", addr)

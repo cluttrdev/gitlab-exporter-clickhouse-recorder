@@ -377,7 +377,7 @@ func renderCreateTestCasesTableSQL(db string) string {
 }
 
 func renderCreateJobMetricsTableSQL(db string) string {
-	const tableName string = "job_metrics"
+	const tableName string = "metrics"
 	return fmt.Sprintf(createJobMetricsTableSQL, db, tableName)
 }
 

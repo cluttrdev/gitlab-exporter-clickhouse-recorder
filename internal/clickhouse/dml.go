@@ -32,6 +32,12 @@ func InsertPipelines(ctx context.Context, pipelines []*pb.Pipeline, c *Client) e
 		"db": c.dbName,
 	}
 
+	updates := make(map[int64]float64, len(pipelines))
+	for _, p := range pipelines {
+		updates[p.Id] = convertTimestamp(p.UpdatedAt)
+	}
+	updated := c.cache.UpdatePipelines(updates)
+
 	ctx = WithParameters(ctx, params)
 
 	batch, err := c.PrepareBatch(ctx, query)
@@ -40,6 +46,10 @@ func InsertPipelines(ctx context.Context, pipelines []*pb.Pipeline, c *Client) e
 	}
 
 	for _, p := range pipelines {
+		if !updated[p.Id] {
+			continue
+		}
+
 		err = batch.Append(
 			p.Id,
 			p.Iid,
@@ -66,7 +76,10 @@ func InsertPipelines(ctx context.Context, pipelines []*pb.Pipeline, c *Client) e
 		}
 	}
 
-	return batch.Send()
+	if err := batch.Send(); err != nil {
+		return err
+	}
+	return nil
 }
 
 func InsertJobs(ctx context.Context, jobs []*pb.Job, c *Client) error {
@@ -75,6 +88,12 @@ func InsertJobs(ctx context.Context, jobs []*pb.Job, c *Client) error {
 		"db": c.dbName,
 	}
 
+	updates := make([]int64, 0, len(jobs))
+	for _, j := range jobs {
+		updates = append(updates, j.Id)
+	}
+	updated := c.cache.UpdateJobs(updates)
+
 	ctx = WithParameters(ctx, params)
 
 	batch, err := c.PrepareBatch(ctx, query)
@@ -82,7 +101,11 @@ func InsertJobs(ctx context.Context, jobs []*pb.Job, c *Client) error {
 		return fmt.Errorf("error preparing batch: %w", err)
 	}
 
-	for _, j := range jobs {
+	for i, j := range jobs {
+		if !updated[i] {
+			continue
+		}
+
 		err = batch.Append(
 			j.Coverage,
 			j.AllowFailure,
@@ -123,6 +146,12 @@ func InsertBridges(ctx context.Context, bridges []*pb.Bridge, c *Client) error {
 		"db": c.dbName,
 	}
 
+	updates := make([]int64, 0, len(bridges))
+	for _, b := range bridges {
+		updates = append(updates, b.Id)
+	}
+	updated := c.cache.UpdateBridges(updates)
+
 	ctx = WithParameters(ctx, params)
 
 	batch, err := c.PrepareBatch(ctx, query)
@@ -130,7 +159,11 @@ func InsertBridges(ctx context.Context, bridges []*pb.Bridge, c *Client) error {
 		return fmt.Errorf("error inserting bridges: %w", err)
 	}
 
-	for _, b := range bridges {
+	for i, b := range bridges {
+		if !updated[i] {
+			continue
+		}
+
 		err = batch.Append(
 			b.Coverage,
 			b.AllowFailure,
@@ -187,6 +220,12 @@ func InsertSections(ctx context.Context, sections []*pb.Section, client *Client)
 		"db": client.dbName,
 	}
 
+	updates := make([]int64, 0, len(sections))
+	for _, s := range sections {
+		updates = append(updates, s.Id)
+	}
+	updated := client.cache.UpdateSections(updates)
+
 	ctx = WithParameters(ctx, params)
 
 	batch, err := client.PrepareBatch(ctx, query)
@@ -194,7 +233,11 @@ func InsertSections(ctx context.Context, sections []*pb.Section, client *Client)
 		return fmt.Errorf("error preparing batch: %w", err)
 	}
 
-	for _, s := range sections {
+	for i, s := range sections {
+		if !updated[i] {
+			continue
+		}
+
 		err = batch.Append(
 			s.Id,
 			s.Name,
@@ -228,6 +271,12 @@ func InsertTestReports(ctx context.Context, reports []*pb.TestReport, client *Cl
 		"db": client.dbName,
 	}
 
+	updates := make([]string, 0, len(reports))
+	for _, tr := range reports {
+		updates = append(updates, tr.Id)
+	}
+	updated := client.cache.UpdateTestReports(updates)
+
 	ctx = WithParameters(ctx, params)
 
 	batch, err := client.PrepareBatch(ctx, query)
@@ -235,7 +284,11 @@ func InsertTestReports(ctx context.Context, reports []*pb.TestReport, client *Cl
 		return fmt.Errorf("error preparing batch: %w", err)
 	}
 
-	for _, tr := range reports {
+	for i, tr := range reports {
+		if !updated[i] {
+			continue
+		}
+
 		err = batch.Append(
 			tr.Id,
 			tr.PipelineId,
@@ -260,6 +313,12 @@ func InsertTestSuites(ctx context.Context, suites []*pb.TestSuite, client *Clien
 		"db": client.dbName,
 	}
 
+	updates := make([]string, 0, len(suites))
+	for _, ts := range suites {
+		updates = append(updates, ts.Id)
+	}
+	updated := client.cache.UpdateTestSuites(updates)
+
 	ctx = WithParameters(ctx, params)
 
 	batch, err := client.PrepareBatch(ctx, query)
@@ -267,7 +326,11 @@ func InsertTestSuites(ctx context.Context, suites []*pb.TestSuite, client *Clien
 		return fmt.Errorf("error preparing batch: %w", err)
 	}
 
-	for _, ts := range suites {
+	for i, ts := range suites {
+		if !updated[i] {
+			continue
+		}
+
 		err = batch.Append(
 			ts.Id,
 			ts.TestreportId,
@@ -294,6 +357,12 @@ func InsertTestCases(ctx context.Context, cases []*pb.TestCase, client *Client) 
 		"db": client.dbName,
 	}
 
+	updates := make([]string, 0, len(cases))
+	for _, tc := range cases {
+		updates = append(updates, tc.Id)
+	}
+	updated := client.cache.UpdateTestCases(updates)
+
 	ctx = WithParameters(ctx, params)
 
 	batch, err := client.PrepareBatch(ctx, query)
@@ -301,7 +370,11 @@ func InsertTestCases(ctx context.Context, cases []*pb.TestCase, client *Client) 
 		return fmt.Errorf("error preparing batch: %w", err)
 	}
 
-	for _, tc := range cases {
+	for i, tc := range cases {
+		if !updated[i] {
+			continue
+		}
+
 		err = batch.Append(
 			tc.Id,
 			tc.TestsuiteId,
@@ -335,6 +408,12 @@ func InsertLogEmbeddedMetrics(ctx context.Context, metrics []*pb.LogEmbeddedMetr
 		"table": "log_embedded_metrics",
 	}
 
+	updates := make([]int64, 0, len(metrics))
+	for _, m := range metrics {
+		updates = append(updates, m.Job.Id)
+	}
+	updated := client.cache.UpdateLogEmbeddedMetrics(updates)
+
 	ctx = WithParameters(ctx, params)
 
 	batch, err := client.PrepareBatch(ctx, query)
@@ -342,7 +421,11 @@ func InsertLogEmbeddedMetrics(ctx context.Context, metrics []*pb.LogEmbeddedMetr
 		return fmt.Errorf("prepare batch: %w", err)
 	}
 
-	for _, m := range metrics {
+	for i, m := range metrics {
+		if !updated[i] {
+			continue
+		}
+
 		err = batch.Append(
 			m.Name,
 			m.Labels,
@@ -368,6 +451,27 @@ func InsertTraces(ctx context.Context, traces []*pb.Trace, client *Client) error
 		"db": client.dbName,
 	}
 
+	var spanCountTotal int = 0
+	for _, t := range traces {
+		for _, rs := range t.Data.ResourceSpans {
+			for _, ss := range rs.ScopeSpans {
+				spanCountTotal += len(ss.Spans)
+			}
+		}
+	}
+
+	updates := make([]string, 0, spanCountTotal)
+	for _, t := range traces {
+		for _, rs := range t.Data.ResourceSpans {
+			for _, ss := range rs.ScopeSpans {
+				for _, s := range ss.Spans {
+					updates = append(updates, string(s.SpanId))
+				}
+			}
+		}
+	}
+	updated := client.cache.UpdateTraceSpans(updates)
+
 	ctx = WithParameters(ctx, params)
 
 	batch, err := client.PrepareBatch(ctx, query)
@@ -375,6 +479,7 @@ func InsertTraces(ctx context.Context, traces []*pb.Trace, client *Client) error
 		return fmt.Errorf("error preparing batch: %w", err)
 	}
 
+	var index int = -1
 	for _, trace := range traces {
 		for _, resourceSpans := range trace.Data.ResourceSpans {
 			resourceAttrs := convertAttributes(resourceSpans.Resource.Attributes)
@@ -386,6 +491,11 @@ func InsertTraces(ctx context.Context, traces []*pb.Trace, client *Client) error
 				scopeName := scopeSpans.Scope.Name
 				scopeVersion := scopeSpans.Scope.Version
 				for _, span := range scopeSpans.Spans {
+					index++
+					if !updated[index] {
+						continue
+					}
+
 					spanAttrs := convertAttributes(span.Attributes)
 					eventTimes, eventNames, eventAttrs := convertEvents(span.Events)
 					linkTraceIDs, linkSpanIDs, linkStates, linkAttrs := convertLinks(span.Links)

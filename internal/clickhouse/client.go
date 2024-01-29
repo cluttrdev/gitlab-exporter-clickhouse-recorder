@@ -14,6 +14,8 @@ type Client struct {
 	conn driver.Conn
 
 	dbName string
+
+	cache *Cache
 }
 
 type ClientConfig struct {
@@ -25,13 +27,15 @@ type ClientConfig struct {
 }
 
 func NewClient(cfg ClientConfig) (*Client, error) {
-	var client Client
+	client := &Client{
+		cache: NewCache(),
+	}
 
 	if err := client.Configure(cfg); err != nil {
 		return nil, err
 	}
 
-	return &client, nil
+	return client, nil
 }
 
 func (c *Client) Configure(cfg ClientConfig) error {
@@ -101,3 +105,68 @@ func (c *Client) CreateTables(ctx context.Context) error {
 	return createTables(ctx, c.dbName, c)
 }
 
+func (c *Client) InitCache(ctx context.Context) error {
+	pipelines, err := SelectPipelineMaxUpdatedAt(c, ctx)
+	if err != nil {
+		return err
+	}
+	c.cache.UpdatePipelines(pipelines)
+
+	jobs, err := SelectTableIDs[int64](c, ctx, "jobs")
+	if err != nil {
+		return err
+	}
+	c.cache.UpdateJobs(keys(jobs))
+
+	sections, err := SelectTableIDs[int64](c, ctx, "sections")
+	if err != nil {
+		return err
+	}
+	c.cache.UpdateSections(keys(sections))
+
+	bridges, err := SelectTableIDs[int64](c, ctx, "bridges")
+	if err != nil {
+		return err
+	}
+	c.cache.UpdateBridges(keys(bridges))
+
+	reports, err := SelectTableIDs[string](c, ctx, "testreports")
+	if err != nil {
+		return err
+	}
+	c.cache.UpdateTestReports(keys(reports))
+
+	suites, err := SelectTableIDs[string](c, ctx, "testsuites")
+	if err != nil {
+		return err
+	}
+	c.cache.UpdateTestSuites(keys(suites))
+
+	cases, err := SelectTableIDs[string](c, ctx, "testcases")
+	if err != nil {
+		return err
+	}
+	c.cache.UpdateTestCases(keys(cases))
+
+	metrics, err := SelectTableIDs[int64](c, ctx, "metrics")
+	if err != nil {
+		return err
+	}
+	c.cache.UpdateLogEmbeddedMetrics(keys(metrics))
+
+	spans, err := SelectTraceSpanIDs(c, ctx)
+	if err != nil {
+		return err
+	}
+	c.cache.UpdateTraceSpans(keys(spans))
+
+	return nil
+}
+
+func keys[K int64 | string, V any](m map[K]V) []K {
+	s := make([]K, 0, len(m))
+	for k := range m {
+		s = append(s, k)
+	}
+	return s
+}
