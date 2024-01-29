@@ -33,146 +33,56 @@ func receive[T any](stream grpc.ServerStream) ([]*T, error) {
 	}
 }
 
-func (s *ClickHouseServer) RecordPipelines(stream pb.GitLabExporter_RecordPipelinesServer) error {
-	data, err := receive[pb.Pipeline](stream)
+type insertFunc[T any] func(client *clickhouse.Client, ctx context.Context, data []*T) (int, error)
+
+func record[T any](srv *ClickHouseServer, stream grpc.ServerStream, insert insertFunc[T]) error {
+	data, err := receive[T](stream)
 	if err != io.EOF {
 		return err
 	}
 
-	n, err := clickhouse.InsertPipelines(context.Background(), data, s.client)
+	n, err := insert(srv.client, context.Background(), data)
 	if err != nil {
 		return err
 	}
 
-	return stream.SendAndClose(&pb.RecordSummary{
+	return stream.SendMsg(&pb.RecordSummary{
 		RecordedCount: int32(n),
 	})
+}
+
+func (s *ClickHouseServer) RecordPipelines(stream pb.GitLabExporter_RecordPipelinesServer) error {
+	return record[pb.Pipeline](s, stream, clickhouse.InsertPipelines)
 }
 
 func (s *ClickHouseServer) RecordJobs(stream pb.GitLabExporter_RecordJobsServer) error {
-	data, err := receive[pb.Job](stream)
-	if err != io.EOF {
-		return err
-	}
-
-	n, err := clickhouse.InsertJobs(context.Background(), data, s.client)
-	if err != nil {
-		return err
-	}
-
-	return stream.SendAndClose(&pb.RecordSummary{
-		RecordedCount: int32(n),
-	})
+	return record[pb.Job](s, stream, clickhouse.InsertJobs)
 }
 
 func (s *ClickHouseServer) RecordSections(stream pb.GitLabExporter_RecordSectionsServer) error {
-	data, err := receive[pb.Section](stream)
-	if err != io.EOF {
-		return err
-	}
-
-	n, err := clickhouse.InsertSections(context.Background(), data, s.client)
-	if err != nil {
-		return err
-	}
-
-	return stream.SendAndClose(&pb.RecordSummary{
-		RecordedCount: int32(n),
-	})
+	return record[pb.Section](s, stream, clickhouse.InsertSections)
 }
 
 func (s *ClickHouseServer) RecordBridges(stream pb.GitLabExporter_RecordBridgesServer) error {
-	data, err := receive[pb.Bridge](stream)
-	if err != io.EOF {
-		return err
-	}
-
-	n, err := clickhouse.InsertBridges(context.Background(), data, s.client)
-	if err != nil {
-		return err
-	}
-
-	return stream.SendAndClose(&pb.RecordSummary{
-		RecordedCount: int32(n),
-	})
+	return record[pb.Bridge](s, stream, clickhouse.InsertBridges)
 }
 
 func (s *ClickHouseServer) RecordTestReports(stream pb.GitLabExporter_RecordTestReportsServer) error {
-	data, err := receive[pb.TestReport](stream)
-	if err != io.EOF {
-		return err
-	}
-
-	n, err := clickhouse.InsertTestReports(context.Background(), data, s.client)
-	if err != nil {
-		return err
-	}
-
-	return stream.SendAndClose(&pb.RecordSummary{
-		RecordedCount: int32(n),
-	})
+	return record[pb.TestReport](s, stream, clickhouse.InsertTestReports)
 }
 
 func (s *ClickHouseServer) RecordTestSuites(stream pb.GitLabExporter_RecordTestSuitesServer) error {
-	data, err := receive[pb.TestSuite](stream)
-	if err != io.EOF {
-		return err
-	}
-
-	n, err := clickhouse.InsertTestSuites(context.Background(), data, s.client)
-	if err != nil {
-		return err
-	}
-
-	return stream.SendAndClose(&pb.RecordSummary{
-		RecordedCount: int32(n),
-	})
+	return record[pb.TestSuite](s, stream, clickhouse.InsertTestSuites)
 }
 
 func (s *ClickHouseServer) RecordTestCases(stream pb.GitLabExporter_RecordTestCasesServer) error {
-	data, err := receive[pb.TestCase](stream)
-	if err != io.EOF {
-		return err
-	}
-
-	n, err := clickhouse.InsertTestCases(context.Background(), data, s.client)
-	if err != nil {
-		return err
-	}
-
-	return stream.SendAndClose(&pb.RecordSummary{
-		RecordedCount: int32(n),
-	})
+	return record[pb.TestCase](s, stream, clickhouse.InsertTestCases)
 }
 
 func (s *ClickHouseServer) RecordLogEmbeddedMetrics(stream pb.GitLabExporter_RecordLogEmbeddedMetricsServer) error {
-	data, err := receive[pb.LogEmbeddedMetric](stream)
-	if err != io.EOF {
-		return err
-	}
-
-	n, err := clickhouse.InsertLogEmbeddedMetrics(context.Background(), data, s.client)
-	if err != nil {
-		return err
-	}
-
-	return stream.SendAndClose(&pb.RecordSummary{
-		RecordedCount: int32(n),
-	})
+	return record[pb.LogEmbeddedMetric](s, stream, clickhouse.InsertLogEmbeddedMetrics)
 }
 
 func (s *ClickHouseServer) RecordTraces(stream pb.GitLabExporter_RecordTracesServer) error {
-	data, err := receive[pb.Trace](stream)
-	if err != io.EOF {
-		return err
-	}
-
-	n, err := clickhouse.InsertTraces(context.Background(), data, s.client)
-	if err != nil {
-		return err
-	}
-
-	return stream.SendAndClose(&pb.RecordSummary{
-		RecordedCount: int32(n),
-	})
+	return record[pb.Trace](s, stream, clickhouse.InsertTraces)
 }
