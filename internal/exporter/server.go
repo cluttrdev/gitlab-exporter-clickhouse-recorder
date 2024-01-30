@@ -3,9 +3,11 @@ package exporter
 import (
 	"context"
 	"io"
+	"log/slog"
+
+	"google.golang.org/grpc"
 
 	pb "github.com/cluttrdev/gitlab-exporter/grpc/exporterpb"
-	"google.golang.org/grpc"
 
 	"github.com/cluttrdev/gitlab-clickhouse-exporter/internal/clickhouse"
 )
@@ -38,11 +40,13 @@ type insertFunc[T any] func(client *clickhouse.Client, ctx context.Context, data
 func record[T any](srv *ClickHouseServer, stream grpc.ServerStream, insert insertFunc[T]) error {
 	data, err := receive[T](stream)
 	if err != io.EOF {
+		slog.Error("Failed to receive data", "error", err)
 		return err
 	}
 
 	n, err := insert(srv.client, context.Background(), data)
 	if err != nil {
+		slog.Error("Failed to insert data", "error", err)
 		return err
 	}
 

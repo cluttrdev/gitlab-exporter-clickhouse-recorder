@@ -7,6 +7,7 @@ import (
 type Config struct {
 	ClickHouse ClickHouse `default:"{}" yaml:"clickhouse"`
 	Server     Server     `default:"{}" yaml:"server"`
+	Log        Log        `default:"{}" yaml:"log"`
 }
 
 type ClickHouse struct {
@@ -20,6 +21,11 @@ type ClickHouse struct {
 type Server struct {
 	Host string `default:"0.0.0.0" yaml:"host"`
 	Port string `default:"0" yaml:"port"`
+}
+
+type Log struct {
+	Level  string `default:"info" yaml:"level"`
+	Format string `default:"text" yaml:"format"`
 }
 
 func Default() Config {

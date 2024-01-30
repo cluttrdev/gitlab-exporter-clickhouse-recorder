@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	otlp_comonpb "go.opentelemetry.io/proto/otlp/common/v1"
@@ -79,7 +80,11 @@ func InsertPipelines(c *Client, ctx context.Context, pipelines []*pb.Pipeline) (
 	if err := batch.Send(); err != nil {
 		return -1, fmt.Errorf("send batch: %w", err)
 	}
-	return batch.Rows(), nil
+
+	n := batch.Rows()
+	slog.Debug("Recorded pipelines", "received", len(pipelines), "inserted", n)
+
+	return n, nil
 }
 
 func InsertJobs(c *Client, ctx context.Context, jobs []*pb.Job) (int, error) {
@@ -141,7 +146,10 @@ func InsertJobs(c *Client, ctx context.Context, jobs []*pb.Job) (int, error) {
 		return -1, fmt.Errorf("send batch: %w", err)
 	}
 
-	return batch.Rows(), nil
+	n := batch.Rows()
+	slog.Debug("Recorded jobs", "received", len(jobs), "inserted", n)
+
+	return n, nil
 }
 
 func InsertBridges(c *Client, ctx context.Context, bridges []*pb.Bridge) (int, error) {
@@ -218,7 +226,11 @@ func InsertBridges(c *Client, ctx context.Context, bridges []*pb.Bridge) (int, e
 	if err := batch.Send(); err != nil {
 		return -1, fmt.Errorf("send batch: %w", err)
 	}
-	return batch.Rows(), nil
+
+	n := batch.Rows()
+	slog.Debug("Recorded bridges", "received", len(bridges), "inserted", n)
+
+	return n, nil
 }
 
 func InsertSections(c *Client, ctx context.Context, sections []*pb.Section) (int, error) {
@@ -272,7 +284,11 @@ func InsertSections(c *Client, ctx context.Context, sections []*pb.Section) (int
 	if err := batch.Send(); err != nil {
 		return -1, fmt.Errorf("send batch: %w", err)
 	}
-	return batch.Rows(), nil
+
+	n := batch.Rows()
+	slog.Debug("Recorded sections", "received", len(sections), "inserted", n)
+
+	return n, nil
 }
 
 func InsertTestReports(c *Client, ctx context.Context, reports []*pb.TestReport) (int, error) {
@@ -317,7 +333,11 @@ func InsertTestReports(c *Client, ctx context.Context, reports []*pb.TestReport)
 	if err := batch.Send(); err != nil {
 		return -1, fmt.Errorf("send batch: %w", err)
 	}
-	return batch.Rows(), nil
+
+	n := batch.Rows()
+	slog.Debug("Recorded testreports", "received", len(reports), "inserted", n)
+
+	return n, nil
 }
 
 func InsertTestSuites(c *Client, ctx context.Context, suites []*pb.TestSuite) (int, error) {
@@ -364,7 +384,11 @@ func InsertTestSuites(c *Client, ctx context.Context, suites []*pb.TestSuite) (i
 	if err := batch.Send(); err != nil {
 		return -1, fmt.Errorf("send batch: %w", err)
 	}
-	return batch.Rows(), nil
+
+	n := batch.Rows()
+	slog.Debug("Recorded testsuites", "received", len(suites), "inserted", n)
+
+	return n, nil
 }
 
 func InsertTestCases(c *Client, ctx context.Context, cases []*pb.TestCase) (int, error) {
@@ -417,7 +441,11 @@ func InsertTestCases(c *Client, ctx context.Context, cases []*pb.TestCase) (int,
 	if err := batch.Send(); err != nil {
 		return -1, fmt.Errorf("send batch: %w", err)
 	}
-	return batch.Rows(), nil
+
+	n := batch.Rows()
+	slog.Debug("Recorded testcases", "received", len(cases), "inserted", n)
+
+	return n, nil
 }
 
 func InsertLogEmbeddedMetrics(c *Client, ctx context.Context, metrics []*pb.LogEmbeddedMetric) (int, error) {
@@ -461,7 +489,11 @@ func InsertLogEmbeddedMetrics(c *Client, ctx context.Context, metrics []*pb.LogE
 	if err := batch.Send(); err != nil {
 		return -1, fmt.Errorf("send batch: %w", err)
 	}
-	return batch.Rows(), nil
+
+	n := batch.Rows()
+	slog.Debug("Recorded metrics", "received", len(metrics), "inserted", n)
+
+	return n, nil
 }
 
 func InsertTraces(c *Client, ctx context.Context, traces []*pb.Trace) (int, error) {
@@ -555,7 +587,11 @@ func InsertTraces(c *Client, ctx context.Context, traces []*pb.Trace) (int, erro
 	if err := batch.Send(); err != nil {
 		return -1, fmt.Errorf("send batch: %w", err)
 	}
-	return batch.Rows(), nil
+
+	n := batch.Rows()
+	slog.Debug("Recorded trace spans", "received", len(updates), "inserted", n)
+
+	return n, nil
 }
 
 func timeFromUnixNano(ts int64) time.Time {

@@ -6,7 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"math"
 	"math/rand"
 	"net"
@@ -30,6 +30,9 @@ type RunConfig struct {
 
 	ServerHost string
 	ServerPort string
+
+	LogLevel  string
+	LogFormat string
 
 	flags *flag.FlagSet
 }
@@ -60,13 +63,14 @@ func (c *RunConfig) RegisterFlags(fs *flag.FlagSet) {
 
 	fs.StringVar(&c.ServerHost, "server-host", "127.0.0.1", "The gRPC server listen host. (default: '127.0.0.1')")
 	fs.StringVar(&c.ServerPort, "server-port", "0", "The gRPC server listen port. (default: '0', random)")
+
+	fs.StringVar(&c.LogLevel, "log-level", "info", "The logging level, one of 'debug', 'info', 'warn', 'error'. (default: 'info')")
+	fs.StringVar(&c.LogFormat, "log-format", "text", "The logging format, either 'text' or 'json'. (default: 'text')")
 }
 
 func (c *RunConfig) Exec(ctx context.Context, args []string) error {
-	log.SetOutput(c.out)
-
 	// load configuration
-	log.Printf("Loading configuration from %s\n", c.RootConfig.filename)
+	fmt.Fprintf(c.out, "Loading configuration from %s\n", c.RootConfig.filename)
 	cfg := config.Default()
 	if err := loadConfig(c.RootConfig.filename, c.flags, &cfg); err != nil {
 		return fmt.Errorf("error loading configuration: %w", err)
@@ -78,10 +82,16 @@ func (c *RunConfig) Exec(ctx context.Context, args []string) error {
 			cfg.Server.Host = f.Value.String()
 		case "server-port":
 			cfg.Server.Port = f.Value.String()
+		case "log-level":
+			cfg.Log.Level = f.Value.String()
+		case "log-format":
+			cfg.Log.Format = f.Value.String()
 		}
 	})
 
 	writeConfig(c.out, cfg)
+
+	initLogging(c.out, cfg.Log)
 
 	// create clickhouse client
 	client, err := clickhouse.NewClient(clickhouse.ClientConfig{
@@ -134,19 +144,55 @@ func (c *RunConfig) Exec(ctx context.Context, args []string) error {
 	go func() {
 		select {
 		case <-signalChan:
-			log.Println("Got SIGINT/SIGTERM, exiting")
+			slog.Info("Got SIGINT/SIGTERM, exiting")
 			cancel()
 		case <-ctx.Done():
-			log.Println("Done")
+			slog.Info("Done")
 		}
 
 		grpcServer.GracefulStop()
 	}()
 
 	// run
-	log.Printf("Listening on %s", listener.Addr().String())
+	slog.Info(fmt.Sprintf("Listening on %s", listener.Addr().String()))
 	return grpcServer.Serve(listener)
+}
 
+func initLogging(out io.Writer, cfg config.Log) {
+	if out == nil {
+		out = os.Stderr
+	}
+
+	var level slog.Level
+	switch cfg.Level {
+	case "debug":
+		level = slog.LevelDebug
+	case "info":
+		level = slog.LevelInfo
+	case "warn":
+		level = slog.LevelWarn
+	case "error":
+		level = slog.LevelError
+	default:
+		level = slog.LevelInfo
+	}
+
+	opts := slog.HandlerOptions{
+		Level: level,
+	}
+
+	var handler slog.Handler
+	switch cfg.Format {
+	case "text":
+		handler = slog.NewTextHandler(out, &opts)
+	case "json":
+		handler = slog.NewJSONHandler(out, &opts)
+	default:
+		handler = slog.NewTextHandler(out, &opts)
+	}
+
+	logger := slog.New(handler)
+	slog.SetDefault(logger)
 }
 
 func waitForReady(ctx context.Context, ready func(ctx context.Context) error) error {
@@ -161,11 +207,11 @@ func waitForReady(ctx context.Context, ready func(ctx context.Context) error) er
 	var err error
 	for i := 0; i < maxTries; i++ {
 		if err = ready(ctx); err == nil {
-			log.Println("Readiness check succeeded")
+			slog.Debug("Readiness check succeeded")
 			return nil
 		}
 
-		log.Println(fmt.Errorf("Readiness check failed: %w", err))
+		slog.Error("Readiness check failed", "error", err)
 		delaySec := backoffBaseSec*math.Pow(2, float64(i)) + backoffJitterSec*rand.Float64()
 		delay := time.Duration(delaySec) * time.Second
 		ticker.Reset(delay)

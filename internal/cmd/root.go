@@ -91,6 +91,9 @@ func writeConfig(out io.Writer, cfg config.Config) {
 	fmt.Fprintf(out, "Server Host: %s\n", cfg.Server.Host)
 	fmt.Fprintf(out, "Server Port: %s\n", cfg.Server.Port)
 	fmt.Fprintln(out, "----")
+	fmt.Fprintf(out, "Log Level: %s\n", cfg.Log.Level)
+	fmt.Fprintf(out, "Log Format: %s\n", cfg.Log.Format)
+	fmt.Fprintln(out, "----")
 }
 
 func sha256String(s string) []byte {

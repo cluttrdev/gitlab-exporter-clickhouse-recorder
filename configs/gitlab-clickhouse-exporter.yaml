@@ -18,3 +18,13 @@ server:
   # The port number or service name to listen on.
   # If the port is empty or "0", a port number is automatically chosen.
   port: "0"
+
+# Log configuration
+log:
+  # The logging level
+  # allowed values: debug, info, warning, error
+  level: info
+
+  # The logging format
+  # allowed values: text or json
+  format: text
