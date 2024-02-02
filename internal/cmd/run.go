@@ -9,20 +9,17 @@ import (
 	"log/slog"
 	"math"
 	"math/rand"
-	"net"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
-
-	"google.golang.org/grpc"
 
 	"github.com/cluttrdev/cli"
 
 	"github.com/cluttrdev/gitlab-clickhouse-exporter/internal/clickhouse"
 	"github.com/cluttrdev/gitlab-clickhouse-exporter/internal/config"
 	"github.com/cluttrdev/gitlab-clickhouse-exporter/internal/exporter"
-	pb "github.com/cluttrdev/gitlab-exporter/grpc/exporterpb"
+	"github.com/cluttrdev/gitlab-clickhouse-exporter/internal/probes"
 )
 
 type RunConfig struct {
@@ -117,18 +114,14 @@ func (c *RunConfig) Exec(ctx context.Context, args []string) error {
 		return err
 	}
 
-	// setup listener
-	addr := fmt.Sprintf("%s:%s", cfg.Server.Host, cfg.Server.Port)
-	listener, err := net.Listen("tcp", addr)
-	if err != nil {
-		return err
-	}
-
-	// setup server
-	var opts []grpc.ServerOption
-
-	grpcServer := grpc.NewServer(opts...)
-	pb.RegisterGitLabExporterServer(grpcServer, exporter.NewServer(client))
+	// setup grpc server
+	grpcServer := exporter.NewServer(
+		exporter.NewExporter(client),
+		exporter.ServerConfig{
+			Host: cfg.Server.Host,
+			Port: cfg.Server.Port,
+		},
+	)
 
 	// setup daemon
 	ctx, cancel := context.WithCancel(ctx)
@@ -149,13 +142,31 @@ func (c *RunConfig) Exec(ctx context.Context, args []string) error {
 		case <-ctx.Done():
 			slog.Info("Done")
 		}
-
-		grpcServer.GracefulStop()
 	}()
 
-	// run
-	slog.Info(fmt.Sprintf("Listening on %s", listener.Addr().String()))
-	return grpcServer.Serve(listener)
+	if cfg.HTTP.Probes.Enabled {
+		// setup http server
+		httpServer := probes.NewServer(probes.ServerConfig{
+			Host: "127.0.0.1",
+			Port: "8080",
+
+			ReadinessCheck: func() error {
+				return grpcServer.CheckReadiness(ctx)
+			},
+
+			Debug: cfg.HTTP.Probes.Debug,
+		})
+
+		// run http server
+		go func() {
+			if err := httpServer.ListenAndServe(ctx); err != nil {
+				slog.Error(err.Error())
+			}
+		}()
+	}
+
+	// run grpc server
+	return grpcServer.ListenAndServe(ctx)
 }
 
 func initLogging(out io.Writer, cfg config.Log) {

@@ -20,6 +20,14 @@ func defaultConfig() config.Config {
 	cfg.Server.Host = "0.0.0.0"
 	cfg.Server.Port = "0"
 
+	cfg.Log.Level = "info"
+	cfg.Log.Format = "text"
+
+	cfg.HTTP.Host = "0.0.0.0"
+	cfg.HTTP.Port = "8080"
+	cfg.HTTP.Probes.Enabled = true
+	cfg.HTTP.Probes.Debug = false
+
 	return cfg
 }
 
@@ -103,17 +111,28 @@ func TestLoad_InvalidData(t *testing.T) {
 func TestLoad_DataWithDefaults(t *testing.T) {
 	data := []byte(`
     clickhouse:
-        user: gitlab-exporter
-        password: supersecret
+      user: gitlab-exporter
+      password: supersecret
 
     server:
-        port: 36275
+      port: 36275
+
+    log:
+      format: json
+
+    http:
+      host: 127.0.0.1
+      probes:
+        debug: true
     `)
 
 	expected := defaultConfig()
 	expected.ClickHouse.User = "gitlab-exporter"
 	expected.ClickHouse.Password = "supersecret"
 	expected.Server.Port = "36275"
+	expected.Log.Format = "json"
+	expected.HTTP.Host = "127.0.0.1"
+	expected.HTTP.Probes.Debug = true
 
 	cfg := defaultConfig()
 	if err := config.Load(data, &cfg); err != nil {

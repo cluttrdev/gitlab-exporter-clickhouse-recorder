@@ -28,3 +28,17 @@ log:
   # The logging format
   # allowed values: text or json
   format: text
+
+# HTTP server options
+http:
+  # The network hostname or IP address to listen on.
+  host: "0.0.0.0"
+  # The port number or service name to listen on.
+  port: "8080"
+
+  # Health check and debug endpoints
+  probes:
+    # Enable or disable http probes endpoints
+    enabled: true
+    # Enable debug information endpoints.
+    debug: false

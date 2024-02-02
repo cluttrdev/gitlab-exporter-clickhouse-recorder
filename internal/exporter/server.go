@@ -2,91 +2,63 @@ package exporter
 
 import (
 	"context"
-	"io"
+	"fmt"
 	"log/slog"
+	"net"
 
 	"google.golang.org/grpc"
 
 	pb "github.com/cluttrdev/gitlab-exporter/grpc/exporterpb"
-
-	"github.com/cluttrdev/gitlab-clickhouse-exporter/internal/clickhouse"
 )
 
-type ClickHouseServer struct {
-	pb.UnimplementedGitLabExporterServer
-
-	client *clickhouse.Client
+type ServerConfig struct {
+	Host string
+	Port string
 }
 
-func NewServer(client *clickhouse.Client) *ClickHouseServer {
-	return &ClickHouseServer{
-		client: client,
+type Server struct {
+	config   ServerConfig
+	exporter *ClickHouseExporter
+}
+
+func NewServer(exp *ClickHouseExporter, cfg ServerConfig) *Server {
+	return &Server{
+		config:   cfg,
+		exporter: exp,
 	}
 }
 
-func receive[T any](stream grpc.ServerStream) ([]*T, error) {
-	var data []*T
-	for {
-		msg := new(T)
-		if err := stream.RecvMsg(msg); err != nil {
-			return data, err
-		}
-		data = append(data, msg)
-	}
-}
-
-type insertFunc[T any] func(client *clickhouse.Client, ctx context.Context, data []*T) (int, error)
-
-func record[T any](srv *ClickHouseServer, stream grpc.ServerStream, insert insertFunc[T]) error {
-	data, err := receive[T](stream)
-	if err != io.EOF {
-		slog.Error("Failed to receive data", "error", err)
-		return err
-	}
-
-	n, err := insert(srv.client, context.Background(), data)
+func (s *Server) ListenAndServe(ctx context.Context) error {
+	// setup listener
+	addr := fmt.Sprintf("%s:%s", s.config.Host, s.config.Port)
+	listener, err := net.Listen("tcp", addr)
 	if err != nil {
-		slog.Error("Failed to insert data", "error", err)
 		return err
 	}
 
-	return stream.SendMsg(&pb.RecordSummary{
-		RecordedCount: int32(n),
-	})
+	// setup server
+	var opts []grpc.ServerOption
+	server := grpc.NewServer(opts...)
+	pb.RegisterGitLabExporterServer(server, s.exporter)
+
+	errChan := make(chan error)
+	go func() {
+		defer close(errChan)
+		slog.Info(fmt.Sprintf("Listening on %s", listener.Addr().String()))
+		if err := server.Serve(listener); err != nil {
+			errChan <- err
+		}
+	}()
+
+	select {
+	case err := <-errChan:
+		return err
+	case <-ctx.Done():
+		server.GracefulStop()
+		return nil
+	}
 }
 
-func (s *ClickHouseServer) RecordPipelines(stream pb.GitLabExporter_RecordPipelinesServer) error {
-	return record[pb.Pipeline](s, stream, clickhouse.InsertPipelines)
-}
-
-func (s *ClickHouseServer) RecordJobs(stream pb.GitLabExporter_RecordJobsServer) error {
-	return record[pb.Job](s, stream, clickhouse.InsertJobs)
-}
-
-func (s *ClickHouseServer) RecordSections(stream pb.GitLabExporter_RecordSectionsServer) error {
-	return record[pb.Section](s, stream, clickhouse.InsertSections)
-}
-
-func (s *ClickHouseServer) RecordBridges(stream pb.GitLabExporter_RecordBridgesServer) error {
-	return record[pb.Bridge](s, stream, clickhouse.InsertBridges)
-}
-
-func (s *ClickHouseServer) RecordTestReports(stream pb.GitLabExporter_RecordTestReportsServer) error {
-	return record[pb.TestReport](s, stream, clickhouse.InsertTestReports)
-}
-
-func (s *ClickHouseServer) RecordTestSuites(stream pb.GitLabExporter_RecordTestSuitesServer) error {
-	return record[pb.TestSuite](s, stream, clickhouse.InsertTestSuites)
-}
-
-func (s *ClickHouseServer) RecordTestCases(stream pb.GitLabExporter_RecordTestCasesServer) error {
-	return record[pb.TestCase](s, stream, clickhouse.InsertTestCases)
-}
-
-func (s *ClickHouseServer) RecordLogEmbeddedMetrics(stream pb.GitLabExporter_RecordLogEmbeddedMetricsServer) error {
-	return record[pb.LogEmbeddedMetric](s, stream, clickhouse.InsertLogEmbeddedMetrics)
-}
-
-func (s *ClickHouseServer) RecordTraces(stream pb.GitLabExporter_RecordTracesServer) error {
-	return record[pb.Trace](s, stream, clickhouse.InsertTraces)
+func (s *Server) CheckReadiness(ctx context.Context) error {
+	return s.exporter.client.CheckReadiness(ctx)
 }
