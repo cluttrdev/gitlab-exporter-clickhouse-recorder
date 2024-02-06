@@ -7,10 +7,13 @@ metadata:
 spec:
   type: {{ .Values.service.type }}
   ports:
-    - port: {{ .Values.service.port }}
+    - port: {{ .Values.service.ports.grpc }}
+      targetPort: grpc
+      protocol: TCP
+      name: grpc
+    - port: {{ .Values.service.ports.http }}
       targetPort: http
       protocol: TCP
       name: http
   selector:
     {{- include "gitlab-clickhouse-exporter.selectorLabels" . | nindent 4 }}
-

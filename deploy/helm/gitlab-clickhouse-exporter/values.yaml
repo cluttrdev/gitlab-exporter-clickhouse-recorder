@@ -32,7 +32,9 @@ resources: {}
 
 service:
   type: ClusterIP
-  port: 80
+  ports:
+    grpc: 80
+    http: 8080
 
 serviceAccount:
   # Specifies whether a service account should be created

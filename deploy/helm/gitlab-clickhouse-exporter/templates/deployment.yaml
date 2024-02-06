@@ -33,9 +33,12 @@ spec:
               - name: config
                 mountPath: /etc/gitlab-clickhouse-exporter/
           ports:
+            - name: grpc
+              containerPort: {{ dig "server" "port" "36275" .Values.config }}
+              protocol: TCP
+          {{- if ( dig "http" "probes" "enabled" true .Values.config ) }}
             - name: http
-              {{- $httpServerConfig := .Values.config.http | default dict }}
-              containerPort: {{ $httpServerConfig.port | default "8080" }}
+              containerPort: {{ dig "http" "port" "8080" .Values.config }}
               protocol: TCP
           livenessProbe:
             httpGet:
@@ -45,6 +48,7 @@ spec:
             httpGet:
               path: /health/ready
               port: http
+          {{- end }}
           env: 
               {{- toYaml .Values.env | nindent 12 }}
           args: ["run", "--config", "/etc/gitlab-clickhouse-exporter/config.yaml"]

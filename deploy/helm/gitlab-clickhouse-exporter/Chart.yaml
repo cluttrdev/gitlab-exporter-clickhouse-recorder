@@ -1,9 +1,9 @@
 ---
 apiVersion: v2
 name: gitlab-clickhouse-exporter
-description: A gRPC endpoint server for gitlab-exporter
+description: A gRPC endpoint for gitlab-exporter that records data in ClickHouse.
 type: application
 
-version: 1.0.0
-appVersion: "v0.1.0"
+version: 1.1.0
+appVersion: "v0.2.0"
 
