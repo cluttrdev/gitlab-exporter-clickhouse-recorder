@@ -50,7 +50,7 @@ spec:
               port: http
           {{- end }}
           env: 
-              {{- toYaml .Values.env | nindent 12 }}
+              {{- tpl (toYaml .Values.env) $ | nindent 12 }}
           args: ["run", "--config", "/etc/gitlab-clickhouse-exporter/config.yaml"]
       volumes:
         - name: config
