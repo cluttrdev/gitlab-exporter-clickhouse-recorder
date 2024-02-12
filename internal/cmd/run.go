@@ -8,9 +8,9 @@ import (
 	"io"
 	"log/slog"
 	"math"
-	"math/rand"
 	"os"
 	"os/signal"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -20,6 +20,7 @@ import (
 	"github.com/cluttrdev/gitlab-clickhouse-exporter/internal/config"
 	"github.com/cluttrdev/gitlab-clickhouse-exporter/internal/exporter"
 	"github.com/cluttrdev/gitlab-clickhouse-exporter/internal/probes"
+	"github.com/cluttrdev/gitlab-clickhouse-exporter/internal/retry"
 )
 
 type RunConfig struct {
@@ -66,6 +67,11 @@ func (c *RunConfig) RegisterFlags(fs *flag.FlagSet) {
 }
 
 func (c *RunConfig) Exec(ctx context.Context, args []string) error {
+	// setup daemon
+	ctx, cancel := setupDaemon(ctx)
+	// ctx, cancel := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
+
 	// load configuration
 	fmt.Fprintf(c.out, "Loading configuration from %s\n", c.RootConfig.filename)
 	cfg := config.Default()
@@ -87,7 +93,6 @@ func (c *RunConfig) Exec(ctx context.Context, args []string) error {
 	})
 
 	writeConfig(c.out, cfg)
-
 	initLogging(c.out, cfg.Log)
 
 	// create clickhouse client
@@ -102,56 +107,21 @@ func (c *RunConfig) Exec(ctx context.Context, args []string) error {
 		return fmt.Errorf("error creating clickhouse client")
 	}
 
-	if err := waitForReady(ctx, client.CheckReadiness); err != nil {
-		return err
-	}
-
-	if err := client.CreateTables(ctx); err != nil {
-		return err
-	}
-
-	if err := client.InitCache(ctx); err != nil {
-		return err
-	}
-
-	// setup grpc server
-	grpcServer := exporter.NewServer(
-		exporter.NewExporter(client),
-		exporter.ServerConfig{
-			Host: cfg.Server.Host,
-			Port: cfg.Server.Port,
-		},
-	)
-
-	// setup daemon
-	ctx, cancel := context.WithCancel(ctx)
-
-	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
-
-	defer func() {
-		signal.Stop(signalChan)
-		cancel()
-	}()
-
-	go func() {
-		select {
-		case <-signalChan:
-			slog.Info("Got SIGINT/SIGTERM, exiting")
-			cancel()
-		case <-ctx.Done():
-			slog.Info("Done")
-		}
-	}()
+	ErrUnspecified := errors.New("Unspecified")
+	ready := readyState{}
+	ready.Store(&ErrUnspecified)
 
 	if cfg.HTTP.Probes.Enabled {
 		// setup http server
 		httpServer := probes.NewServer(probes.ServerConfig{
-			Host: "127.0.0.1",
-			Port: "8080",
+			Host: cfg.HTTP.Host,
+			Port: cfg.HTTP.Port,
 
 			ReadinessCheck: func() error {
-				return grpcServer.CheckReadiness(ctx)
+				return *ready.Load()
+			},
+			LivenessCheck: func() error {
+				return client.Ping(context.Background())
 			},
 
 			Debug: cfg.HTTP.Probes.Debug,
@@ -164,6 +134,22 @@ func (c *RunConfig) Exec(ctx context.Context, args []string) error {
 			}
 		}()
 	}
+
+	// getting ready
+	if err := connectAndInit(ctx, client, &ready); err != nil {
+		slog.Error("Failed to get ready", "error", err)
+		return err
+	}
+	slog.Debug("Readiness check succeeded")
+
+	// setup grpc server
+	grpcServer := exporter.NewServer(
+		exporter.NewExporter(client),
+		exporter.ServerConfig{
+			Host: cfg.Server.Host,
+			Port: cfg.Server.Port,
+		},
+	)
 
 	// run grpc server
 	return grpcServer.ListenAndServe(ctx)
@@ -206,34 +192,81 @@ func initLogging(out io.Writer, cfg config.Log) {
 	slog.SetDefault(logger)
 }
 
-func waitForReady(ctx context.Context, ready func(ctx context.Context) error) error {
-	var (
-		maxTries         int     = 5
-		backoffBaseSec   float64 = 1.0
-		backoffJitterSec float64 = 1.0
+type readyState struct {
+	atomic.Pointer[error]
+}
+
+func connectAndInit(ctx context.Context, client *clickhouse.Client, ready *readyState) error {
+	// try pinging clickhouse server
+	seconds := func(d time.Duration) time.Duration {
+		s := math.Ceil(d.Seconds())
+		return time.Duration(s) * time.Second
+	}
+	err := retry.Do(
+		func(ctx context.Context) error {
+			err := client.Ping(ctx)
+			if err != nil {
+				ready.Store(&err)
+
+				args := []any{
+					"error", err,
+				}
+
+				v, ok := ctx.Value(retry.ContextValuesKey("retry")).(retry.ContextValues)
+				if ok {
+					args = append(args, "retry.delay", seconds(v.Delay))
+				}
+
+				slog.Debug("Readiness check failed", args...)
+			}
+			return err
+		},
+		// as long as context is not done
+		retry.WithContext(ctx),
+		// with unlimited attempts
+		retry.MaxAttempts(0),
+		// with exponential backoff
+		retry.WithBackoff(retry.Backoff{
+			InitialDelay: 1 * time.Second,
+			MaxDelay:     5 * time.Minute,
+			Factor:       2.0,
+			Jitter:       0.1, // +/- 10% jitter
+		}),
 	)
-
-	ticker := time.NewTicker(time.Second)
-
-	var err error
-	for i := 0; i < maxTries; i++ {
-		if err = ready(ctx); err == nil {
-			slog.Debug("Readiness check succeeded")
-			return nil
-		}
-
-		slog.Error("Readiness check failed", "error", err)
-		delaySec := backoffBaseSec*math.Pow(2, float64(i)) + backoffJitterSec*rand.Float64()
-		delay := time.Duration(delaySec) * time.Second
-		ticker.Reset(delay)
-
-		select {
-		case <-ticker.C:
-		case <-ctx.Done():
-			ticker.Stop()
-			return context.Canceled
-		}
+	if err != nil {
+		return err
 	}
 
-	return errors.New("Failed to get ready")
+	if err := client.CreateTables(ctx); err != nil {
+		ready.Store(&err)
+		return err
+	}
+
+	if err := client.InitCache(ctx); err != nil {
+		ready.Store(&err)
+		return err
+	}
+
+	ready.Store(nil)
+	return nil
+}
+
+func setupDaemon(ctx context.Context) (context.Context, context.CancelFunc) {
+	ctx, cancel := context.WithCancel(ctx)
+
+	go func() {
+		signalChan := make(chan os.Signal, 1)
+		signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
+
+		select {
+		case <-signalChan:
+			slog.Debug("Got SIGINT/SIGTERM, exiting")
+			signal.Stop(signalChan)
+			cancel()
+		case <-ctx.Done():
+			slog.Debug("Done")
+		}
+	}()
+
+	return ctx, cancel
 }

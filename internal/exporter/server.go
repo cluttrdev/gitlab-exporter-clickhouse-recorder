@@ -58,7 +58,3 @@ func (s *Server) ListenAndServe(ctx context.Context) error {
 		return nil
 	}
 }
-
-func (s *Server) CheckReadiness(ctx context.Context) error {
-	return s.exporter.client.CheckReadiness(ctx)
-}

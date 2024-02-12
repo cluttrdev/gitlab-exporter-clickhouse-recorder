@@ -68,15 +68,10 @@ func (c *Client) Configure(cfg ClientConfig) error {
 	return nil
 }
 
-func (c *Client) CheckReadiness(ctx context.Context) error {
-	if err := c.conn.Ping(ctx); err != nil {
-		if exception, ok := err.(*clickhouse.Exception); ok {
-			return fmt.Errorf("clickhouse exception: [%d] %s", exception.Code, exception.Message)
-		} else {
-			return fmt.Errorf("error pinging clickhouse: %w", err)
-		}
-	}
-	return nil
+func (c *Client) Ping(ctx context.Context) error {
+	c.RLock()
+	defer c.RUnlock()
+	return c.conn.Ping(ctx)
 }
 
 func WithParameters(ctx context.Context, params map[string]string) context.Context {
