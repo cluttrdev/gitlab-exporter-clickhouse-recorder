@@ -34,7 +34,6 @@ service:
   type: ClusterIP
   ports:
     grpc: 80
-    http: 8080
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -55,5 +54,9 @@ env: []
 
 # ---
 
-config: {}
-
+# See here for all available configuration options and their default values:
+# https://github.com/cluttrdev/gitlab-clickhouse-exporter/blob/main/configs/gitlab-clickhouse-exporter.yaml
+config:
+  server:
+    # We set a specific default port here since otherwise it would be chosen automatically
+    port: 36275

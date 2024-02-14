@@ -2,25 +2,19 @@ package cmd
 
 import (
 	"context"
-	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"log/slog"
-	"math"
 	"os"
 	"os/signal"
-	"sync/atomic"
 	"syscall"
-	"time"
 
 	"github.com/cluttrdev/cli"
 
 	"github.com/cluttrdev/gitlab-clickhouse-exporter/internal/clickhouse"
 	"github.com/cluttrdev/gitlab-clickhouse-exporter/internal/config"
 	"github.com/cluttrdev/gitlab-clickhouse-exporter/internal/exporter"
-	"github.com/cluttrdev/gitlab-clickhouse-exporter/internal/probes"
-	"github.com/cluttrdev/gitlab-clickhouse-exporter/internal/retry"
 )
 
 type RunConfig struct {
@@ -68,12 +62,10 @@ func (c *RunConfig) RegisterFlags(fs *flag.FlagSet) {
 
 func (c *RunConfig) Exec(ctx context.Context, args []string) error {
 	// setup daemon
-	ctx, cancel := setupDaemon(ctx)
-	// ctx, cancel := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
+	ctx, cancel := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
 	// load configuration
-	fmt.Fprintf(c.out, "Loading configuration from %s\n", c.RootConfig.filename)
 	cfg := config.Default()
 	if err := loadConfig(c.RootConfig.filename, c.flags, &cfg); err != nil {
 		return fmt.Errorf("error loading configuration: %w", err)
@@ -92,7 +84,9 @@ func (c *RunConfig) Exec(ctx context.Context, args []string) error {
 		}
 	})
 
-	writeConfig(c.out, cfg)
+	if cfg.Log.Level == "debug" {
+		writeConfig(c.out, cfg)
+	}
 	initLogging(c.out, cfg.Log)
 
 	// create clickhouse client
@@ -107,52 +101,14 @@ func (c *RunConfig) Exec(ctx context.Context, args []string) error {
 		return fmt.Errorf("error creating clickhouse client")
 	}
 
-	ErrUnspecified := errors.New("Unspecified")
-	ready := readyState{}
-	ready.Store(&ErrUnspecified)
-
-	if cfg.HTTP.Probes.Enabled {
-		// setup http server
-		httpServer := probes.NewServer(probes.ServerConfig{
-			Host: cfg.HTTP.Host,
-			Port: cfg.HTTP.Port,
-
-			ReadinessCheck: func() error {
-				return *ready.Load()
-			},
-			LivenessCheck: func() error {
-				return client.Ping(context.Background())
-			},
-
-			Debug: cfg.HTTP.Probes.Debug,
-		})
-
-		// run http server
-		go func() {
-			if err := httpServer.ListenAndServe(ctx); err != nil {
-				slog.Error(err.Error())
-			}
-		}()
-	}
-
-	// getting ready
-	if err := connectAndInit(ctx, client, &ready); err != nil {
-		slog.Error("Failed to get ready", "error", err)
-		return err
-	}
-	slog.Debug("Readiness check succeeded")
-
 	// setup grpc server
 	grpcServer := exporter.NewServer(
 		exporter.NewExporter(client),
-		exporter.ServerConfig{
-			Host: cfg.Server.Host,
-			Port: cfg.Server.Port,
-		},
 	)
 
 	// run grpc server
-	return grpcServer.ListenAndServe(ctx)
+	addr := fmt.Sprintf("%s:%s", cfg.Server.Host, cfg.Server.Port)
+	return grpcServer.ListenAndServe(ctx, addr)
 }
 
 func initLogging(out io.Writer, cfg config.Log) {
@@ -190,65 +146,6 @@ func initLogging(out io.Writer, cfg config.Log) {
 
 	logger := slog.New(handler)
 	slog.SetDefault(logger)
-}
-
-type readyState struct {
-	atomic.Pointer[error]
-}
-
-func connectAndInit(ctx context.Context, client *clickhouse.Client, ready *readyState) error {
-	// try pinging clickhouse server
-	seconds := func(d time.Duration) time.Duration {
-		s := math.Ceil(d.Seconds())
-		return time.Duration(s) * time.Second
-	}
-	err := retry.Do(
-		func(ctx context.Context) error {
-			err := client.Ping(ctx)
-			if err != nil {
-				ready.Store(&err)
-
-				args := []any{
-					"error", err,
-				}
-
-				v, ok := ctx.Value(retry.ContextValuesKey("retry")).(retry.ContextValues)
-				if ok {
-					args = append(args, "retry.delay", seconds(v.Delay))
-				}
-
-				slog.Debug("Readiness check failed", args...)
-			}
-			return err
-		},
-		// as long as context is not done
-		retry.WithContext(ctx),
-		// with unlimited attempts
-		retry.MaxAttempts(0),
-		// with exponential backoff
-		retry.WithBackoff(retry.Backoff{
-			InitialDelay: 1 * time.Second,
-			MaxDelay:     5 * time.Minute,
-			Factor:       2.0,
-			Jitter:       0.1, // +/- 10% jitter
-		}),
-	)
-	if err != nil {
-		return err
-	}
-
-	if err := client.CreateTables(ctx); err != nil {
-		ready.Store(&err)
-		return err
-	}
-
-	if err := client.InitCache(ctx); err != nil {
-		ready.Store(&err)
-		return err
-	}
-
-	ready.Store(nil)
-	return nil
 }
 
 func setupDaemon(ctx context.Context) (context.Context, context.CancelFunc) {

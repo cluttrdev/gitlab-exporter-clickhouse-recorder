@@ -6,54 +6,62 @@ import (
 	"log/slog"
 	"net"
 
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/health"
+	healthgrpc "google.golang.org/grpc/health/grpc_health_v1"
 
 	pb "github.com/cluttrdev/gitlab-exporter/grpc/exporterpb"
 )
 
-type ServerConfig struct {
-	Host string
-	Port string
-}
-
 type Server struct {
-	config   ServerConfig
 	exporter *ClickHouseExporter
+	health   *health.Server
 }
 
-func NewServer(exp *ClickHouseExporter, cfg ServerConfig) *Server {
+func NewServer(exp *ClickHouseExporter) *Server {
 	return &Server{
-		config:   cfg,
 		exporter: exp,
+		health:   health.NewServer(),
 	}
 }
 
-func (s *Server) ListenAndServe(ctx context.Context) error {
+func (s *Server) ListenAndServe(ctx context.Context, addr string) error {
 	// setup listener
-	addr := fmt.Sprintf("%s:%s", s.config.Host, s.config.Port)
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
 		return err
 	}
+	slog.Info(fmt.Sprintf("Listening on %s", listener.Addr().String()))
 
 	// setup server
 	var opts []grpc.ServerOption
 	server := grpc.NewServer(opts...)
+
+	healthgrpc.RegisterHealthServer(server, s.health)
 	pb.RegisterGitLabExporterServer(server, s.exporter)
+
+	// serve and monitor health
+	g := new(errgroup.Group)
+	g.Go(func() error {
+		if err := s.getReady(ctx); err != nil {
+			return err
+		}
+
+		return s.watchReadiness(ctx)
+	})
+	g.Go(func() error { return server.Serve(listener) })
 
 	errChan := make(chan error)
 	go func() {
-		defer close(errChan)
-		slog.Info(fmt.Sprintf("Listening on %s", listener.Addr().String()))
-		if err := server.Serve(listener); err != nil {
-			errChan <- err
-		}
+		errChan <- g.Wait()
 	}()
 
 	select {
 	case err := <-errChan:
 		return err
 	case <-ctx.Done():
+		s.health.Shutdown()
 		server.GracefulStop()
 		return nil
 	}

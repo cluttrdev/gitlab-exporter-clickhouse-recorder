@@ -34,22 +34,12 @@ spec:
                 mountPath: /etc/gitlab-clickhouse-exporter/
           ports:
             - name: grpc
-              containerPort: {{ dig "server" "port" "36275" .Values.config }}
+              containerPort: {{ .Values.config.server.port }}
               protocol: TCP
-          {{- if ( dig "http" "probes" "enabled" true .Values.config ) }}
-            - name: http
-              containerPort: {{ dig "http" "port" "8080" .Values.config }}
-              protocol: TCP
-          livenessProbe:
-            httpGet:
-              path: /health/live
-              port: http
           readinessProbe:
-            httpGet:
-              path: /health/ready
-              port: http
-          {{- end }}
-          env: 
+            grpc:
+              port: {{ .Values.config.server.port }}
+          env:
             {{- tpl (toYaml .Values.env) $ | nindent 12 }}
           args: ["run", "--config", "/etc/gitlab-clickhouse-exporter/config.yaml"]
       volumes:

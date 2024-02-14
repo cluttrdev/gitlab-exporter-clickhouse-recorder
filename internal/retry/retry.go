@@ -56,7 +56,7 @@ loop:
 		}
 
 		if !cfg.retryIf(err) {
-			break
+			break loop
 		}
 
 		// don't wait if this was the last attempt
