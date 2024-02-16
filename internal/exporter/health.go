@@ -42,9 +42,7 @@ func (s *Server) waitForReady(ctx context.Context) error {
 					)
 				}
 
-				slog.Debug("Readiness check failed", args...)
-			} else {
-				slog.Debug("Readiness check succeeded")
+				slog.Error("Readiness check failed", args...)
 			}
 			return err
 		},
@@ -103,6 +101,7 @@ func (s *Server) watchReadiness(ctx context.Context) error {
 			if err != nil {
 				return err
 			}
+			slog.Info("Readiness check succeeded")
 			s.setServingStatus(service, healthpb.HealthCheckResponse_SERVING)
 		}
 
