@@ -41,6 +41,8 @@ func (s *Server) ListenAndServe(ctx context.Context, addr string) error {
 	healthgrpc.RegisterHealthServer(server, s.health)
 	pb.RegisterGitLabExporterServer(server, s.exporter)
 
+	s.health.SetServingStatus("", healthgrpc.HealthCheckResponse_UNKNOWN)
+
 	// serve and monitor health
 	g := new(errgroup.Group)
 	g.Go(func() error {
