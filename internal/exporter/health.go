@@ -105,6 +105,6 @@ func (s *Server) watchReadiness(ctx context.Context) error {
 			s.setServingStatus(service, healthpb.HealthCheckResponse_SERVING)
 		}
 
-		time.Sleep(1 * time.Minute)
+		time.Sleep(3 * time.Second)
 	}
 }
