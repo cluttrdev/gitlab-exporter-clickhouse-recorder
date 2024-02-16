@@ -482,7 +482,7 @@ func InsertLogEmbeddedMetrics(c *Client, ctx context.Context, metrics []*pb.LogE
 
 		err = batch.Append(
 			m.Name,
-			m.Labels,
+			convertLabels(m.Labels),
 			m.Value,
 			convertTimestamp(m.Timestamp),
 			m.Job.Id,
@@ -650,4 +650,14 @@ func convertLinks(links []*otlp_tracepb.Span_Link) ([]string, []string, []string
 		attrs = append(attrs, convertAttributes(link.Attributes))
 	}
 	return traceIDs, spanIDs, states, attrs
+}
+
+func convertLabels(labels []*pb.LogEmbeddedMetric_Label) map[string]string {
+	m := make(map[string]string, len(labels))
+
+	for _, l := range labels {
+		m[l.Name] = l.Value
+	}
+
+	return m
 }
