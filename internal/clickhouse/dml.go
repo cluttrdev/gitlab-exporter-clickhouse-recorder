@@ -28,9 +28,10 @@ func InsertPipelines(c *Client, ctx context.Context, pipelines []*pb.Pipeline) (
 		return 0, errors.New("nil client")
 	}
 
-	const query string = `INSERT INTO {db: Identifier}.pipelines`
+	const query string = `INSERT INTO {db: Identifier}.{table: Identifier}`
 	var params = map[string]string{
-		"db": c.dbName,
+		"db":    c.dbName,
+		"table": PipelinesTable,
 	}
 
 	updates := make(map[int64]float64, len(pipelines))
@@ -88,9 +89,10 @@ func InsertPipelines(c *Client, ctx context.Context, pipelines []*pb.Pipeline) (
 }
 
 func InsertJobs(c *Client, ctx context.Context, jobs []*pb.Job) (int, error) {
-	const query string = `INSERT INTO {db: Identifier}.jobs`
+	const query string = `INSERT INTO {db: Identifier}.{table: Identifier}`
 	var params = map[string]string{
-		"db": c.dbName,
+		"db":    c.dbName,
+		"table": JobsTable,
 	}
 
 	updates := make([]int64, 0, len(jobs))
@@ -153,9 +155,10 @@ func InsertJobs(c *Client, ctx context.Context, jobs []*pb.Job) (int, error) {
 }
 
 func InsertBridges(c *Client, ctx context.Context, bridges []*pb.Bridge) (int, error) {
-	const query string = `INSERT INTO {db: Identifier}.bridges`
+	const query string = `INSERT INTO {db: Identifier}.{table: Identifier}`
 	var params = map[string]string{
-		"db": c.dbName,
+		"db":    c.dbName,
+		"table": BridgesTable,
 	}
 
 	updates := make([]int64, 0, len(bridges))
@@ -234,9 +237,10 @@ func InsertBridges(c *Client, ctx context.Context, bridges []*pb.Bridge) (int, e
 }
 
 func InsertSections(c *Client, ctx context.Context, sections []*pb.Section) (int, error) {
-	const query string = `INSERT INTO {db: Identifier}.sections`
+	const query string = `INSERT INTO {db: Identifier}.{table: Identifier}`
 	var params = map[string]string{
-		"db": c.dbName,
+		"db":    c.dbName,
+		"table": SectionsTable,
 	}
 
 	updates := make([]int64, 0, len(sections))
@@ -292,9 +296,10 @@ func InsertSections(c *Client, ctx context.Context, sections []*pb.Section) (int
 }
 
 func InsertTestReports(c *Client, ctx context.Context, reports []*pb.TestReport) (int, error) {
-	const query string = `INSERT INTO {db: Identifier}.testreports`
+	const query string = `INSERT INTO {db: Identifier}.{table: Identifier}`
 	var params = map[string]string{
-		"db": c.dbName,
+		"db":    c.dbName,
+		"table": TestReportsTable,
 	}
 
 	updates := make([]string, 0, len(reports))
@@ -341,9 +346,10 @@ func InsertTestReports(c *Client, ctx context.Context, reports []*pb.TestReport)
 }
 
 func InsertTestSuites(c *Client, ctx context.Context, suites []*pb.TestSuite) (int, error) {
-	const query string = `INSERT INTO {db: Identifier}.testsuites`
+	const query string = `INSERT INTO {db: Identifier}.{table: Identifier}`
 	var params = map[string]string{
-		"db": c.dbName,
+		"db":    c.dbName,
+		"table": TestSuitesTable,
 	}
 
 	updates := make([]string, 0, len(suites))
@@ -392,9 +398,10 @@ func InsertTestSuites(c *Client, ctx context.Context, suites []*pb.TestSuite) (i
 }
 
 func InsertTestCases(c *Client, ctx context.Context, cases []*pb.TestCase) (int, error) {
-	const query string = `INSERT INTO {db: Identifier}.testcases`
+	const query string = `INSERT INTO {db: Identifier}.{table: Identifier}`
 	var params = map[string]string{
-		"db": c.dbName,
+		"db":    c.dbName,
+		"table": TestCasesTable,
 	}
 
 	updates := make([]string, 0, len(cases))
@@ -452,7 +459,7 @@ func InsertLogEmbeddedMetrics(c *Client, ctx context.Context, metrics []*pb.LogE
 	const query string = `INSERT INTO {db: Identifier}.{table: Identifier}`
 	var params = map[string]string{
 		"db":    c.dbName,
-		"table": "log_embedded_metrics",
+		"table": LogEmbeddedMetricsTable,
 	}
 
 	updates := make([]int64, 0, len(metrics))
@@ -497,9 +504,10 @@ func InsertLogEmbeddedMetrics(c *Client, ctx context.Context, metrics []*pb.LogE
 }
 
 func InsertTraces(c *Client, ctx context.Context, traces []*pb.Trace) (int, error) {
-	const query string = `INSERT INTO {db: Identifier}.traces`
+	const query string = `INSERT INTO {db: Identifier}.{table: Identifier}`
 	var params = map[string]string{
-		"db": c.dbName,
+		"db":    c.dbName,
+		"table": TraceSpansTable,
 	}
 
 	var spanCountTotal int = 0
