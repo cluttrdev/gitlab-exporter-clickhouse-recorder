@@ -8,6 +8,8 @@ github.com/cluttrdev/cli v0.0.0-20240126090120-a44e34c8b0be h1:qWavDIOL48vXWudUg
 github.com/cluttrdev/cli v0.0.0-20240126090120-a44e34c8b0be/go.mod h1:Yo/r2O/t6guxglvLWE11UXM/0uEcjWPlK3poxjXktWc=
 github.com/cluttrdev/gitlab-exporter v0.5.0 h1:cqGQb4PpZ39C4OeHuawo9M9fTfn4s0BZniuRCeLJl/4=
 github.com/cluttrdev/gitlab-exporter v0.5.0/go.mod h1:mrNUqA2YFGYM4Wd4NljIWlXI3Vl+SGK8vXE1cRDtLKo=
+github.com/cluttrdev/gitlab-exporter v0.6.0 h1:9HeSOTI/5Uu0XOurV91lRpXFWhIWXPWsM7NEGjmEWb8=
+github.com/cluttrdev/gitlab-exporter v0.6.0/go.mod h1:rEHLhLOGHVfkHN2h8kFEf6NMcBnDTXJo0enZ+kPZ6Og=
 github.com/creasty/defaults v1.7.0 h1:eNdqZvc5B509z18lD8yc212CAqJNvfT1Jq6L8WowdBA=
 github.com/creasty/defaults v1.7.0/go.mod h1:iGzKe6pbEHnpMPtfDXZEr0NVxWnPTjb1bbDy08fPzYM=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

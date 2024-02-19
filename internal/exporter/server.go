@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc/health"
 	healthgrpc "google.golang.org/grpc/health/grpc_health_v1"
 
-	pb "github.com/cluttrdev/gitlab-exporter/grpc/exporterpb"
+	"github.com/cluttrdev/gitlab-exporter/protobuf/servicepb"
 )
 
 type Server struct {
@@ -39,7 +39,7 @@ func (s *Server) ListenAndServe(ctx context.Context, addr string) error {
 	server := grpc.NewServer(opts...)
 
 	healthgrpc.RegisterHealthServer(server, s.health)
-	pb.RegisterGitLabExporterServer(server, s.exporter)
+	servicepb.RegisterGitLabExporterServer(server, s.exporter)
 
 	s.health.SetServingStatus("", healthgrpc.HealthCheckResponse_UNKNOWN)
 

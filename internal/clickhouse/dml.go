@@ -10,7 +10,7 @@ import (
 	otlp_comonpb "go.opentelemetry.io/proto/otlp/common/v1"
 	otlp_tracepb "go.opentelemetry.io/proto/otlp/trace/v1"
 
-	pb "github.com/cluttrdev/gitlab-exporter/grpc/exporterpb"
+	"github.com/cluttrdev/gitlab-exporter/protobuf/typespb"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -23,7 +23,7 @@ func convertDuration(d *durationpb.Duration) float64 {
 	return float64(d.GetSeconds()) + float64(d.GetNanos())*1.0e-09
 }
 
-func InsertPipelines(c *Client, ctx context.Context, pipelines []*pb.Pipeline) (int, error) {
+func InsertPipelines(c *Client, ctx context.Context, pipelines []*typespb.Pipeline) (int, error) {
 	if c == nil {
 		return 0, errors.New("nil client")
 	}
@@ -88,7 +88,7 @@ func InsertPipelines(c *Client, ctx context.Context, pipelines []*pb.Pipeline) (
 	return n, nil
 }
 
-func InsertJobs(c *Client, ctx context.Context, jobs []*pb.Job) (int, error) {
+func InsertJobs(c *Client, ctx context.Context, jobs []*typespb.Job) (int, error) {
 	const query string = `INSERT INTO {db: Identifier}.{table: Identifier}`
 	var params = map[string]string{
 		"db":    c.dbName,
@@ -154,7 +154,7 @@ func InsertJobs(c *Client, ctx context.Context, jobs []*pb.Job) (int, error) {
 	return n, nil
 }
 
-func InsertBridges(c *Client, ctx context.Context, bridges []*pb.Bridge) (int, error) {
+func InsertBridges(c *Client, ctx context.Context, bridges []*typespb.Bridge) (int, error) {
 	const query string = `INSERT INTO {db: Identifier}.{table: Identifier}`
 	var params = map[string]string{
 		"db":    c.dbName,
@@ -236,7 +236,7 @@ func InsertBridges(c *Client, ctx context.Context, bridges []*pb.Bridge) (int, e
 	return n, nil
 }
 
-func InsertSections(c *Client, ctx context.Context, sections []*pb.Section) (int, error) {
+func InsertSections(c *Client, ctx context.Context, sections []*typespb.Section) (int, error) {
 	const query string = `INSERT INTO {db: Identifier}.{table: Identifier}`
 	var params = map[string]string{
 		"db":    c.dbName,
@@ -295,7 +295,7 @@ func InsertSections(c *Client, ctx context.Context, sections []*pb.Section) (int
 	return n, nil
 }
 
-func InsertTestReports(c *Client, ctx context.Context, reports []*pb.TestReport) (int, error) {
+func InsertTestReports(c *Client, ctx context.Context, reports []*typespb.TestReport) (int, error) {
 	const query string = `INSERT INTO {db: Identifier}.{table: Identifier}`
 	var params = map[string]string{
 		"db":    c.dbName,
@@ -345,7 +345,7 @@ func InsertTestReports(c *Client, ctx context.Context, reports []*pb.TestReport)
 	return n, nil
 }
 
-func InsertTestSuites(c *Client, ctx context.Context, suites []*pb.TestSuite) (int, error) {
+func InsertTestSuites(c *Client, ctx context.Context, suites []*typespb.TestSuite) (int, error) {
 	const query string = `INSERT INTO {db: Identifier}.{table: Identifier}`
 	var params = map[string]string{
 		"db":    c.dbName,
@@ -397,7 +397,7 @@ func InsertTestSuites(c *Client, ctx context.Context, suites []*pb.TestSuite) (i
 	return n, nil
 }
 
-func InsertTestCases(c *Client, ctx context.Context, cases []*pb.TestCase) (int, error) {
+func InsertTestCases(c *Client, ctx context.Context, cases []*typespb.TestCase) (int, error) {
 	const query string = `INSERT INTO {db: Identifier}.{table: Identifier}`
 	var params = map[string]string{
 		"db":    c.dbName,
@@ -455,7 +455,7 @@ func InsertTestCases(c *Client, ctx context.Context, cases []*pb.TestCase) (int,
 	return n, nil
 }
 
-func InsertLogEmbeddedMetrics(c *Client, ctx context.Context, metrics []*pb.LogEmbeddedMetric) (int, error) {
+func InsertLogEmbeddedMetrics(c *Client, ctx context.Context, metrics []*typespb.Metric) (int, error) {
 	const query string = `INSERT INTO {db: Identifier}.{table: Identifier}`
 	var params = map[string]string{
 		"db":    c.dbName,
@@ -503,7 +503,7 @@ func InsertLogEmbeddedMetrics(c *Client, ctx context.Context, metrics []*pb.LogE
 	return n, nil
 }
 
-func InsertTraces(c *Client, ctx context.Context, traces []*pb.Trace) (int, error) {
+func InsertTraces(c *Client, ctx context.Context, traces []*typespb.Trace) (int, error) {
 	const query string = `INSERT INTO {db: Identifier}.{table: Identifier}`
 	var params = map[string]string{
 		"db":    c.dbName,
@@ -652,7 +652,7 @@ func convertLinks(links []*otlp_tracepb.Span_Link) ([]string, []string, []string
 	return traceIDs, spanIDs, states, attrs
 }
 
-func convertLabels(labels []*pb.LogEmbeddedMetric_Label) map[string]string {
+func convertLabels(labels []*typespb.Metric_Label) map[string]string {
 	m := make(map[string]string, len(labels))
 
 	for _, l := range labels {

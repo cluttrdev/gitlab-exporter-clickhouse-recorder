@@ -7,13 +7,14 @@ import (
 
 	"google.golang.org/grpc"
 
-	pb "github.com/cluttrdev/gitlab-exporter/grpc/exporterpb"
+	"github.com/cluttrdev/gitlab-exporter/protobuf/servicepb"
+	"github.com/cluttrdev/gitlab-exporter/protobuf/typespb"
 
 	"github.com/cluttrdev/gitlab-clickhouse-exporter/internal/clickhouse"
 )
 
 type ClickHouseExporter struct {
-	pb.UnimplementedGitLabExporterServer
+	servicepb.UnimplementedGitLabExporterServer
 
 	client *clickhouse.Client
 }
@@ -50,43 +51,43 @@ func record[T any](srv *ClickHouseExporter, stream grpc.ServerStream, insert ins
 		return err
 	}
 
-	return stream.SendMsg(&pb.RecordSummary{
+	return stream.SendMsg(&servicepb.RecordSummary{
 		RecordedCount: int32(n),
 	})
 }
 
-func (s *ClickHouseExporter) RecordPipelines(stream pb.GitLabExporter_RecordPipelinesServer) error {
-	return record[pb.Pipeline](s, stream, clickhouse.InsertPipelines)
+func (s *ClickHouseExporter) RecordPipelines(stream servicepb.GitLabExporter_RecordPipelinesServer) error {
+	return record[typespb.Pipeline](s, stream, clickhouse.InsertPipelines)
 }
 
-func (s *ClickHouseExporter) RecordJobs(stream pb.GitLabExporter_RecordJobsServer) error {
-	return record[pb.Job](s, stream, clickhouse.InsertJobs)
+func (s *ClickHouseExporter) RecordJobs(stream servicepb.GitLabExporter_RecordJobsServer) error {
+	return record[typespb.Job](s, stream, clickhouse.InsertJobs)
 }
 
-func (s *ClickHouseExporter) RecordSections(stream pb.GitLabExporter_RecordSectionsServer) error {
-	return record[pb.Section](s, stream, clickhouse.InsertSections)
+func (s *ClickHouseExporter) RecordSections(stream servicepb.GitLabExporter_RecordSectionsServer) error {
+	return record[typespb.Section](s, stream, clickhouse.InsertSections)
 }
 
-func (s *ClickHouseExporter) RecordBridges(stream pb.GitLabExporter_RecordBridgesServer) error {
-	return record[pb.Bridge](s, stream, clickhouse.InsertBridges)
+func (s *ClickHouseExporter) RecordBridges(stream servicepb.GitLabExporter_RecordBridgesServer) error {
+	return record[typespb.Bridge](s, stream, clickhouse.InsertBridges)
 }
 
-func (s *ClickHouseExporter) RecordTestReports(stream pb.GitLabExporter_RecordTestReportsServer) error {
-	return record[pb.TestReport](s, stream, clickhouse.InsertTestReports)
+func (s *ClickHouseExporter) RecordTestReports(stream servicepb.GitLabExporter_RecordTestReportsServer) error {
+	return record[typespb.TestReport](s, stream, clickhouse.InsertTestReports)
 }
 
-func (s *ClickHouseExporter) RecordTestSuites(stream pb.GitLabExporter_RecordTestSuitesServer) error {
-	return record[pb.TestSuite](s, stream, clickhouse.InsertTestSuites)
+func (s *ClickHouseExporter) RecordTestSuites(stream servicepb.GitLabExporter_RecordTestSuitesServer) error {
+	return record[typespb.TestSuite](s, stream, clickhouse.InsertTestSuites)
 }
 
-func (s *ClickHouseExporter) RecordTestCases(stream pb.GitLabExporter_RecordTestCasesServer) error {
-	return record[pb.TestCase](s, stream, clickhouse.InsertTestCases)
+func (s *ClickHouseExporter) RecordTestCases(stream servicepb.GitLabExporter_RecordTestCasesServer) error {
+	return record[typespb.TestCase](s, stream, clickhouse.InsertTestCases)
 }
 
-func (s *ClickHouseExporter) RecordLogEmbeddedMetrics(stream pb.GitLabExporter_RecordLogEmbeddedMetricsServer) error {
-	return record[pb.LogEmbeddedMetric](s, stream, clickhouse.InsertLogEmbeddedMetrics)
+func (s *ClickHouseExporter) RecordLogEmbeddedMetrics(stream servicepb.GitLabExporter_RecordMetricsServer) error {
+	return record[typespb.Metric](s, stream, clickhouse.InsertLogEmbeddedMetrics)
 }
 
-func (s *ClickHouseExporter) RecordTraces(stream pb.GitLabExporter_RecordTracesServer) error {
-	return record[pb.Trace](s, stream, clickhouse.InsertTraces)
+func (s *ClickHouseExporter) RecordTraces(stream servicepb.GitLabExporter_RecordTracesServer) error {
+	return record[typespb.Trace](s, stream, clickhouse.InsertTraces)
 }

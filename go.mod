@@ -5,7 +5,7 @@ go 1.21.4
 require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.18.0
 	github.com/cluttrdev/cli v0.0.0-20240126090120-a44e34c8b0be
-	github.com/cluttrdev/gitlab-exporter v0.5.0
+	github.com/cluttrdev/gitlab-exporter v0.6.0
 	github.com/creasty/defaults v1.7.0
 	github.com/google/go-cmp v0.6.0
 	go.opentelemetry.io/proto/otlp v1.1.0
