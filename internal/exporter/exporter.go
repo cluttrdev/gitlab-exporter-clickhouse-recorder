@@ -84,8 +84,8 @@ func (s *ClickHouseExporter) RecordTestCases(stream servicepb.GitLabExporter_Rec
 	return record[typespb.TestCase](s, stream, clickhouse.InsertTestCases)
 }
 
-func (s *ClickHouseExporter) RecordLogEmbeddedMetrics(stream servicepb.GitLabExporter_RecordMetricsServer) error {
-	return record[typespb.Metric](s, stream, clickhouse.InsertLogEmbeddedMetrics)
+func (s *ClickHouseExporter) RecordMetrics(stream servicepb.GitLabExporter_RecordMetricsServer) error {
+	return record[typespb.Metric](s, stream, clickhouse.InsertMetrics)
 }
 
 func (s *ClickHouseExporter) RecordTraces(stream servicepb.GitLabExporter_RecordTracesServer) error {

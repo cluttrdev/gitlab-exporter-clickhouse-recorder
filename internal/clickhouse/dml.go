@@ -455,7 +455,7 @@ func InsertTestCases(c *Client, ctx context.Context, cases []*typespb.TestCase) 
 	return n, nil
 }
 
-func InsertLogEmbeddedMetrics(c *Client, ctx context.Context, metrics []*typespb.Metric) (int, error) {
+func InsertMetrics(c *Client, ctx context.Context, metrics []*typespb.Metric) (int, error) {
 	const query string = `INSERT INTO {db: Identifier}.{table: Identifier}`
 	var params = map[string]string{
 		"db":    c.dbName,
