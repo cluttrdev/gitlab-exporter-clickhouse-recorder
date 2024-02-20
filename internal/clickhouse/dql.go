@@ -59,3 +59,33 @@ func SelectTableIDs[T int64 | string](c *Client, ctx context.Context, table stri
 
 	return m, nil
 }
+
+func SelectTraceSpanIDs(c *Client, ctx context.Context) (map[string]struct{}, error) {
+	const query string = `
+        SELECT TraceId, SpanId FROM {db: Identifier}.{table: Identifier}
+        `
+	var params = map[string]string{
+		"db":    c.dbName,
+		"table": TraceSpansTable,
+	}
+
+	ctx = WithParameters(ctx, params)
+
+	var results []struct {
+		TraceId string `ch:"TraceId"`
+		SpanId  string `ch:"SpanId"`
+	}
+
+	if err := c.Select(ctx, &results, query); err != nil {
+		return nil, err
+	}
+
+	m := make(map[string]struct{}, len(results))
+	var key string
+	for _, r := range results {
+		key = r.TraceId + "-" + r.SpanId
+		m[key] = struct{}{}
+	}
+
+	return m, nil
+}

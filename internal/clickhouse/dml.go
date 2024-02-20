@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	otlp_comonpb "go.opentelemetry.io/proto/otlp/common/v1"
@@ -519,12 +520,22 @@ func InsertTraces(c *Client, ctx context.Context, traces []*typespb.Trace) (int,
 		}
 	}
 
+	buildTraceSpanID := func(s *otlp_tracepb.Span) string {
+		var sb strings.Builder
+
+		sb.Write(s.TraceId)
+		sb.WriteString("-")
+		sb.Write(s.SpanId)
+
+		return sb.String()
+	}
+
 	updates := make([]string, 0, spanCountTotal)
 	for _, t := range traces {
 		for _, rs := range t.Data.ResourceSpans {
 			for _, ss := range rs.ScopeSpans {
 				for _, s := range ss.Spans {
-					updates = append(updates, string(s.SpanId))
+					updates = append(updates, buildTraceSpanID(s))
 				}
 			}
 		}

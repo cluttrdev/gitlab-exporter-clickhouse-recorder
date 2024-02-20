@@ -149,11 +149,11 @@ func (c *Client) InitCache(ctx context.Context) error {
 	}
 	c.cache.UpdateLogEmbeddedMetrics(keys(metrics))
 
-	spans, err := SelectTableIDs[string](c, ctx, TraceSpansTable, "SpanId")
+	tracespans, err := SelectTraceSpanIDs(c, ctx)
 	if err != nil {
 		return err
 	}
-	c.cache.UpdateTraceSpans(keys(spans))
+	c.cache.UpdateTraceSpans(keys(tracespans))
 
 	return nil
 }
