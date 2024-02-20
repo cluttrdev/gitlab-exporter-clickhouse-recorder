@@ -133,14 +133,22 @@ func (c *Cache) UpdateTestCases(data []string) []bool {
 func (c *Cache) UpdateLogEmbeddedMetrics(data []int64) []bool {
 	c.Lock()
 	defer c.Unlock()
+
+	newJobIDs := make(map[int64]struct{})
+
 	updated := make([]bool, len(data))
 	for i, jobID := range data {
 		_, ok := c.logEmbeddedMetrics[jobID]
 		if !ok {
-			c.logEmbeddedMetrics[jobID] = struct{}{}
+			newJobIDs[jobID] = struct{}{}
 			updated[i] = true
 		}
 	}
+
+	for jobID := range newJobIDs {
+		c.logEmbeddedMetrics[jobID] = struct{}{}
+	}
+
 	return updated
 }
 
