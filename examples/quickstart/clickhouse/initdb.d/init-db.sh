@@ -2,9 +2,9 @@
 
 set -e
 
-database=${GLE_CLICKHOUSE_DATABASE:-'gitlab_ci'}
-username=${GLE_CLICKHOUSE_USER:-'glche'}
-password=${GLE_CLICKHOUSE_PASSWORD:-'glche'}
+database=${INITDB_CLICKHOUSE_DATABASE:-'gitlab_ci'}
+username=${INITDB_CLICKHOUSE_USER:-'default'}
+password=${INITDB_CLICKHOUSE_PASSWORD:-''}
 
 clickhouse client -n <<-EOSQL
     CREATE DATABASE IF NOT EXISTS ${database};
