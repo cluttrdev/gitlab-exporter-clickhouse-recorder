@@ -30,8 +30,8 @@ clickhouse:
 EOF
 
 # and/or set environment variables
-export GLCHE_SERVER_HOST=127.0.0.1
-export GLCHE_SERVER_PORT=36275
+export GLCHR_SERVER_HOST=127.0.0.1
+export GLCHR_SERVER_PORT=36275
 
 # run the server
 gitlab-exporter-clickhouse-recorder run --config config.yaml

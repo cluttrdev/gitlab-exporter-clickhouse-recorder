@@ -12,7 +12,7 @@ import (
 
 const (
 	exeName      string = "gitlab-exporter-clickhouse-recorder"
-	envVarPrefix string = "GLCHE"
+	envVarPrefix string = "GLCHR"
 )
 
 var Version string

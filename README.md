@@ -70,16 +70,16 @@ variables, where flags take precedence.
 | Flag                  | Environment Variable        | Default Value |
 | ---                   | ---                         | ---           |
 | # global options      |                             |               |
-| --clickhouse-host     | `GLCHE_CLICKHOUSE_HOST`     | `"127.0.0.1"` |
-| --clickhouse-port     | `GLCHE_CLICKHOUSE_PORT`     | `"9000"`      |
-| --clickhouse-database | `GLCHE_CLICKHOUSE_DATABASE` | `"default"`   |
-| --clickhouse-user     | `GLCHE_CLICKHOUSE_USER`     | `"default"`   |
-| --clickhouse-password | `GLCHE_CLICKHOUSE_PASSWORD` | `""`          |
+| --clickhouse-host     | `GLCHR_CLICKHOUSE_HOST`     | `"127.0.0.1"` |
+| --clickhouse-port     | `GLCHR_CLICKHOUSE_PORT`     | `"9000"`      |
+| --clickhouse-database | `GLCHR_CLICKHOUSE_DATABASE` | `"default"`   |
+| --clickhouse-user     | `GLCHR_CLICKHOUSE_USER`     | `"default"`   |
+| --clickhouse-password | `GLCHR_CLICKHOUSE_PASSWORD` | `""`          |
 | # run options         |                             |               |
-| --server-host         | `GLCHE_SERVER_HOST`         | `"0.0.0.0"`   |
-| --server-port         | `GLCHE_SERVER_PORT`         | `"0"`         |
-| --log-level           | `GLCHE_LOG_LEVEL`           | `"info"`      |
-| --log-format          | `GLCHE_LOG_FORMAT`          | `"text"`      |
+| --server-host         | `GLCHR_SERVER_HOST`         | `"0.0.0.0"`   |
+| --server-port         | `GLCHR_SERVER_PORT`         | `"0"`         |
+| --log-level           | `GLCHR_LOG_LEVEL`           | `"info"`      |
+| --log-format          | `GLCHR_LOG_FORMAT`          | `"text"`      |
 
 ## Getting Started
 

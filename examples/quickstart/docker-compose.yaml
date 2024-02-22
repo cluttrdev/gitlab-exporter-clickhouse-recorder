@@ -47,16 +47,16 @@ services:
     container_name: gitlab-exporter-clickhouse-recorder
     image: ghcr.io/cluttrdev/gitlab-exporter-clickhouse-recorder:latest
     environment:
-      GLCHE_CLICKHOUSE_HOST: clickhouse
-      GLCHE_CLICKHOUSE_PORT: 9000
-      GLCHE_CLICKHOUSE_DATABASE: "gitlab_ci"
-      GLCHE_CLICKHOUSE_USER: "glche"
-      GLCHE_CLICKHOUSE_PASSWORD: "glche"
+      GLCHR_CLICKHOUSE_HOST: clickhouse
+      GLCHR_CLICKHOUSE_PORT: 9000
+      GLCHR_CLICKHOUSE_DATABASE: "gitlab_ci"
+      GLCHR_CLICKHOUSE_USER: "glche"
+      GLCHR_CLICKHOUSE_PASSWORD: "glche"
 
-      GLCHE_SERVER_HOST: 0.0.0.0
-      GLCHE_SERVER_PORT: 36275
+      GLCHR_SERVER_HOST: 0.0.0.0
+      GLCHR_SERVER_PORT: 36275
 
-      GLCHE_LOG_LEVEL: debug
+      GLCHR_LOG_LEVEL: debug
     networks:
       - glche-quickstart
     expose:
