@@ -1,5 +1,8 @@
 # Default values for gitlab-exporter-clickhouse-recorder.
 
+nameOverride: ""
+fullnameOverride: ""
+
 image:
   registry: ghcr.io
   repository: cluttrdev/gitlab-exporter-clickhouse-recorder
