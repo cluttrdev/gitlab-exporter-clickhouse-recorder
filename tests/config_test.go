@@ -35,7 +35,8 @@ func checkConfig(t *testing.T, want interface{}, got interface{}) {
 func Test_NewDefault(t *testing.T) {
 	expected := defaultConfig()
 
-	cfg := config.Default()
+	var cfg config.Config
+	config.SetDefaults(&cfg)
 
 	checkConfig(t, expected, cfg)
 }

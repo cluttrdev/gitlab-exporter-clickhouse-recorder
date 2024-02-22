@@ -59,7 +59,8 @@ func (c *DeduplicateConfig) Exec(ctx context.Context, args []string) error {
 	}
 
 	// load configuration
-	cfg := config.Default()
+	var cfg config.Config
+	config.SetDefaults(&cfg)
 	if err := loadConfig(c.RootConfig.filename, c.flags, &cfg); err != nil {
 		return fmt.Errorf("error loading configuration: %w", err)
 	}

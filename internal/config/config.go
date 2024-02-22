@@ -28,10 +28,6 @@ type Log struct {
 	Format string `default:"text" yaml:"format"`
 }
 
-func Default() Config {
-	var cfg Config
-
-	defaults.MustSet(&cfg)
-
-	return cfg
+func SetDefaults(cfg *Config) {
+	defaults.MustSet(cfg)
 }
