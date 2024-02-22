@@ -27,9 +27,9 @@ func Do(fn func(ctx context.Context) error, opts ...Option) error {
 func DoWithData[T any](fn func(ctx context.Context) (T, error), opts ...Option) (T, error) {
 	var t T
 
-	cfg := newDefaultConfig()
+	cfg := defaultConfig()
 	for _, opt := range opts {
-		if err := opt(cfg); err != nil {
+		if err := opt(&cfg); err != nil {
 			return t, err
 		}
 	}
@@ -48,6 +48,12 @@ func DoWithData[T any](fn func(ctx context.Context) (T, error), opts ...Option) 
 		attempt int           = 0
 		delay   time.Duration = cfg.backoff.InitialDelay
 	)
+
+	ticker := time.NewTicker(delay)
+	defer func() {
+		ticker.Stop()
+		<-ticker.C
+	}()
 loop:
 	for {
 		t, err = fn(ctx)
@@ -64,8 +70,9 @@ loop:
 			break loop
 		}
 
+		ticker.Reset(delay)
 		select {
-		case <-time.After(delay):
+		case <-ticker.C:
 			attempt++
 			delay = cfg.backoff.Delay(attempt)
 
@@ -94,8 +101,8 @@ type Config struct {
 	context     context.Context
 }
 
-func newDefaultConfig() *Config {
-	return &Config{
+func defaultConfig() Config {
+	return Config{
 		maxAttempts: 5,
 		retryIf:     func(error) bool { return true },
 		backoff: Backoff{
