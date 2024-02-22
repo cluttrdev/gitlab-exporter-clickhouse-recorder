@@ -9,7 +9,7 @@ import (
 
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 
-	"github.com/cluttrdev/gitlab-clickhouse-exporter/internal/retry"
+	"github.com/cluttrdev/gitlab-exporter-clickhouse-recorder/internal/retry"
 )
 
 func (s *Server) setServingStatus(service string, status healthpb.HealthCheckResponse_ServingStatus) {

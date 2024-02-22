@@ -32,7 +32,7 @@ ARG VERSION=v0.0.0+unknown
 
 RUN GOOS=${GOOS} GOARCH=${GOARCH} go build \
     -ldflags "-X 'main.version=${VERSION}' -s -w" \
-    -o /bin/gitlab-clickhouse-exporter
+    -o /bin/gitlab-exporter-clickhouse-recorder
 
 #
 # RUN
@@ -44,10 +44,10 @@ COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certifica
 COPY --from=build /etc/passwd /etc/passwd
 COPY --from=build /etc/group /etc/group
 
-COPY --from=build /bin/gitlab-clickhouse-exporter /bin/gitlab-clickhouse-exporter
+COPY --from=build /bin/gitlab-exporter-clickhouse-recorder /bin/gitlab-exporter-clickhouse-recorder
 
 USER user:user
 
-ENTRYPOINT [ "/bin/gitlab-clickhouse-exporter" ]
+ENTRYPOINT [ "/bin/gitlab-exporter-clickhouse-recorder" ]
 
 CMD [ "--help" ]

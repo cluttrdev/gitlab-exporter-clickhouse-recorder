@@ -10,7 +10,7 @@ import (
 	"github.com/cluttrdev/gitlab-exporter/protobuf/servicepb"
 	"github.com/cluttrdev/gitlab-exporter/protobuf/typespb"
 
-	"github.com/cluttrdev/gitlab-clickhouse-exporter/internal/clickhouse"
+	"github.com/cluttrdev/gitlab-exporter-clickhouse-recorder/internal/clickhouse"
 )
 
 type ClickHouseExporter struct {

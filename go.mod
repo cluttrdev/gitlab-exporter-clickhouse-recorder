@@ -1,4 +1,4 @@
-module github.com/cluttrdev/gitlab-clickhouse-exporter
+module github.com/cluttrdev/gitlab-exporter-clickhouse-recorder
 
 go 1.21.4
 

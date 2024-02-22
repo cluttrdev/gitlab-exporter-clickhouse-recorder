@@ -6,7 +6,7 @@ BIN_DIR := "bin"
 DIST_DIR := "dist"
 
 GITHUB_OWNER := "cluttrdev"
-GITHUB_REPO := "gitlab-clickhouse-exporter"
+GITHUB_REPO := "gitlab-exporter-clickhouse-recorder"
 
 # list available recipes
 default:

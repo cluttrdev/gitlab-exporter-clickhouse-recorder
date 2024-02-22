@@ -8,7 +8,7 @@ import (
 	"io"
 
 	"github.com/cluttrdev/cli"
-	"github.com/cluttrdev/gitlab-clickhouse-exporter/internal/config"
+	"github.com/cluttrdev/gitlab-exporter-clickhouse-recorder/internal/config"
 )
 
 func NewRootCmd(out io.Writer) *cli.Command {

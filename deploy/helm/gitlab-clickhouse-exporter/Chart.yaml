@@ -1,6 +1,6 @@
 ---
 apiVersion: v2
-name: gitlab-clickhouse-exporter
+name: gitlab-exporter-clickhouse-recorder
 description: A gRPC endpoint for gitlab-exporter that records data in ClickHouse.
 type: application
 

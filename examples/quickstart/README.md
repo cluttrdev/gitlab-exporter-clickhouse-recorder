@@ -19,7 +19,7 @@ See the
 files for more details.
 
 Then, create a configuration file or set the necessary environment variables
-and run `gitlab-clickhouse-exporter`.
+and run `gitlab-exporter-clickhouse-recorder`.
 ```shell
 # create simple config file with the database settings
 cat <<EOF > config.yaml
@@ -34,7 +34,7 @@ export GLCHE_SERVER_HOST=127.0.0.1
 export GLCHE_SERVER_PORT=36275
 
 # run the server
-gitlab-clickhouse-exporter run --config config.yaml
+gitlab-exporter-clickhouse-recorder run --config config.yaml
 ```
 
 You should now be able to login to Grafana at <http://localhost:3000> (using

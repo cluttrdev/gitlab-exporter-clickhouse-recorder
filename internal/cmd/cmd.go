@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	exeName      string = "gitlab-clickhouse-exporter"
+	exeName      string = "gitlab-exporter-clickhouse-recorder"
 	envVarPrefix string = "GLCHE"
 )
 
