@@ -36,10 +36,11 @@ func InsertPipelines(c *Client, ctx context.Context, pipelines []*typespb.Pipeli
 	}
 
 	updates := make(map[int64]float64, len(pipelines))
+	updated := make(map[int64]bool, len(pipelines))
 	for _, p := range pipelines {
 		updates[p.Id] = convertTimestamp(p.UpdatedAt)
 	}
-	updated := c.cache.UpdatePipelines(updates)
+	c.cache.UpdatePipelines(updates, updated)
 
 	ctx = WithParameters(ctx, params)
 
@@ -97,10 +98,11 @@ func InsertJobs(c *Client, ctx context.Context, jobs []*typespb.Job) (int, error
 	}
 
 	updates := make([]int64, 0, len(jobs))
+	updated := make([]bool, len(jobs))
 	for _, j := range jobs {
 		updates = append(updates, j.Id)
 	}
-	updated := c.cache.UpdateJobs(updates)
+	c.cache.UpdateJobs(updates, updated)
 
 	ctx = WithParameters(ctx, params)
 
@@ -163,10 +165,11 @@ func InsertBridges(c *Client, ctx context.Context, bridges []*typespb.Bridge) (i
 	}
 
 	updates := make([]int64, 0, len(bridges))
+	updated := make([]bool, len(bridges))
 	for _, b := range bridges {
 		updates = append(updates, b.Id)
 	}
-	updated := c.cache.UpdateBridges(updates)
+	c.cache.UpdateBridges(updates, updated)
 
 	ctx = WithParameters(ctx, params)
 
@@ -245,10 +248,11 @@ func InsertSections(c *Client, ctx context.Context, sections []*typespb.Section)
 	}
 
 	updates := make([]int64, 0, len(sections))
+	updated := make([]bool, len(sections))
 	for _, s := range sections {
 		updates = append(updates, s.Id)
 	}
-	updated := c.cache.UpdateSections(updates)
+	c.cache.UpdateSections(updates, updated)
 
 	ctx = WithParameters(ctx, params)
 
@@ -304,10 +308,11 @@ func InsertTestReports(c *Client, ctx context.Context, reports []*typespb.TestRe
 	}
 
 	updates := make([]string, 0, len(reports))
+	updated := make([]bool, len(reports))
 	for _, tr := range reports {
 		updates = append(updates, tr.Id)
 	}
-	updated := c.cache.UpdateTestReports(updates)
+	c.cache.UpdateTestReports(updates, updated)
 
 	ctx = WithParameters(ctx, params)
 
@@ -354,10 +359,11 @@ func InsertTestSuites(c *Client, ctx context.Context, suites []*typespb.TestSuit
 	}
 
 	updates := make([]string, 0, len(suites))
+	updated := make([]bool, len(suites))
 	for _, ts := range suites {
 		updates = append(updates, ts.Id)
 	}
-	updated := c.cache.UpdateTestSuites(updates)
+	c.cache.UpdateTestSuites(updates, updated)
 
 	ctx = WithParameters(ctx, params)
 
@@ -406,10 +412,11 @@ func InsertTestCases(c *Client, ctx context.Context, cases []*typespb.TestCase) 
 	}
 
 	updates := make([]string, 0, len(cases))
+	updated := make([]bool, len(cases))
 	for _, tc := range cases {
 		updates = append(updates, tc.Id)
 	}
-	updated := c.cache.UpdateTestCases(updates)
+	c.cache.UpdateTestCases(updates, updated)
 
 	ctx = WithParameters(ctx, params)
 
@@ -464,10 +471,11 @@ func InsertMetrics(c *Client, ctx context.Context, metrics []*typespb.Metric) (i
 	}
 
 	updates := make([]int64, 0, len(metrics))
+	updated := make([]bool, len(metrics))
 	for _, m := range metrics {
 		updates = append(updates, m.Job.Id)
 	}
-	updated := c.cache.UpdateLogEmbeddedMetrics(updates)
+	c.cache.UpdateLogEmbeddedMetrics(updates, updated)
 
 	ctx = WithParameters(ctx, params)
 
@@ -531,6 +539,7 @@ func InsertTraces(c *Client, ctx context.Context, traces []*typespb.Trace) (int,
 	}
 
 	updates := make([]string, 0, spanCountTotal)
+	updated := make([]bool, spanCountTotal)
 	for _, t := range traces {
 		for _, rs := range t.Data.ResourceSpans {
 			for _, ss := range rs.ScopeSpans {
@@ -540,7 +549,7 @@ func InsertTraces(c *Client, ctx context.Context, traces []*typespb.Trace) (int,
 			}
 		}
 	}
-	updated := c.cache.UpdateTraceSpans(updates)
+	c.cache.UpdateTraceSpans(updates, updated)
 
 	ctx = WithParameters(ctx, params)
 

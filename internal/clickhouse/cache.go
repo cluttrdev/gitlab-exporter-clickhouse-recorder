@@ -1,6 +1,8 @@
 package clickhouse
 
-import "sync"
+import (
+	"sync"
+)
 
 type Cache struct {
 	sync.RWMutex
@@ -30,138 +32,147 @@ func NewCache() *Cache {
 	}
 }
 
-func (c *Cache) UpdatePipelines(data map[int64]float64) map[int64]bool {
+func (c *Cache) UpdatePipelines(data map[int64]float64, updated map[int64]bool) {
 	c.Lock()
 	defer c.Unlock()
-	updated := make(map[int64]bool, len(data))
 	for k, v := range data {
 		timestamp, ok := c.pipelines[k]
 		if !ok || timestamp < v {
 			c.pipelines[k] = v
-			updated[k] = true
+			if updated != nil {
+				updated[k] = true
+			}
 		} else {
-			updated[k] = false
+			if updated != nil {
+				updated[k] = false
+			}
 		}
 	}
-	return updated
 }
 
-func (c *Cache) UpdateJobs(data []int64) []bool {
+func (c *Cache) UpdateJobs(data []int64, updated []bool) {
 	c.Lock()
 	defer c.Unlock()
-	updated := make([]bool, len(data))
 	for i, id := range data {
 		_, ok := c.jobs[id]
 		if !ok {
 			c.jobs[id] = struct{}{}
-			updated[i] = true
+		}
+
+		if i < len(updated) {
+			updated[i] = !ok
 		}
 	}
-	return updated
 }
 
-func (c *Cache) UpdateSections(data []int64) []bool {
+func (c *Cache) UpdateSections(data []int64, updated []bool) {
 	c.Lock()
 	defer c.Unlock()
-	updated := make([]bool, len(data))
 	for i, id := range data {
 		_, ok := c.sections[id]
 		if !ok {
 			c.sections[id] = struct{}{}
-			updated[i] = true
+		}
+
+		if i < len(updated) {
+			updated[i] = !ok
 		}
 	}
-	return updated
 }
 
-func (c *Cache) UpdateBridges(data []int64) []bool {
+func (c *Cache) UpdateBridges(data []int64, updated []bool) {
 	c.Lock()
 	defer c.Unlock()
-	updated := make([]bool, len(data))
 	for i, id := range data {
 		_, ok := c.bridges[id]
 		if !ok {
 			c.bridges[id] = struct{}{}
-			updated[i] = true
+		}
+
+		if i < len(updated) {
+			updated[i] = !ok
 		}
 	}
-	return updated
 }
 
-func (c *Cache) UpdateTestReports(data []string) []bool {
+func (c *Cache) UpdateTestReports(data []string, updated []bool) {
 	c.Lock()
 	defer c.Unlock()
-	updated := make([]bool, len(data))
 	for i, id := range data {
 		_, ok := c.testReports[id]
 		if !ok {
 			c.testReports[id] = struct{}{}
-			updated[i] = true
+		}
+
+		if i < len(updated) {
+			updated[i] = !ok
 		}
 	}
-	return updated
 }
 
-func (c *Cache) UpdateTestSuites(data []string) []bool {
+func (c *Cache) UpdateTestSuites(data []string, updated []bool) {
 	c.Lock()
 	defer c.Unlock()
-	updated := make([]bool, len(data))
 	for i, id := range data {
 		_, ok := c.testSuites[id]
 		if !ok {
 			c.testSuites[id] = struct{}{}
-			updated[i] = true
+		}
+
+		if i < len(updated) {
+			updated[i] = !ok
 		}
 	}
-	return updated
 }
 
-func (c *Cache) UpdateTestCases(data []string) []bool {
+func (c *Cache) UpdateTestCases(data []string, updated []bool) {
 	c.Lock()
 	defer c.Unlock()
-	updated := make([]bool, len(data))
 	for i, id := range data {
 		_, ok := c.testCases[id]
 		if !ok {
 			c.testCases[id] = struct{}{}
-			updated[i] = true
+		}
+
+		if i < len(updated) {
+			updated[i] = !ok
 		}
 	}
-	return updated
 }
 
-func (c *Cache) UpdateLogEmbeddedMetrics(data []int64) []bool {
+func (c *Cache) UpdateLogEmbeddedMetrics(data []int64, updated []bool) {
 	c.Lock()
 	defer c.Unlock()
 
-	newJobIDs := make(map[int64]struct{})
+	newJobIDs := make(map[int64]struct{}, len(data))
 
-	updated := make([]bool, len(data))
 	for i, jobID := range data {
 		_, ok := c.logEmbeddedMetrics[jobID]
 		if !ok {
 			newJobIDs[jobID] = struct{}{}
-			updated[i] = true
+		}
+
+		if i < len(updated) {
+			updated[i] = !ok
 		}
 	}
 
 	for jobID := range newJobIDs {
 		c.logEmbeddedMetrics[jobID] = struct{}{}
 	}
-
-	return updated
 }
 
-func (c *Cache) UpdateTraceSpans(data []string) []bool {
+func (c *Cache) UpdateTraceSpans(data []string, updated []bool) {
 	c.Lock()
 	defer c.Unlock()
-	updated := make([]bool, len(data))
 	for i, id := range data {
 		_, ok := c.traceSpans[id]
 		if !ok {
 			c.traceSpans[id] = struct{}{}
-			updated[i] = true
+		}
+
+		if i < len(updated) {
+			updated[i] = !ok
 		}
 	}
-	return updated
 }
