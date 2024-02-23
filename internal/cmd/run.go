@@ -86,6 +86,12 @@ func (c *RunConfig) Exec(ctx context.Context, args []string) error {
 		}
 	})
 
+	if c.debug {
+		cfg.HTTP.Enabled = true
+		cfg.HTTP.Debug = true
+		cfg.Log.Level = "debug"
+	}
+
 	if cfg.Log.Level == "debug" {
 		writeConfig(c.out, cfg)
 	}

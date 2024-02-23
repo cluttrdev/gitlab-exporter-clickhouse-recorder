@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -28,25 +29,22 @@ func NewRootCmd(out io.Writer) *cli.Command {
 }
 
 type RootConfig struct {
-	Host     string
-	Port     string
-	Database string
-	User     string
-	Password string
-
 	filename string
 	out      io.Writer
 	flags    *flag.FlagSet
+	debug    bool
 }
 
 func (c *RootConfig) RegisterFlags(fs *flag.FlagSet) {
-	fs.StringVar(&c.Host, "clickhouse-host", "127.0.0.1", "The ClickHouse server name (default: '127.0.0.1').")
-	fs.StringVar(&c.Port, "clickhouse-port", "9000", "The ClickHouse port to connect to (default: '9000')")
-	fs.StringVar(&c.Database, "clickhouse-database", "default", "Select the current default ClickHouse database (default: 'default').")
-	fs.StringVar(&c.User, "clickhouse-user", "default", "The ClickHouse username to connect with (default: 'default').")
-	fs.StringVar(&c.Password, "clickhouse-password", "", "The ClickHouse password (default: '').")
+	_ = fs.String("clickhouse-host", "127.0.0.1", "The ClickHouse server name (default: '127.0.0.1').")
+	_ = fs.String("clickhouse-port", "9000", "The ClickHouse port to connect to (default: '9000')")
+	_ = fs.String("clickhouse-database", "default", "Select the current default ClickHouse database (default: 'default').")
+	_ = fs.String("clickhouse-user", "default", "The ClickHouse username to connect with (default: 'default').")
+	_ = fs.String("clickhouse-password", "", "The ClickHouse password (default: '').")
 
 	fs.StringVar(&c.filename, "config", "", "The configuration file to use.")
+
+	fs.BoolVar(&c.debug, "debug", false, "Run in debug mode.")
 }
 
 func (c *RootConfig) Exec(ctx context.Context, args []string) error {
@@ -81,19 +79,14 @@ func loadConfig(filename string, flags *flag.FlagSet, cfg *config.Config) error 
 }
 
 func writeConfig(out io.Writer, cfg config.Config) {
-	fmt.Fprintln(out, "----")
-	fmt.Fprintf(out, "ClickHouse Host: %s\n", cfg.ClickHouse.Host)
-	fmt.Fprintf(out, "ClickHouse Port: %s\n", cfg.ClickHouse.Port)
-	fmt.Fprintf(out, "ClickHouse Database: %s\n", cfg.ClickHouse.Database)
-	fmt.Fprintf(out, "ClickHouse User: %s\n", cfg.ClickHouse.User)
-	fmt.Fprintf(out, "ClickHouse Password: %x\n", sha256String(cfg.ClickHouse.Password))
-	fmt.Fprintln(out, "----")
-	fmt.Fprintf(out, "Server Host: %s\n", cfg.Server.Host)
-	fmt.Fprintf(out, "Server Port: %s\n", cfg.Server.Port)
-	fmt.Fprintln(out, "----")
-	fmt.Fprintf(out, "Log Level: %s\n", cfg.Log.Level)
-	fmt.Fprintf(out, "Log Format: %s\n", cfg.Log.Format)
-	fmt.Fprintln(out, "----")
+	_cfg := cfg
+	_cfg.ClickHouse.Password = fmt.Sprintf("%x", sha256String(cfg.ClickHouse.Password))
+
+	b, err := json.MarshalIndent(_cfg, "", "  ")
+	if err != nil {
+		fmt.Fprintf(out, "error marshalling config: %v\n", err)
+	}
+	fmt.Fprint(out, string(b))
 }
 
 func sha256String(s string) []byte {
