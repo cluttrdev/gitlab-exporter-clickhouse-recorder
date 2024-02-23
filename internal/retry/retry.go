@@ -50,10 +50,7 @@ func DoWithData[T any](fn func(ctx context.Context) (T, error), opts ...Option) 
 	)
 
 	ticker := time.NewTicker(delay)
-	defer func() {
-		ticker.Stop()
-		<-ticker.C
-	}()
+	defer ticker.Stop()
 loop:
 	for {
 		t, err = fn(ctx)
