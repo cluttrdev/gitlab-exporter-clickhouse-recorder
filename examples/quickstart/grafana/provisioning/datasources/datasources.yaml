@@ -11,3 +11,8 @@ datasources:
       username: default
     secureJsonData:
       password: ''
+  - name: Prometheus
+    type: prometheus
+    uid: prometheus
+    url: http://prometheus:9090
+
