@@ -65,17 +65,23 @@ func (s *Server) getReady(ctx context.Context) error {
 
 	s.setServingStatus(service, healthpb.HealthCheckResponse_NOT_SERVING)
 
+	slog.Debug("Checking readiness...")
 	if err := s.waitForReady(ctx); err != nil {
 		return err
 	}
+	slog.Debug("Checking readiness... done")
 
+	slog.Debug("Creating tables...")
 	if err := s.exporter.client.CreateTables(ctx); err != nil {
 		return err
 	}
+	slog.Debug("Creating tables... done")
 
+	slog.Debug("Initializing cache... ")
 	if err := s.exporter.client.InitCache(ctx); err != nil {
 		return err
 	}
+	slog.Debug("Initializing cache... done")
 
 	s.setServingStatus(service, healthpb.HealthCheckResponse_SERVING)
 	return nil
@@ -101,7 +107,7 @@ func (s *Server) watchReadiness(ctx context.Context) error {
 			if err != nil {
 				return err
 			}
-			slog.Info("Readiness check succeeded")
+			slog.Info("Readiness check successful")
 			s.setServingStatus(service, healthpb.HealthCheckResponse_SERVING)
 		}
 
