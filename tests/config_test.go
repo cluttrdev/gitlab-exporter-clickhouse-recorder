@@ -20,6 +20,11 @@ func defaultConfig() config.Config {
 	cfg.Server.Host = "0.0.0.0"
 	cfg.Server.Port = "0"
 
+	cfg.HTTP.Enabled = true
+	cfg.HTTP.Host = "127.0.0.1"
+	cfg.HTTP.Port = "9100"
+	cfg.HTTP.Debug = false
+
 	cfg.Log.Level = "info"
 	cfg.Log.Format = "text"
 
@@ -113,6 +118,10 @@ func TestLoad_DataWithDefaults(t *testing.T) {
     server:
       port: 36275
 
+    http:
+      host: 0.0.0.0
+      port: 9443
+
     log:
       format: json
     `)
@@ -121,6 +130,8 @@ func TestLoad_DataWithDefaults(t *testing.T) {
 	expected.ClickHouse.User = "gitlab-exporter"
 	expected.ClickHouse.Password = "supersecret"
 	expected.Server.Port = "36275"
+	expected.HTTP.Host = "0.0.0.0"
+	expected.HTTP.Port = "9443"
 	expected.Log.Format = "json"
 
 	cfg := defaultConfig()

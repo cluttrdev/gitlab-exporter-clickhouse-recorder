@@ -15,6 +15,7 @@ import (
 	"github.com/cluttrdev/gitlab-exporter-clickhouse-recorder/internal/clickhouse"
 	"github.com/cluttrdev/gitlab-exporter-clickhouse-recorder/internal/config"
 	"github.com/cluttrdev/gitlab-exporter-clickhouse-recorder/internal/exporter"
+	"github.com/cluttrdev/gitlab-exporter-clickhouse-recorder/internal/probes"
 )
 
 type RunConfig struct {
@@ -89,6 +90,14 @@ func (c *RunConfig) Exec(ctx context.Context, args []string) error {
 		writeConfig(c.out, cfg)
 	}
 	initLogging(c.out, cfg.Log)
+
+	if cfg.HTTP.Enabled {
+		go func() {
+			if err := serveHTTP(ctx, cfg.HTTP); err != nil {
+				slog.Error(err.Error())
+			}
+		}()
+	}
 
 	// create clickhouse client
 	client, err := clickhouse.NewClient(clickhouse.ClientConfig{
@@ -167,4 +176,13 @@ func setupDaemon(ctx context.Context) (context.Context, context.CancelFunc) {
 	}()
 
 	return ctx, cancel
+}
+
+func serveHTTP(ctx context.Context, cfg config.HTTP) error {
+	addr := fmt.Sprintf("%s:%s", cfg.Host, cfg.Port)
+	srv := probes.NewServer(probes.ServerConfig{
+		Address: addr,
+		Debug:   cfg.Debug,
+	})
+	return srv.ListenAndServe(ctx)
 }

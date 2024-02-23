@@ -7,6 +7,7 @@ import (
 type Config struct {
 	ClickHouse ClickHouse `default:"{}" yaml:"clickhouse"`
 	Server     Server     `default:"{}" yaml:"server"`
+	HTTP       HTTP       `default:"{}" yaml:"http"`
 	Log        Log        `default:"{}" yaml:"log"`
 }
 
@@ -21,6 +22,13 @@ type ClickHouse struct {
 type Server struct {
 	Host string `default:"0.0.0.0" yaml:"host"`
 	Port string `default:"0" yaml:"port"`
+}
+
+type HTTP struct {
+	Enabled bool   `default:"true" yaml:"enabled"`
+	Host    string `default:"127.0.0.1" yaml:"host"`
+	Port    string `default:"9100" yaml:"port"`
+	Debug   bool   `default:"false" yaml:"debug"`
 }
 
 type Log struct {

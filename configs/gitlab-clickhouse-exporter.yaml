@@ -19,6 +19,16 @@ server:
   # If the port is empty or "0", a port number is automatically chosen.
   port: "0"
 
+# HTTP probes server settings.
+http:
+  enabled: true
+  # The listen host.
+  host: "127.0.0.1"
+  # The listen port.
+  port: "9100"
+  # Whether to enable debug probe endpoints
+  debug: false
+
 # Log configuration
 log:
   # The logging level
