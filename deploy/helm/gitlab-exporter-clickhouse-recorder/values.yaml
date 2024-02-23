@@ -33,10 +33,17 @@ resources: {}
 #    cpu: 200m
 #    memory: 256Mi
 
+monitoring:
+  enabled: &monitoringEnabled false
+  port: &monitoringPort 9100
+  path: /metrics
+  interval: 1m
+
 service:
   type: ClusterIP
   ports:
     grpc: 80
+    http: *monitoringPort
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -61,5 +68,10 @@ env: []
 # https://github.com/cluttrdev/gitlab-exporter-clickhouse-recorder/blob/main/configs/gitlab-exporter-clickhouse-recorder.yaml
 config:
   server:
-    # We set a specific default port here since otherwise it would be chosen automatically
+    host: 0.0.0.0
     port: 36275
+
+  http:
+    enabled: *monitoringEnabled
+    host: 0.0.0.0
+    port: *monitoringPort

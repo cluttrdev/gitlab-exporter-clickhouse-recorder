@@ -36,6 +36,11 @@ spec:
             - name: grpc
               containerPort: {{ .Values.config.server.port }}
               protocol: TCP
+            {{- if .Values.config.http.enabled }}
+            - name: http
+              containerPort: {{ .Values.config.http.port }}
+              protocol: TCP
+            {{- end }}
           readinessProbe:
             grpc:
               port: {{ .Values.config.server.port }}
