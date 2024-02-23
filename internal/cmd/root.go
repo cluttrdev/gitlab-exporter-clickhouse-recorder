@@ -7,6 +7,8 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log/slog"
+	"os"
 
 	"github.com/cluttrdev/cli"
 	"github.com/cluttrdev/gitlab-exporter-clickhouse-recorder/internal/config"
@@ -93,4 +95,41 @@ func sha256String(s string) []byte {
 	h := sha256.New()
 	h.Write([]byte(s))
 	return h.Sum(nil)
+}
+
+func initLogging(out io.Writer, cfg config.Log) {
+	if out == nil {
+		out = os.Stderr
+	}
+
+	var level slog.Level
+	switch cfg.Level {
+	case "debug":
+		level = slog.LevelDebug
+	case "info":
+		level = slog.LevelInfo
+	case "warn":
+		level = slog.LevelWarn
+	case "error":
+		level = slog.LevelError
+	default:
+		level = slog.LevelInfo
+	}
+
+	opts := slog.HandlerOptions{
+		Level: level,
+	}
+
+	var handler slog.Handler
+	switch cfg.Format {
+	case "text":
+		handler = slog.NewTextHandler(out, &opts)
+	case "json":
+		handler = slog.NewJSONHandler(out, &opts)
+	default:
+		handler = slog.NewTextHandler(out, &opts)
+	}
+
+	logger := slog.New(handler)
+	slog.SetDefault(logger)
 }

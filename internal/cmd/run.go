@@ -2,20 +2,26 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"log/slog"
+	"net/http"
+	"net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/cluttrdev/cli"
+	"github.com/oklog/run"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/cluttrdev/gitlab-exporter-clickhouse-recorder/internal/clickhouse"
 	"github.com/cluttrdev/gitlab-exporter-clickhouse-recorder/internal/config"
 	"github.com/cluttrdev/gitlab-exporter-clickhouse-recorder/internal/exporter"
-	"github.com/cluttrdev/gitlab-exporter-clickhouse-recorder/internal/probes"
 )
 
 type RunConfig struct {
@@ -62,10 +68,6 @@ func (c *RunConfig) RegisterFlags(fs *flag.FlagSet) {
 }
 
 func (c *RunConfig) Exec(ctx context.Context, args []string) error {
-	// setup daemon
-	ctx, cancel := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
-	defer cancel()
-
 	// load configuration
 	var cfg config.Config
 	config.SetDefaults(&cfg)
@@ -97,14 +99,6 @@ func (c *RunConfig) Exec(ctx context.Context, args []string) error {
 	}
 	initLogging(c.out, cfg.Log)
 
-	if cfg.HTTP.Enabled {
-		go func() {
-			if err := serveHTTP(ctx, cfg.HTTP); err != nil {
-				slog.Error(err.Error())
-			}
-		}()
-	}
-
 	// create clickhouse client
 	client, err := clickhouse.NewClient(clickhouse.ClientConfig{
 		Host:     cfg.ClickHouse.Host,
@@ -117,51 +111,79 @@ func (c *RunConfig) Exec(ctx context.Context, args []string) error {
 		return fmt.Errorf("error creating clickhouse client")
 	}
 
-	// setup grpc server
+	// create grpc server
 	grpcServer := exporter.NewServer(
 		exporter.NewExporter(client),
 	)
 
-	// run grpc server
-	addr := fmt.Sprintf("%s:%s", cfg.Server.Host, cfg.Server.Port)
-	return grpcServer.ListenAndServe(ctx, addr)
-}
+	// setup run group
+	g := &run.Group{}
 
-func initLogging(out io.Writer, cfg config.Log) {
-	if out == nil {
-		out = os.Stderr
+	{ // serve grpc
+		ctx, cancel := context.WithCancel(ctx)
+		g.Add(func() error { // execute
+			addr := fmt.Sprintf("%s:%s", cfg.Server.Host, cfg.Server.Port)
+			return grpcServer.ListenAndServe(ctx, addr)
+		}, func(err error) { // interrupt
+			cancel()
+		})
 	}
 
-	var level slog.Level
-	switch cfg.Level {
-	case "debug":
-		level = slog.LevelDebug
-	case "info":
-		level = slog.LevelInfo
-	case "warn":
-		level = slog.LevelWarn
-	case "error":
-		level = slog.LevelError
-	default:
-		level = slog.LevelInfo
+	if cfg.HTTP.Enabled { // serve http
+		addr := fmt.Sprintf("%s:%s", cfg.HTTP.Host, cfg.HTTP.Port)
+		httpServer := &http.Server{
+			Addr: addr,
+		}
+
+		reg := prometheus.NewRegistry()
+		reg.MustRegister(
+			grpcServer.MetricsCollector(),
+			collectors.NewGoCollector(),
+			collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
+		)
+
+		g.Add(func() error { // execute
+			m := http.NewServeMux()
+
+			m.Handle(
+				"/metrics",
+				promhttp.InstrumentMetricHandler(
+					reg, promhttp.HandlerFor(reg, promhttp.HandlerOpts{}),
+				),
+			)
+
+			if cfg.HTTP.Debug {
+				m.HandleFunc("/debug/pprof/", pprof.Index)
+				m.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+				m.HandleFunc("/debug/pprof/profile", pprof.Profile)
+				m.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+				m.HandleFunc("/debug/pprof/trace", pprof.Trace)
+			}
+
+			httpServer.Handler = m
+
+			slog.Info("Starting HTTP server", "addr", httpServer.Addr)
+			return httpServer.ListenAndServe()
+		}, func(error) { // interrupt
+			if err := httpServer.Shutdown(context.Background()); err != nil {
+				if !errors.Is(err, http.ErrServerClosed) {
+					slog.Error(err.Error())
+				}
+			}
+		})
 	}
 
-	opts := slog.HandlerOptions{
-		Level: level,
+	{ // signal handler
+		ctx, cancel := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
+		g.Add(func() error { // execute
+			<-ctx.Done()
+			return ctx.Err()
+		}, func(err error) { // interrupt
+			cancel()
+		})
 	}
 
-	var handler slog.Handler
-	switch cfg.Format {
-	case "text":
-		handler = slog.NewTextHandler(out, &opts)
-	case "json":
-		handler = slog.NewJSONHandler(out, &opts)
-	default:
-		handler = slog.NewTextHandler(out, &opts)
-	}
-
-	logger := slog.New(handler)
-	slog.SetDefault(logger)
+	return g.Run()
 }
 
 func setupDaemon(ctx context.Context) (context.Context, context.CancelFunc) {
@@ -182,13 +204,4 @@ func setupDaemon(ctx context.Context) (context.Context, context.CancelFunc) {
 	}()
 
 	return ctx, cancel
-}
-
-func serveHTTP(ctx context.Context, cfg config.HTTP) error {
-	addr := fmt.Sprintf("%s:%s", cfg.Host, cfg.Port)
-	srv := probes.NewServer(probes.ServerConfig{
-		Address: addr,
-		Debug:   cfg.Debug,
-	})
-	return srv.ListenAndServe(ctx)
 }

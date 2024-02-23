@@ -6,7 +6,9 @@ import (
 	"log/slog"
 	"net"
 
-	"golang.org/x/sync/errgroup"
+	grpcprom "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
+	"github.com/oklog/run"
+	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	healthgrpc "google.golang.org/grpc/health/grpc_health_v1"
@@ -17,54 +19,78 @@ import (
 type Server struct {
 	exporter *ClickHouseExporter
 	health   *health.Server
+	metrics  *grpcprom.ServerMetrics
 }
 
 func NewServer(exp *ClickHouseExporter) *Server {
+	healthServer := health.NewServer()
+	healthServer.SetServingStatus("" /* system */, healthgrpc.HealthCheckResponse_NOT_SERVING)
+
+	metricsServer := grpcprom.NewServerMetrics()
+
 	return &Server{
 		exporter: exp,
-		health:   health.NewServer(),
+		health:   healthServer,
+		metrics:  metricsServer,
 	}
 }
 
+func (s *Server) MetricsCollector() prometheus.Collector {
+	return s.metrics
+}
+
 func (s *Server) ListenAndServe(ctx context.Context, addr string) error {
-	// setup listener
-	listener, err := net.Listen("tcp", addr)
-	if err != nil {
-		return err
-	}
-	slog.Info(fmt.Sprintf("Listening on %s", listener.Addr().String()))
+	// setup grpc server
+	grpcServer := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(s.metrics.UnaryServerInterceptor()),
+		grpc.ChainStreamInterceptor(s.metrics.StreamServerInterceptor()),
+	)
 
-	// setup server
-	var opts []grpc.ServerOption
-	server := grpc.NewServer(opts...)
-
-	healthgrpc.RegisterHealthServer(server, s.health)
-	servicepb.RegisterGitLabExporterServer(server, s.exporter)
-
-	s.health.SetServingStatus("", healthgrpc.HealthCheckResponse_UNKNOWN)
+	servicepb.RegisterGitLabExporterServer(grpcServer, s.exporter)
+	healthgrpc.RegisterHealthServer(grpcServer, s.health)
+	s.metrics.InitializeMetrics(grpcServer)
 
 	// serve and monitor health
-	g := new(errgroup.Group)
-	g.Go(func() error {
-		if err := s.getReady(ctx); err != nil {
-			return err
-		}
+	g := &run.Group{}
 
-		return s.watchReadiness(ctx)
-	})
-	g.Go(func() error { return server.Serve(listener) })
+	{ // serve grpc
+		g.Add(func() error { // execute
+			listener, err := net.Listen("tcp", addr)
+			if err != nil {
+				return err
+			}
+			slog.Info(fmt.Sprintf("Listening on %s", listener.Addr().String()))
 
-	errChan := make(chan error)
-	go func() {
-		errChan <- g.Wait()
-	}()
-
-	select {
-	case err := <-errChan:
-		return err
-	case <-ctx.Done():
-		s.health.Shutdown()
-		server.GracefulStop()
-		return nil
+			return grpcServer.Serve(listener)
+		}, func(err error) { // interrupt
+			s.health.Shutdown()
+			grpcServer.GracefulStop()
+			grpcServer.Stop()
+		})
 	}
+
+	{ // monitor health
+		ctx, cancel := context.WithCancel(ctx)
+		g.Add(func() error { // execute
+			if err := s.getReady(ctx); err != nil {
+				return err
+			}
+
+			return s.watchReadiness(ctx)
+		}, func(err error) { // interrupt
+			cancel()
+		})
+	}
+
+	{ // context handler
+		ctx, cancel := context.WithCancel(ctx)
+		g.Add(func() error { // execute
+			<-ctx.Done()
+			return ctx.Err()
+		}, func(err error) { // interrupt
+			cancel()
+		})
+	}
+
+	return g.Run()
 }
