@@ -9,7 +9,6 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/pprof"
-	"os"
 	"os/signal"
 	"syscall"
 
@@ -122,19 +121,18 @@ func (c *RunConfig) Exec(ctx context.Context, args []string) error {
 	{ // serve grpc
 		ctx, cancel := context.WithCancel(ctx)
 		g.Add(func() error { // execute
+			slog.Info("Starting grpc server")
 			addr := fmt.Sprintf("%s:%s", cfg.Server.Host, cfg.Server.Port)
 			return grpcServer.ListenAndServe(ctx, addr)
 		}, func(err error) { // interrupt
+			slog.Info("Stopping grpc server...")
 			cancel()
+			<-ctx.Done()
+			slog.Info("Stopping grpc server... done")
 		})
 	}
 
 	if cfg.HTTP.Enabled { // serve http
-		addr := fmt.Sprintf("%s:%s", cfg.HTTP.Host, cfg.HTTP.Port)
-		httpServer := &http.Server{
-			Addr: addr,
-		}
-
 		reg := prometheus.NewRegistry()
 		reg.MustRegister(
 			grpcServer.MetricsCollector(),
@@ -142,42 +140,18 @@ func (c *RunConfig) Exec(ctx context.Context, args []string) error {
 			collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
 		)
 
-		g.Add(func() error { // execute
-			m := http.NewServeMux()
-
-			m.Handle(
-				"/metrics",
-				promhttp.InstrumentMetricHandler(
-					reg, promhttp.HandlerFor(reg, promhttp.HandlerOpts{}),
-				),
-			)
-
-			if cfg.HTTP.Debug {
-				m.HandleFunc("/debug/pprof/", pprof.Index)
-				m.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
-				m.HandleFunc("/debug/pprof/profile", pprof.Profile)
-				m.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
-				m.HandleFunc("/debug/pprof/trace", pprof.Trace)
-			}
-
-			httpServer.Handler = m
-
-			slog.Info("Starting HTTP server", "addr", httpServer.Addr)
-			return httpServer.ListenAndServe()
-		}, func(error) { // interrupt
-			if err := httpServer.Shutdown(context.Background()); err != nil {
-				if !errors.Is(err, http.ErrServerClosed) {
-					slog.Error(err.Error())
-				}
-			}
-		})
+		g.Add(serveHTTP(cfg.HTTP, reg))
 	}
 
 	{ // signal handler
 		ctx, cancel := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
 		g.Add(func() error { // execute
 			<-ctx.Done()
-			return ctx.Err()
+			err := ctx.Err()
+			if !errors.Is(err, context.Canceled) {
+				slog.Info("Got SIGINT/SIGTERM, exiting")
+			}
+			return err
 		}, func(err error) { // interrupt
 			cancel()
 		})
@@ -186,22 +160,43 @@ func (c *RunConfig) Exec(ctx context.Context, args []string) error {
 	return g.Run()
 }
 
-func setupDaemon(ctx context.Context) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(ctx)
+func serveHTTP(cfg config.HTTP, reg *prometheus.Registry) (func() error, func(error)) {
+	m := http.NewServeMux()
 
-	go func() {
-		signalChan := make(chan os.Signal, 1)
-		signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
+	m.Handle(
+		"/metrics",
+		promhttp.InstrumentMetricHandler(
+			reg, promhttp.HandlerFor(reg, promhttp.HandlerOpts{}),
+		),
+	)
 
-		select {
-		case <-signalChan:
-			slog.Debug("Got SIGINT/SIGTERM, exiting")
-			signal.Stop(signalChan)
-			cancel()
-		case <-ctx.Done():
-			slog.Debug("Done")
+	if cfg.Debug {
+		m.HandleFunc("/debug/pprof/", pprof.Index)
+		m.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+		m.HandleFunc("/debug/pprof/profile", pprof.Profile)
+		m.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+		m.HandleFunc("/debug/pprof/trace", pprof.Trace)
+	}
+
+	httpServer := &http.Server{
+		Addr:    fmt.Sprintf("%s:%s", cfg.Host, cfg.Port),
+		Handler: m,
+	}
+
+	execute := func() error {
+		slog.Info("Starting http server", "addr", httpServer.Addr)
+		return httpServer.ListenAndServe()
+	}
+
+	interrupt := func(error) {
+		slog.Info("Stopping http server...")
+		if err := httpServer.Shutdown(context.Background()); err != nil {
+			if !errors.Is(err, http.ErrServerClosed) {
+				slog.Error("error shutting down http server", "error", err)
+			}
 		}
-	}()
+		slog.Info("Stopping http server... done")
+	}
 
-	return ctx, cancel
+	return execute, interrupt
 }
