@@ -65,16 +65,19 @@ func (c *DeduplicateConfig) Exec(ctx context.Context, args []string) error {
 		return fmt.Errorf("error loading configuration: %w", err)
 	}
 
-	ch, err := clickhouse.NewClient(clickhouse.ClientConfig{
+	// create clickhouse client
+	opts := clickhouse.ClientOptions(clickhouse.ClientConfig{
 		Host:     cfg.ClickHouse.Host,
 		Port:     cfg.ClickHouse.Port,
 		Database: cfg.ClickHouse.Database,
 		User:     cfg.ClickHouse.User,
 		Password: cfg.ClickHouse.Password,
 	})
+	conn, err := clickhouse.Connect(&opts)
 	if err != nil {
-		return fmt.Errorf("error creating clickhouse client: %w", err)
+		return fmt.Errorf("error creating clickhouse connection")
 	}
+	client := clickhouse.NewClient(conn, cfg.ClickHouse.Database)
 
 	table := args[0]
 
@@ -87,7 +90,7 @@ func (c *DeduplicateConfig) Exec(ctx context.Context, args []string) error {
 		ThrowIfNoop: &c.throwIfNoop,
 	}
 
-	return clickhouse.DeduplicateTable(ctx, opt, ch)
+	return clickhouse.DeduplicateTable(ctx, opt, client)
 }
 
 type columnList []string

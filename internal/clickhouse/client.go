@@ -26,22 +26,18 @@ type ClientConfig struct {
 	Password string
 }
 
-func NewClient(cfg ClientConfig) (*Client, error) {
-	client := &Client{
-		cache: NewCache(),
+func NewClient(conn driver.Conn, database string) *Client {
+	return &Client{
+		conn:   conn,
+		cache:  NewCache(),
+		dbName: database,
 	}
-
-	if err := client.Configure(cfg); err != nil {
-		return nil, err
-	}
-
-	return client, nil
 }
 
-func (c *Client) Configure(cfg ClientConfig) error {
+func ClientOptions(cfg ClientConfig) clickhouse.Options {
 	addr := fmt.Sprintf("%s:%s", cfg.Host, cfg.Port)
 
-	conn, err := clickhouse.Open(&clickhouse.Options{
+	return clickhouse.Options{
 		Addr: []string{addr},
 		Auth: clickhouse.Auth{
 			Database: cfg.Database,
@@ -56,16 +52,15 @@ func (c *Client) Configure(cfg ClientConfig) error {
 				{Name: "gitlab-exporter-clickhouse-recorder", Version: "v0.0.0+unknown"},
 			},
 		},
-	})
-	if err != nil {
-		return err
+	}
+}
+
+func Connect(options *clickhouse.Options) (driver.Conn, error) {
+	if options.Settings == nil {
+		options.Settings = clickhouse.Settings{}
 	}
 
-	c.Lock()
-	c.conn = conn
-	c.dbName = cfg.Database
-	c.Unlock()
-	return nil
+	return clickhouse.Open(options)
 }
 
 func (c *Client) Ping(ctx context.Context) error {

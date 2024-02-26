@@ -99,16 +99,18 @@ func (c *RunConfig) Exec(ctx context.Context, args []string) error {
 	initLogging(c.out, cfg.Log)
 
 	// create clickhouse client
-	client, err := clickhouse.NewClient(clickhouse.ClientConfig{
+	opts := clickhouse.ClientOptions(clickhouse.ClientConfig{
 		Host:     cfg.ClickHouse.Host,
 		Port:     cfg.ClickHouse.Port,
 		Database: cfg.ClickHouse.Database,
 		User:     cfg.ClickHouse.User,
 		Password: cfg.ClickHouse.Password,
 	})
+	conn, err := clickhouse.Connect(&opts)
 	if err != nil {
-		return fmt.Errorf("error creating clickhouse client")
+		return fmt.Errorf("error creating clickhouse connection")
 	}
+	client := clickhouse.NewClient(conn, cfg.ClickHouse.Database)
 
 	// create grpc server
 	grpcServer := exporter.NewServer(
