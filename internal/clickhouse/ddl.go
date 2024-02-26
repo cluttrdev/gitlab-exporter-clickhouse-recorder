@@ -269,7 +269,7 @@ SETTINGS index_granularity=8192, ttl_only_drop_parts = 1
     `
 
 	createTraceIdTsTableSQL = `
-CREATE TABLE IF NOT EXISTS %s.%s_trace_id_ts (
+CREATE TABLE IF NOT EXISTS {db: Identifier}.{table: Identifier} (
      TraceId String CODEC(ZSTD(1)),
      Start DateTime64(9) CODEC(Delta, ZSTD(1)),
      End DateTime64(9) CODEC(Delta, ZSTD(1)),
@@ -281,20 +281,20 @@ SETTINGS index_granularity=8192
     `
 
 	createTraceIdTsMaterializedViewSQL = `
-CREATE MATERIALIZED VIEW IF NOT EXISTS %s.%s_trace_id_ts_mv
-TO %s.%s_trace_id_ts
+CREATE MATERIALIZED VIEW IF NOT EXISTS {db: Identifier}.{view: Identifier}
+TO {db: Identifier}.%s
 AS SELECT
     TraceId,
     min(Timestamp) as Start,
     max(Timestamp) as End
-FROM %s.%s
+FROM {db: Identifier}.%s
 WHERE TraceId != ''
 GROUP BY TraceId
 ;
     `
 
 	createTraceViewSQL = `
-CREATE VIEW IF NOT EXISTS %s.%s AS
+CREATE VIEW IF NOT EXISTS ` + "`" + `%s` + "`" + `.%s AS
 SELECT
     TraceId AS traceID,
     SpanId AS spanID,
@@ -305,7 +305,7 @@ SELECT
     Timestamp AS startTime,
     arrayMap(key -> map('key', key, 'value', SpanAttributes[key]), mapKeys(SpanAttributes)) AS tags,
     arrayMap(key -> map('key', key, 'value', ResourceAttributes[key]), mapKeys(ResourceAttributes)) AS serviceTags
-FROM %s.%s
+FROM ` + "`" + `%s` + "`" + `.%s
 WHERE TraceId = {trace_id:String}
 ;
     `
@@ -340,13 +340,13 @@ func createTables(ctx context.Context, db string, client *Client) error {
 	if err := createTraceSpansTable(client, ctx, db); err != nil {
 		return fmt.Errorf("exec create traces table: %w", err)
 	}
-	if err := client.Exec(ctx, renderCreateTraceIdTsTableSQL(db)); err != nil {
+	if err := createTraceIdTsTable(client, ctx, db); err != nil {
 		return fmt.Errorf("exec create traceIdTs table: %w", err)
 	}
-	if err := client.Exec(ctx, renderCreateTraceIdTsMaterializedViewSQL(db)); err != nil {
-		return fmt.Errorf("exec create traceIdTs view: %w", err)
+	if err := createTraceIdTsMaterializedView(client, ctx, db); err != nil {
+		return fmt.Errorf("exec create tracesIdTs materialized view: %w", err)
 	}
-	if err := client.Exec(ctx, renderTraceViewSQL(db)); err != nil {
+	if err := createTraceView(client, ctx, db); err != nil {
 		return fmt.Errorf("exec create trace view: %w", err)
 	}
 
@@ -443,24 +443,46 @@ func createTraceSpansTable(c *Client, ctx context.Context, db string) error {
 	)
 }
 
-func renderCreateTraceIdTsTableSQL(db string) string {
-	return fmt.Sprintf(createTraceIdTsTableSQL, db, TraceSpansTable)
-}
-
-func renderCreateTraceIdTsMaterializedViewSQL(db string) string {
-	return fmt.Sprintf(
-		createTraceIdTsMaterializedViewSQL,
-		db, TraceSpansTable,
-		db, TraceSpansTable,
-		db, TraceSpansTable,
+func createTraceIdTsTable(c *Client, ctx context.Context, db string) error {
+	return c.Exec(
+		WithParameters(ctx, map[string]string{
+			"db":    db,
+			"table": fmt.Sprintf("%s_trace_id_ts", TraceSpansTable),
+		}),
+		createTraceIdTsTableSQL,
 	)
 }
 
-func renderTraceViewSQL(db string) string {
+func createTraceIdTsMaterializedView(c *Client, ctx context.Context, db string) error {
+	var query string = fmt.Sprintf(
+		createTraceIdTsMaterializedViewSQL,
+		fmt.Sprintf("%s_trace_id_ts", TraceSpansTable), // tableTo
+		TraceSpansTable, // tableFrom
+	)
+	return c.Exec(
+		WithParameters(ctx, map[string]string{
+			"db":   db,
+			"view": fmt.Sprintf("%s_trace_id_ts_mv", TraceSpansTable),
+			// "tableTo": fmt.Sprintf("%s_trace_id_ts", TraceSpansTable),
+			// "tableFrom": TraceSpansTable,
+		}),
+		query,
+	)
+}
+
+func createTraceView(c *Client, ctx context.Context, db string) error {
 	const viewName string = "trace_view"
-	return fmt.Sprintf(
+	var query string = fmt.Sprintf(
 		createTraceViewSQL,
-		db, viewName,
-		db, TraceSpansTable,
+		db, viewName, // {db: Identifier}.{view: Identifier}
+		db, TraceSpansTable, // {db:Identifier}.{tableFrom: Identifier}
+	)
+	return c.Exec(
+		WithParameters(ctx, map[string]string{
+			"db": db,
+			// "view": viewName,
+			// "tableFrom": TraceSpansTable,
+		}),
+		query,
 	)
 }
