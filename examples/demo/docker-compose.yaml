@@ -24,8 +24,7 @@ services:
       clickhouse:
         condition: service_healthy
 
-    # image: ghcr.io/cluttrdev/gitlab-exporter-clickhouse-recorder:latest
-    image: docker.io/cluttrdev/gitlab-exporter-clickhouse-recorder:v0.6.0-5-20240226200010-4d0403fb77bd-modified
+    image: ghcr.io/cluttrdev/gitlab-exporter-clickhouse-recorder:latest
     environment:
       GLCHR_LOG_LEVEL: debug
     volumes:
