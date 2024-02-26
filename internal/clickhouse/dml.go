@@ -111,8 +111,14 @@ func InsertJobs(c *Client, ctx context.Context, jobs []*typespb.Job) (int, error
 		return 0, fmt.Errorf("prepare batch: %w", err)
 	}
 
+	var errs error
 	for i, j := range jobs {
 		if !updated[i] {
+			continue
+		}
+
+		if j.Pipeline == nil {
+			errs = errors.Join(errs, fmt.Errorf("job without pipeline: %d", j.Id))
 			continue
 		}
 
@@ -143,7 +149,7 @@ func InsertJobs(c *Client, ctx context.Context, jobs []*typespb.Job) (int, error
 			j.WebUrl,
 		)
 		if err != nil {
-			return 0, fmt.Errorf("append batch: %w", err)
+			errs = errors.Join(errs, fmt.Errorf("append job %d to batch: %w", j.Id, err))
 		}
 	}
 
@@ -154,7 +160,7 @@ func InsertJobs(c *Client, ctx context.Context, jobs []*typespb.Job) (int, error
 	n := batch.Rows()
 	slog.Debug("Recorded jobs", "received", len(jobs), "inserted", n)
 
-	return n, nil
+	return n, errs
 }
 
 func InsertBridges(c *Client, ctx context.Context, bridges []*typespb.Bridge) (int, error) {
