@@ -83,7 +83,7 @@ variables, where flags take precedence.
 
 ## Getting Started
 
-To get up and running, have a look at the [quickstart](./examples/quickstart/README.md)
+To get up and running, have a look at the [demo](./examples/demo/README.md)
 example which contains a `docker compose` setup to provision a ClickHouse server
 and a Grafana instance that includes predefined dashboards.
 

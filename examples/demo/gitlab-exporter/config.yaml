@@ -1,0 +1,42 @@
+# For an overview of available configuration options and their default values,
+# see: https://github.com/cluttrdev/gitlab-exporter/blob/main/configs/gitlab-exporter.yaml
+
+gitlab:
+  api:
+    url: "https://gitlab.com/api/v4"
+
+  client:
+    rate:
+      limit: 30.0
+
+endpoints:
+  - address: "gitlab-exporter-clickhouse-recorder:36275"
+
+projects:
+  - id: 50817395  # cluttrdev/gitlab-exporter
+
+    export:
+      sections:
+        enabled: true
+      testreports:
+        enabled: true
+      traces:
+        enabled: true
+      metrics:
+        enabled: true
+    
+    catch_up:
+      enabled: true
+      updated_after: ""
+      updated_before: ""
+
+http:
+  enabled: true
+  host: "0.0.0.0"
+  port: "9100"
+  debug: false
+
+log:
+  level: debug
+  format: text
+
