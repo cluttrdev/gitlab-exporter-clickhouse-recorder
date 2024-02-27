@@ -34,17 +34,16 @@ resources: {}
 #    cpu: 200m
 #    memory: 256Mi
 
-monitoring:
-  enabled: true
-  port: 9100
-  path: /metrics
-  interval: 1m
-
 service:
   type: ClusterIP
   ports:
     grpc: 80
     http: 9100
+
+monitoring:
+  enabled: true
+  path: /metrics
+  interval: 1m
 
 serviceAccount:
   # Specifies whether a service account should be created
