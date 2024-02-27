@@ -35,8 +35,8 @@ resources: {}
 #    memory: 256Mi
 
 monitoring:
-  enabled: &monitoringEnabled false
-  port: &monitoringPort 9100
+  enabled: true
+  port: 9100
   path: /metrics
   interval: 1m
 
@@ -44,7 +44,7 @@ service:
   type: ClusterIP
   ports:
     grpc: 80
-    http: *monitoringPort
+    http: 9100
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -73,6 +73,6 @@ config:
     port: 36275
 
   http:
-    enabled: *monitoringEnabled
+    enabled: true
     host: 0.0.0.0
-    port: *monitoringPort
+    port: 9100
