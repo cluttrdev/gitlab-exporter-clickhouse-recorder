@@ -48,7 +48,7 @@ Selector labels
 */}}
 {{- define "gitlab-exporter-clickhouse-recorder.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "gitlab-exporter-clickhouse-recorder.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/instance: {{ include "gitlab-exporter-clickhouse-recorder.fullname" . }}
 {{- end }}
 
 {{/*
