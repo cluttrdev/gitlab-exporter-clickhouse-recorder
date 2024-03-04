@@ -83,3 +83,57 @@ func Test_InsertJobs(t *testing.T) {
 		t.Errorf("Inserted %d jobs, expected: %d", n, len(data)-1)
 	}
 }
+
+func Test_InsertTestCases(t *testing.T) {
+	client, err := GetTestClient(testSet)
+	if err != nil {
+		t.Error(err)
+	}
+
+	data := []*typespb.TestCase{
+		{Id: "6252785472-1", TestsuiteId: "6252785472", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
+		{Id: "6252785472-2", TestsuiteId: "6252785472", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
+		{Id: "6252785472-3", TestsuiteId: "6252785472", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
+		{Id: "6252785472-4", TestsuiteId: "6252785472", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
+		{Id: "6252785472-5", TestsuiteId: "6252785472", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
+		{Id: "6252785472-6", TestsuiteId: "6252785472", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
+		{Id: "6252785472-7", TestsuiteId: "6252785472", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
+		{Id: "6252785472-8", TestsuiteId: "6252785472", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
+		{Id: "6252785472-9", TestsuiteId: "6252785472", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
+		{Id: "6252785472-10", TestsuiteId: "6252785472", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
+	}
+
+	n, err := clickhouse.InsertTestCases(client, context.Background(), data)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if n != 10 {
+		t.Errorf("Inserted %d testcases, expected: %d", n, 10)
+	}
+
+	// ----
+
+	data = append(data, []*typespb.TestCase{
+		{Id: "6308490339-1", TestsuiteId: "6308490339", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
+		{Id: "6308490339-2", TestsuiteId: "6308490339", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
+		{Id: "6308490339-3", TestsuiteId: "6308490339", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
+		{Id: "6308490339-4", TestsuiteId: "6308490339", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
+		{Id: "6308490339-5", TestsuiteId: "6308490339", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
+		{Id: "6308490339-6", TestsuiteId: "6308490339", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
+		{Id: "6308490339-7", TestsuiteId: "6308490339", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
+		{Id: "6308490339-8", TestsuiteId: "6308490339", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
+		{Id: "6308490339-9", TestsuiteId: "6308490339", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
+		{Id: "6308490339-10", TestsuiteId: "6308490339", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
+	}...,
+	)
+
+	n, err = clickhouse.InsertTestCases(client, context.Background(), data)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if n != 10 {
+		t.Errorf("Inserted %d testcases, expected: %d", n, 10)
+	}
+}

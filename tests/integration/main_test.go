@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	ch "github.com/ClickHouse/clickhouse-go/v2"
-	ch_tests "github.com/ClickHouse/clickhouse-go/v2/tests"
 
 	"github.com/cluttrdev/gitlab-exporter-clickhouse-recorder/internal/clickhouse"
 )
@@ -14,14 +13,15 @@ import (
 const testSet string = "native"
 
 func TestMain(m *testing.M) {
-	env, err := ch_tests.CreateClickHouseTestEnvironment(testSet)
+	env, err := CreateClickHouseTestEnvironment(testSet)
 	if err != nil {
 		panic(err)
 	}
 	defer env.Container.Terminate(context.Background())
 
-	ch_tests.SetTestEnvironment(testSet, env)
-	if err := ch_tests.CreateDatabase(testSet); err != nil {
+	SetTestEnvironment(testSet, env)
+
+	if err := CreateDatabase(testSet); err != nil {
 		panic(err)
 	}
 
@@ -33,12 +33,12 @@ func TestMain(m *testing.M) {
 }
 
 func GetTestClient(testSet string) (*clickhouse.Client, error) {
-	te, err := ch_tests.GetTestEnvironment(testSet)
+	te, err := GetTestEnvironment(testSet)
 	if err != nil {
 		return nil, err
 	}
 
-	opts := ch_tests.ClientOptionsFromEnv(te, ch.Settings{})
+	opts := ClientOptionsFromEnv(te, ch.Settings{})
 	opts.MaxOpenConns = 1
 
 	conn, err := clickhouse.Connect(&opts)
