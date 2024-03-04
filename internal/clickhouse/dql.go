@@ -34,7 +34,7 @@ func SelectPipelineMaxUpdatedAt(c *Client, ctx context.Context) (map[int64]float
 
 func SelectTableIDs[T int64 | string](c *Client, ctx context.Context, table string, column string) (map[T]struct{}, error) {
 	const query string = `
-        SELECT {column: Identifier} AS id FROM {db: Identifier}.{table: Identifier}
+        SELECT DISTINCT {column: Identifier} AS id FROM {db: Identifier}.{table: Identifier}
         `
 	var params = map[string]string{
 		"db":     c.dbName,

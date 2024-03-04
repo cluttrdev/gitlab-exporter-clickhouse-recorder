@@ -65,18 +65,29 @@ func (c *Cache) UpdateJobs(data []int64, updated []bool) {
 	}
 }
 
-func (c *Cache) UpdateSections(data []int64, updated []bool) {
+// UpdateSections updates the cache used to prevent inserting duplicate sections.
+// For each key in the given map we check whether it is already cached.
+// If it is, the correspopnding map value is set to `false`, else it will be
+// added to the cache and the correponding map value is set to `true`.
+// In order to not require holding each individual section ID in memory, we
+// use the section's job ID as a cache key.
+func (c *Cache) UpdateSections(keys map[int64]bool) {
 	c.Lock()
 	defer c.Unlock()
-	for i, id := range data {
-		_, ok := c.sections[id]
+
+	newJobIDs := make(map[int64]struct{})
+
+	for jobID := range keys {
+		_, ok := c.sections[jobID]
 		if !ok {
-			c.sections[id] = struct{}{}
+			newJobIDs[jobID] = struct{}{}
 		}
 
-		if i < len(updated) {
-			updated[i] = !ok
-		}
+		keys[jobID] = !ok
+	}
+
+	for jobID := range newJobIDs {
+		c.sections[jobID] = struct{}{}
 	}
 }
 
@@ -125,36 +136,51 @@ func (c *Cache) UpdateTestSuites(data []string, updated []bool) {
 	}
 }
 
-func (c *Cache) UpdateTestCases(data []string, updated []bool) {
+// UpdateTestCases updates the cache used to prevent inserting duplicate test cases.
+// For each key in the given map we check whether it is already cached.
+// If it is, the correspopnding map value is set to `false`, else it will be
+// added to the cache and the correponding map value is set to `true`.
+// In order to not require holding each individual test case ID in memory, we
+// use the test case's test suite ID as a cache key.
+func (c *Cache) UpdateTestCases(keys map[string]bool) {
 	c.Lock()
 	defer c.Unlock()
-	for i, id := range data {
-		_, ok := c.testCases[id]
+
+	newTestSuiteIDs := make(map[string]struct{})
+
+	for suiteID := range keys {
+		_, ok := c.testCases[suiteID]
 		if !ok {
-			c.testCases[id] = struct{}{}
+			newTestSuiteIDs[suiteID] = struct{}{}
 		}
 
-		if i < len(updated) {
-			updated[i] = !ok
-		}
+		keys[suiteID] = !ok
+	}
+
+	for suiteID := range newTestSuiteIDs {
+		c.testCases[suiteID] = struct{}{}
 	}
 }
 
-func (c *Cache) UpdateLogEmbeddedMetrics(data []int64, updated []bool) {
+// UpdateLogEmbeddedMetrics updates the cache used to prevent inserting duplicate metrics.
+// For each key in the given map we check whether it is already cached.
+// If it is, the correspopnding map value is set to `false`, else it will be
+// added to the cache and the correponding map value is set to `true`.
+// In order to not require holding each individual metric ID in memory, we
+// use the metric's job ID as a cache key.
+func (c *Cache) UpdateLogEmbeddedMetrics(keys map[int64]bool) {
 	c.Lock()
 	defer c.Unlock()
 
-	newJobIDs := make(map[int64]struct{}, len(data))
+	newJobIDs := make(map[int64]struct{})
 
-	for i, jobID := range data {
+	for jobID := range keys {
 		_, ok := c.logEmbeddedMetrics[jobID]
 		if !ok {
 			newJobIDs[jobID] = struct{}{}
 		}
 
-		if i < len(updated) {
-			updated[i] = !ok
-		}
+		keys[jobID] = !ok
 	}
 
 	for jobID := range newJobIDs {

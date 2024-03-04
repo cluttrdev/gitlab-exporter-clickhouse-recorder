@@ -3,6 +3,7 @@ package clickhouse
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"sync"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -38,7 +39,8 @@ func ClientOptions(cfg ClientConfig) clickhouse.Options {
 	addr := fmt.Sprintf("%s:%s", cfg.Host, cfg.Port)
 
 	return clickhouse.Options{
-		Addr: []string{addr},
+		Protocol: clickhouse.Native,
+		Addr:     []string{addr},
 		Auth: clickhouse.Auth{
 			Database: cfg.Database,
 			Username: cfg.User,
@@ -52,12 +54,17 @@ func ClientOptions(cfg ClientConfig) clickhouse.Options {
 				{Name: "gitlab-exporter-clickhouse-recorder", Version: "v0.0.0+unknown"},
 			},
 		},
+		Compression: &clickhouse.Compression{
+			Method: clickhouse.CompressionLZ4,
+		},
 	}
 }
 
 func Connect(options *clickhouse.Options) (driver.Conn, error) {
 	if options.Settings == nil {
-		options.Settings = clickhouse.Settings{}
+		options.Settings = clickhouse.Settings{
+			"connect_timeout": 30,
+		}
 	}
 
 	return clickhouse.Open(options)
@@ -96,59 +103,77 @@ func (c *Client) CreateTables(ctx context.Context) error {
 }
 
 func (c *Client) InitCache(ctx context.Context) error {
+	slog.Debug("Initializing pipelines cache...")
 	pipelines, err := SelectPipelineMaxUpdatedAt(c, ctx)
 	if err != nil {
 		return err
 	}
 	c.cache.UpdatePipelines(pipelines, nil)
+	slog.Debug("Initializing pipelines cache... done")
 
+	slog.Debug("Initializing jobs cache...")
 	jobs, err := SelectTableIDs[int64](c, ctx, JobsTable, "id")
 	if err != nil {
 		return err
 	}
 	c.cache.UpdateJobs(keys(jobs), nil)
+	slog.Debug("Initializing jobs cache... done")
 
-	sections, err := SelectTableIDs[int64](c, ctx, SectionsTable, "id")
+	slog.Debug("Initializing sections cache...")
+	sectionJobs, err := SelectTableIDs[int64](c, ctx, SectionsTable, "job.id")
 	if err != nil {
 		return err
 	}
-	c.cache.UpdateSections(keys(sections), nil)
+	c.cache.UpdateSections(keymap(sectionJobs))
+	slog.Debug("Initializing sections cache... done")
 
+	slog.Debug("Initializing bridges cache...")
 	bridges, err := SelectTableIDs[int64](c, ctx, BridgesTable, "id")
 	if err != nil {
 		return err
 	}
 	c.cache.UpdateBridges(keys(bridges), nil)
+	slog.Debug("Initializing bridges cache... done")
 
+	slog.Debug("Initializing testreports cache...")
 	reports, err := SelectTableIDs[string](c, ctx, TestReportsTable, "id")
 	if err != nil {
 		return err
 	}
 	c.cache.UpdateTestReports(keys(reports), nil)
+	slog.Debug("Initializing testreports cache... done")
 
+	slog.Debug("Initializing testsuites cache...")
 	suites, err := SelectTableIDs[string](c, ctx, TestSuitesTable, "id")
 	if err != nil {
 		return err
 	}
 	c.cache.UpdateTestSuites(keys(suites), nil)
+	slog.Debug("Initializing testsuites cache... done")
 
-	cases, err := SelectTableIDs[string](c, ctx, TestCasesTable, "id")
+	slog.Debug("Initializing testcases cache...")
+	caseSuites, err := SelectTableIDs[string](c, ctx, TestCasesTable, "testsuite_id")
 	if err != nil {
 		return err
 	}
-	c.cache.UpdateTestCases(keys(cases), nil)
+	c.cache.UpdateTestCases(keymap(caseSuites))
+	slog.Debug("Initializing testcases cache... done")
 
+	slog.Debug("Initializing metrics cache...")
 	metrics, err := SelectTableIDs[int64](c, ctx, LogEmbeddedMetricsTable, "job_id")
 	if err != nil {
 		return err
 	}
-	c.cache.UpdateLogEmbeddedMetrics(keys(metrics), nil)
+	c.cache.UpdateLogEmbeddedMetrics(keymap(metrics))
+	slog.Debug("Initializing metrics cache... done")
 
+	slog.Debug("Initializing tracespans cache...")
 	tracespans, err := SelectTraceSpanIDs(c, ctx)
 	if err != nil {
 		return err
 	}
 	c.cache.UpdateTraceSpans(keys(tracespans), nil)
+	slog.Debug("Initializing tracespans cache... done")
 
 	return nil
 }
@@ -159,4 +184,12 @@ func keys[K int64 | string, V any](m map[K]V) []K {
 		s = append(s, k)
 	}
 	return s
+}
+
+func keymap[K int64 | string, V any](m map[K]V) map[K]bool {
+	km := make(map[K]bool, len(m))
+	for k := range m {
+		km[k] = false
+	}
+	return km
 }

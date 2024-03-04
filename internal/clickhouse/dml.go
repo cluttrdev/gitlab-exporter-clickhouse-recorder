@@ -253,12 +253,11 @@ func InsertSections(c *Client, ctx context.Context, sections []*typespb.Section)
 		"table": SectionsTable,
 	}
 
-	updates := make([]int64, 0, len(sections))
-	updated := make([]bool, len(sections))
+	updated := make(map[int64]bool, len(sections))
 	for _, s := range sections {
-		updates = append(updates, s.Id)
+		updated[s.Job.Id] = false
 	}
-	c.cache.UpdateSections(updates, updated)
+	c.cache.UpdateSections(updated)
 
 	ctx = WithParameters(ctx, params)
 
@@ -267,8 +266,8 @@ func InsertSections(c *Client, ctx context.Context, sections []*typespb.Section)
 		return 0, fmt.Errorf("prepare batch: %w", err)
 	}
 
-	for i, s := range sections {
-		if !updated[i] {
+	for _, s := range sections {
+		if !updated[s.Job.Id] {
 			continue
 		}
 
@@ -328,6 +327,8 @@ func InsertTestReports(c *Client, ctx context.Context, reports []*typespb.TestRe
 	}
 
 	for i, tr := range reports {
+		// always updating test reports we be better, but then we have to
+		// deduplicate in ClickHouse
 		if !updated[i] {
 			continue
 		}
@@ -417,12 +418,11 @@ func InsertTestCases(c *Client, ctx context.Context, cases []*typespb.TestCase) 
 		"table": TestCasesTable,
 	}
 
-	updates := make([]string, 0, len(cases))
-	updated := make([]bool, len(cases))
+	updated := make(map[string]bool, len(cases))
 	for _, tc := range cases {
-		updates = append(updates, tc.Id)
+		updated[tc.TestsuiteId] = false
 	}
-	c.cache.UpdateTestCases(updates, updated)
+	c.cache.UpdateTestCases(updated)
 
 	ctx = WithParameters(ctx, params)
 
@@ -431,8 +431,8 @@ func InsertTestCases(c *Client, ctx context.Context, cases []*typespb.TestCase) 
 		return 0, fmt.Errorf("prepare batch: %w", err)
 	}
 
-	for i, tc := range cases {
-		if !updated[i] {
+	for _, tc := range cases {
+		if !updated[tc.TestsuiteId] {
 			continue
 		}
 
@@ -476,12 +476,11 @@ func InsertMetrics(c *Client, ctx context.Context, metrics []*typespb.Metric) (i
 		"table": LogEmbeddedMetricsTable,
 	}
 
-	updates := make([]int64, 0, len(metrics))
-	updated := make([]bool, len(metrics))
+	updated := make(map[int64]bool, len(metrics))
 	for _, m := range metrics {
-		updates = append(updates, m.Job.Id)
+		updated[m.Job.Id] = false
 	}
-	c.cache.UpdateLogEmbeddedMetrics(updates, updated)
+	c.cache.UpdateLogEmbeddedMetrics(updated)
 
 	ctx = WithParameters(ctx, params)
 
@@ -490,8 +489,8 @@ func InsertMetrics(c *Client, ctx context.Context, metrics []*typespb.Metric) (i
 		return 0, fmt.Errorf("prepare batch: %w", err)
 	}
 
-	for i, m := range metrics {
-		if !updated[i] {
+	for _, m := range metrics {
+		if !updated[m.Job.Id] {
 			continue
 		}
 
