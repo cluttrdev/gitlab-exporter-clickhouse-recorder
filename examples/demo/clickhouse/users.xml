@@ -39,6 +39,14 @@
             The default is 0 - Disabled.
             -->
             <access_management>1</access_management>
+
+            <!--
+            Allow access from localhost only.
+            -->
+            <networks>
+                <ip>::1</ip>
+                <ip>127.0.0.1</ip>
+            </networks>
         </default>
     </users>
 </clickhouse>

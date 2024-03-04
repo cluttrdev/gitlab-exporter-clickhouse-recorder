@@ -3,7 +3,7 @@ clickhouse:
   port: 9000
   database: gitlab_ci
   user: glchr
-  password: supersecret
+  password: glchr
 
 server:
   host: 0.0.0.0

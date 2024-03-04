@@ -8,9 +8,9 @@ datasources:
       defaultDatabase: default
       port: 9000
       server: clickhouse
-      username: default
+      username: $GF_CLICKHOUSE_USER
     secureJsonData:
-      password: ''
+      password: $GF_CLICKHOUSE_PASSWORD
   - name: Prometheus
     type: prometheus
     uid: prometheus
