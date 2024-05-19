@@ -5,14 +5,13 @@ go 1.22
 require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.24.0
 	github.com/cluttrdev/cli v0.0.0-20240318153739-b60d492ac8ff
-	github.com/cluttrdev/gitlab-exporter v0.7.1
+	github.com/cluttrdev/gitlab-exporter v0.7.2-0.20240518115547-e6f6c3c6a65b
 	github.com/creasty/defaults v1.7.0
 	github.com/docker/docker v26.1.3+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/docker/go-units v0.5.0
 	github.com/google/go-cmp v0.6.0
 	github.com/google/uuid v1.6.0
-	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.0.1
 	github.com/oklog/run v1.1.0
 	github.com/prometheus/client_golang v1.19.1
 	github.com/testcontainers/testcontainers-go v0.28.0
@@ -44,6 +43,7 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.0.1 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0 // indirect
 	github.com/klauspost/compress v1.17.8 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect

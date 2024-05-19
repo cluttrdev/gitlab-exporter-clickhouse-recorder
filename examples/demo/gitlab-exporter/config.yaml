@@ -12,23 +12,32 @@ gitlab:
 endpoints:
   - address: "gitlab-exporter-clickhouse-recorder:36275"
 
+project_defaults:
+  export:
+    sections:
+      enabled: true
+    testreports:
+      enabled: true
+    traces:
+      enabled: true
+    metrics:
+      enabled: true
+
+  catch_up:
+    enabled: true
+    updated_after: ""
+    updated_before: ""
+
 projects:
   - id: 50817395  # cluttrdev/gitlab-exporter
 
-    export:
-      sections:
-        enabled: true
-      testreports:
-        enabled: true
-      traces:
-        enabled: true
-      metrics:
-        enabled: true
-    
-    catch_up:
-      enabled: true
-      updated_after: ""
-      updated_before: ""
+namespaces:
+  - id: cluttrdev
+    kind: user
+    visibility: public
+  - id: gitlab-exporter
+    kind: group
+    include_subgroups: true
 
 http:
   enabled: true

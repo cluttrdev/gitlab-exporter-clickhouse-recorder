@@ -17,10 +17,13 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
+
+	"github.com/cluttrdev/gitlab-exporter/grpc/server"
 
 	"github.com/cluttrdev/gitlab-exporter-clickhouse-recorder/internal/clickhouse"
 	"github.com/cluttrdev/gitlab-exporter-clickhouse-recorder/internal/config"
-	"github.com/cluttrdev/gitlab-exporter-clickhouse-recorder/internal/exporter"
+	"github.com/cluttrdev/gitlab-exporter-clickhouse-recorder/internal/recorder"
 )
 
 type RunConfig struct {
@@ -112,10 +115,11 @@ func (c *RunConfig) Exec(ctx context.Context, args []string) error {
 	}
 	client := clickhouse.NewClient(conn, cfg.ClickHouse.Database)
 
+	// create recorder
+	rec := recorder.New(client)
+
 	// create grpc server
-	grpcServer := exporter.NewServer(
-		exporter.NewExporter(client),
-	)
+	grpcServer := server.New(rec)
 
 	// setup run group
 	g := &run.Group{}
@@ -132,6 +136,38 @@ func (c *RunConfig) Exec(ctx context.Context, args []string) error {
 			<-ctx.Done()
 			slog.Info("Stopping grpc server... done")
 		})
+
+		{ // monitor health
+			g.Add(func() error { // execute
+				grpcServer.SetServingStatus("", healthpb.HealthCheckResponse_NOT_SERVING)
+				if err := rec.GetReady(ctx); err != nil {
+					return err
+				}
+				grpcServer.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
+
+				errChan := rec.WatchReadiness(ctx)
+				var latestErr error
+				for {
+					err, ok := <-errChan
+					if !ok {
+						// channel closed, return last error
+						return latestErr
+					}
+
+					latestErr = err
+					if errors.Is(err, context.Canceled) {
+						return err
+					} else if err != nil {
+						grpcServer.SetServingStatus("", healthpb.HealthCheckResponse_NOT_SERVING)
+					} else {
+						slog.Info("Readiness check successful")
+						grpcServer.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
+					}
+				}
+			}, func(err error) { // interrupt
+				cancel()
+			})
+		}
 	}
 
 	if cfg.HTTP.Enabled { // serve http

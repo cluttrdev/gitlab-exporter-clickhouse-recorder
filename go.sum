@@ -22,8 +22,8 @@ github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UF
 github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/cluttrdev/cli v0.0.0-20240318153739-b60d492ac8ff h1:sLmFPSp1na6ay0Z2BkxIK9zwuWZ+nW6EISyTQl6soec=
 github.com/cluttrdev/cli v0.0.0-20240318153739-b60d492ac8ff/go.mod h1:Yo/r2O/t6guxglvLWE11UXM/0uEcjWPlK3poxjXktWc=
-github.com/cluttrdev/gitlab-exporter v0.7.1 h1:gTqDzwDCf9RKyTvJ8Iu6FgHQ59VykepOo9b96hsPoVg=
-github.com/cluttrdev/gitlab-exporter v0.7.1/go.mod h1:Eiry+3m3lrQ62jxUcyGKTE5s9pb74o+LlLP//4JAYko=
+github.com/cluttrdev/gitlab-exporter v0.7.2-0.20240518115547-e6f6c3c6a65b h1:Ku5Ai2xBRuK7ubT6KOHDu+9Za8lUgAR7WIcszW2wYIw=
+github.com/cluttrdev/gitlab-exporter v0.7.2-0.20240518115547-e6f6c3c6a65b/go.mod h1:E4EMCjDfa2Mge4ZqkFdVoYjAV2d4qhfaM4Mn3lhXs5Y=
 github.com/containerd/containerd v1.7.12 h1:+KQsnv4VnzyxWcfO9mlxxELaoztsDEjOuCMPAuPqgU0=
 github.com/containerd/containerd v1.7.12/go.mod h1:/5OMpE1p0ylxtEUGY8kuCYkDRzJm9NO1TFMWjUpdevk=
 github.com/containerd/log v0.1.0 h1:TCJt7ioM2cr/tfR8GPbGf9/VRAX8D2B4PjzCpfX540I=
