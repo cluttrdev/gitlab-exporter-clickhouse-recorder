@@ -28,8 +28,7 @@ func InsertPipelines(c *Client, ctx context.Context, pipelines []*typespb.Pipeli
 	if c == nil {
 		return 0, errors.New("nil client")
 	}
-
-	const query string = `INSERT INTO {db: Identifier}.{table: Identifier}`
+	const query string = `INSERT INTO {db:Identifier}.{table:Identifier}`
 	var params = map[string]string{
 		"db":    c.dbName,
 		"table": PipelinesTable,
@@ -91,7 +90,7 @@ func InsertPipelines(c *Client, ctx context.Context, pipelines []*typespb.Pipeli
 }
 
 func InsertJobs(c *Client, ctx context.Context, jobs []*typespb.Job) (int, error) {
-	const query string = `INSERT INTO {db: Identifier}.{table: Identifier}`
+	const query string = `INSERT INTO {db:Identifier}.{table:Identifier}`
 	var params = map[string]string{
 		"db":    c.dbName,
 		"table": JobsTable,
@@ -164,7 +163,7 @@ func InsertJobs(c *Client, ctx context.Context, jobs []*typespb.Job) (int, error
 }
 
 func InsertBridges(c *Client, ctx context.Context, bridges []*typespb.Bridge) (int, error) {
-	const query string = `INSERT INTO {db: Identifier}.{table: Identifier}`
+	const query string = `INSERT INTO {db:Identifier}.{table:Identifier}`
 	var params = map[string]string{
 		"db":    c.dbName,
 		"table": BridgesTable,
@@ -247,7 +246,7 @@ func InsertBridges(c *Client, ctx context.Context, bridges []*typespb.Bridge) (i
 }
 
 func InsertSections(c *Client, ctx context.Context, sections []*typespb.Section) (int, error) {
-	const query string = `INSERT INTO {db: Identifier}.{table: Identifier}`
+	const query string = `INSERT INTO {db:Identifier}.{table:Identifier}`
 	var params = map[string]string{
 		"db":    c.dbName,
 		"table": SectionsTable,
@@ -306,7 +305,7 @@ func InsertSections(c *Client, ctx context.Context, sections []*typespb.Section)
 }
 
 func InsertTestReports(c *Client, ctx context.Context, reports []*typespb.TestReport) (int, error) {
-	const query string = `INSERT INTO {db: Identifier}.{table: Identifier}`
+	const query string = `INSERT INTO {db:Identifier}.{table:Identifier}`
 	var params = map[string]string{
 		"db":    c.dbName,
 		"table": TestReportsTable,
@@ -359,7 +358,7 @@ func InsertTestReports(c *Client, ctx context.Context, reports []*typespb.TestRe
 }
 
 func InsertTestSuites(c *Client, ctx context.Context, suites []*typespb.TestSuite) (int, error) {
-	const query string = `INSERT INTO {db: Identifier}.{table: Identifier}`
+	const query string = `INSERT INTO {db:Identifier}.{table:Identifier}`
 	var params = map[string]string{
 		"db":    c.dbName,
 		"table": TestSuitesTable,
@@ -412,7 +411,7 @@ func InsertTestSuites(c *Client, ctx context.Context, suites []*typespb.TestSuit
 }
 
 func InsertTestCases(c *Client, ctx context.Context, cases []*typespb.TestCase) (int, error) {
-	const query string = `INSERT INTO {db: Identifier}.{table: Identifier}`
+	const query string = `INSERT INTO {db:Identifier}.{table:Identifier}`
 	var params = map[string]string{
 		"db":    c.dbName,
 		"table": TestCasesTable,
@@ -470,7 +469,7 @@ func InsertTestCases(c *Client, ctx context.Context, cases []*typespb.TestCase) 
 }
 
 func InsertMetrics(c *Client, ctx context.Context, metrics []*typespb.Metric) (int, error) {
-	const query string = `INSERT INTO {db: Identifier}.{table: Identifier}`
+	const query string = `INSERT INTO {db:Identifier}.{table:Identifier}`
 	var params = map[string]string{
 		"db":    c.dbName,
 		"table": LogEmbeddedMetricsTable,
@@ -518,7 +517,7 @@ func InsertMetrics(c *Client, ctx context.Context, metrics []*typespb.Metric) (i
 }
 
 func InsertTraces(c *Client, ctx context.Context, traces []*typespb.Trace) (int, error) {
-	const query string = `INSERT INTO {db: Identifier}.{table: Identifier}`
+	const query string = `INSERT INTO {db:Identifier}.{table:Identifier}`
 	var params = map[string]string{
 		"db":    c.dbName,
 		"table": TraceSpansTable,

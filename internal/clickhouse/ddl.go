@@ -19,7 +19,7 @@ const (
 
 const (
 	createPipelinesTableSQL = `
-CREATE TABLE IF NOT EXISTS {db: Identifier}.{table: Identifier} (
+CREATE TABLE IF NOT EXISTS {db:Identifier}.{table:Identifier} (
     id Int64,
     iid Int64,
     project_id Int64,
@@ -46,7 +46,7 @@ ORDER BY id
     `
 
 	createJobsTableSQL = `
-CREATE TABLE IF NOT EXISTS {db: Identifier}.{table: Identifier} (
+CREATE TABLE IF NOT EXISTS {db:Identifier}.{table:Identifier} (
     coverage Float64,
     allow_failure Bool,
     created_at Float64,
@@ -78,7 +78,7 @@ ORDER BY id
     `
 
 	createBridgesTableSQL = `
-CREATE TABLE IF NOT EXISTS {db: Identifier}.{table: Identifier} (
+CREATE TABLE IF NOT EXISTS {db:Identifier}.{table:Identifier} (
     coverage Float64,
     allow_failure Bool,
     created_at Float64,
@@ -126,7 +126,7 @@ ORDER BY id
     `
 
 	createSectionsTableSQL = `
-CREATE TABLE IF NOT EXISTS {db: Identifier}.{table: Identifier} (
+CREATE TABLE IF NOT EXISTS {db:Identifier}.{table:Identifier} (
     id Int64,
     name String,
     job Tuple(
@@ -151,7 +151,7 @@ ORDER BY id
     `
 
 	createTestReportsTableSQL = `
-CREATE TABLE IF NOT EXISTS {db: Identifier}.{table: Identifier} (
+CREATE TABLE IF NOT EXISTS {db:Identifier}.{table:Identifier} (
     id String,
     pipeline_id Int64,
     total_time Float64,
@@ -167,7 +167,7 @@ ORDER BY id
     `
 
 	createTestSuitesTableSQL = `
-CREATE TABLE IF NOT EXISTS {db: Identifier}.{table: Identifier} (
+CREATE TABLE IF NOT EXISTS {db:Identifier}.{table:Identifier} (
     id String,
     testreport_id String,
     pipeline_id Int64,
@@ -185,7 +185,7 @@ ORDER BY id
     `
 
 	createTestCasesTableSQL = `
-CREATE TABLE IF NOT EXISTS {db: Identifier}.{table: Identifier} (
+CREATE TABLE IF NOT EXISTS {db:Identifier}.{table:Identifier} (
     id String,
     testsuite_id String,
     testreport_id String,
@@ -209,7 +209,7 @@ ORDER BY id
     `
 
 	createLogEmbeddedMetricsTableSQL = `
-CREATE TABLE IF NOT EXISTS {db: Identifier}.{table: Identifier} (
+CREATE TABLE IF NOT EXISTS {db:Identifier}.{table:Identifier} (
     name String,
     labels Map(String, String),
     value Float64,
@@ -228,7 +228,7 @@ const (
 	// schemas taken from https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/exporter/clickhouseexporter/exporter_traces.go
 
 	createTracesTableSQL = `
-CREATE TABLE IF NOT EXISTS {db: Identifier}.{table: Identifier} (
+CREATE TABLE IF NOT EXISTS {db:Identifier}.{table:Identifier} (
      Timestamp DateTime64(9) CODEC(Delta, ZSTD(1)),
      TraceId String CODEC(ZSTD(1)),
      SpanId String CODEC(ZSTD(1)),
@@ -269,7 +269,7 @@ SETTINGS index_granularity=8192, ttl_only_drop_parts = 1
     `
 
 	createTraceIdTsTableSQL = `
-CREATE TABLE IF NOT EXISTS {db: Identifier}.{table: Identifier} (
+CREATE TABLE IF NOT EXISTS {db:Identifier}.{table:Identifier} (
      TraceId String CODEC(ZSTD(1)),
      Start DateTime64(9) CODEC(Delta, ZSTD(1)),
      End DateTime64(9) CODEC(Delta, ZSTD(1)),
@@ -281,13 +281,13 @@ SETTINGS index_granularity=8192
     `
 
 	createTraceIdTsMaterializedViewSQL = `
-CREATE MATERIALIZED VIEW IF NOT EXISTS {db: Identifier}.{view: Identifier}
-TO {db: Identifier}.%s
+CREATE MATERIALIZED VIEW IF NOT EXISTS {db:Identifier}.{view:Identifier}
+TO {db:Identifier}.%s
 AS SELECT
     TraceId,
     min(Timestamp) as Start,
     max(Timestamp) as End
-FROM {db: Identifier}.%s
+FROM {db:Identifier}.%s
 WHERE TraceId != ''
 GROUP BY TraceId
 ;
@@ -474,8 +474,8 @@ func createTraceView(c *Client, ctx context.Context, db string) error {
 	const viewName string = "trace_view"
 	var query string = fmt.Sprintf(
 		createTraceViewSQL,
-		db, viewName, // {db: Identifier}.{view: Identifier}
-		db, TraceSpansTable, // {db:Identifier}.{tableFrom: Identifier}
+		db, viewName, // {db:Identifier}.{view:Identifier}
+		db, TraceSpansTable, // {db:Identifier}.{tableFrom:Identifier}
 	)
 	return c.Exec(
 		WithParameters(ctx, map[string]string{
