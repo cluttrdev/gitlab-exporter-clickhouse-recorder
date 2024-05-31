@@ -16,6 +16,18 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+const (
+	PipelinesTable          string = "pipelines"
+	JobsTable               string = "jobs"
+	SectionsTable           string = "sections"
+	BridgesTable            string = "bridges"
+	TestReportsTable        string = "testreports"
+	TestSuitesTable         string = "testsuites"
+	TestCasesTable          string = "testcases"
+	LogEmbeddedMetricsTable string = "metrics"
+	TraceSpansTable         string = "traces"
+)
+
 func convertTimestamp(ts *timestamppb.Timestamp) float64 {
 	return float64(ts.GetSeconds()) + float64(ts.GetNanos())*1.0e-09
 }

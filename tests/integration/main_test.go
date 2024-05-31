@@ -2,7 +2,10 @@ package integration_tests
 
 import (
 	"context"
+	"fmt"
+	"io/fs"
 	"os"
+	"path/filepath"
 	"testing"
 
 	ch "github.com/ClickHouse/clickhouse-go/v2"
@@ -25,7 +28,7 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 
-	if err := CreateTables(testSet); err != nil {
+	if err := RunSchemaMigrations(testSet); err != nil {
 		panic(err)
 	}
 
@@ -49,11 +52,40 @@ func GetTestClient(testSet string) (*clickhouse.Client, error) {
 	return clickhouse.NewClient(conn, te.Database), nil
 }
 
-func CreateTables(testSet string) error {
-	client, err := GetTestClient(testSet)
+type OSPathFS struct {
+	Path string
+}
+
+func (fsys *OSPathFS) Open(name string) (fs.File, error) {
+	return os.Open(filepath.Join(fsys.Path, name))
+}
+
+func RunSchemaMigrations(testSet string) error {
+	env, err := GetTestEnvironment(testSet)
 	if err != nil {
 		return err
 	}
 
-	return client.CreateTables(context.Background())
+	root, err := filepath.Abs("../../db/migrations")
+	if err != nil {
+		return err
+	}
+
+	fsys := OSPathFS{
+		Path: filepath.Clean(root),
+	}
+
+	opts := clickhouse.MigrationOptions{
+		ClientConfig: clickhouse.ClientConfig{
+			Host:     env.Host,
+			Port:     fmt.Sprint(env.Port),
+			Database: env.Database,
+			User:     env.Username,
+			Password: env.Password,
+		},
+
+		FileSystem: &fsys,
+		Path:       "",
+	}
+	return clickhouse.MigrateUp(opts)
 }

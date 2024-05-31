@@ -98,10 +98,6 @@ func (c *Client) PrepareBatch(ctx context.Context, query string) (driver.Batch, 
 	return c.conn.PrepareBatch(ctx, query)
 }
 
-func (c *Client) CreateTables(ctx context.Context) error {
-	return createTables(ctx, c.dbName, c)
-}
-
 func (c *Client) InitCache(ctx context.Context) error {
 	slog.Debug("Initializing pipelines cache...")
 	pipelines, err := SelectPipelineMaxUpdatedAt(c, ctx)

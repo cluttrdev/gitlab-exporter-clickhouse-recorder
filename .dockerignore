@@ -11,3 +11,6 @@
 !main.go
 !cmd/
 !internal/
+
+## Migration files
+!db/migrations/

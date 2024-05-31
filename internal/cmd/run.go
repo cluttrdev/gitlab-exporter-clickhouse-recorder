@@ -154,12 +154,14 @@ func (c *RunConfig) Exec(ctx context.Context, args []string) error {
 						return latestErr
 					}
 
-					latestErr = err
 					if errors.Is(err, context.Canceled) {
 						return err
-					} else if err != nil {
+					}
+
+					if err != nil {
+						latestErr = err
 						grpcServer.SetServingStatus("", healthpb.HealthCheckResponse_NOT_SERVING)
-					} else {
+					} else if latestErr != nil {
 						slog.Info("Readiness check successful")
 						grpcServer.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
 					}

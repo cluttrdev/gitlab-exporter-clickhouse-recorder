@@ -24,6 +24,7 @@ func Execute() error {
 	root.Subcommands = []*cli.Command{
 		NewRunCmd(out),
 		NewDeduplicateCmd(out),
+		NewMigrateCommand(out),
 		cli.NewVersionCommand(cli.NewBuildInfo(Version), out),
 	}
 
