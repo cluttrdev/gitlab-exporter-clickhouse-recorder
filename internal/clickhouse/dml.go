@@ -24,6 +24,7 @@ const (
 	TestReportsTable        string = "testreports"
 	TestSuitesTable         string = "testsuites"
 	TestCasesTable          string = "testcases"
+	MergeRequestsTable      string = "mergerequests"
 	LogEmbeddedMetricsTable string = "metrics"
 	TraceSpansTable         string = "traces"
 )
@@ -476,6 +477,98 @@ func InsertTestCases(c *Client, ctx context.Context, cases []*typespb.TestCase) 
 
 	n := batch.Rows()
 	slog.Debug("Recorded testcases", "received", len(cases), "inserted", n)
+
+	return n, nil
+}
+
+func InsertMergeRequests(c *Client, ctx context.Context, mrs []*typespb.MergeRequest) (int, error) {
+	if c == nil {
+		return 0, errors.New("nil client")
+	}
+	const query string = `INSERT INTO {db:Identifier}.{table:Identifier}`
+	var params = map[string]string{
+		"db":    c.dbName,
+		"table": MergeRequestsTable,
+	}
+
+	updates := make(map[int64]float64, len(mrs))
+	updated := make(map[int64]bool, len(mrs))
+	for _, mr := range mrs {
+		updates[mr.Id] = convertTimestamp(mr.UpdatedAt)
+	}
+	c.cache.UpdateMergeRequests(updates, updated)
+
+	ctx = WithParameters(ctx, params)
+
+	batch, err := c.PrepareBatch(ctx, query)
+	if err != nil {
+		return 0, fmt.Errorf("prepare batch: %w", err)
+	}
+
+	for _, mr := range mrs {
+		if !updated[mr.Id] {
+			continue
+		}
+
+		assignees_id := make([]int64, 0, len(mr.Assignees))
+		for _, a := range mr.Assignees {
+			assignees_id = append(assignees_id, a.Id)
+		}
+		reviewers_id := make([]int64, 0, len(mr.Reviewers))
+		for _, a := range mr.Reviewers {
+			reviewers_id = append(reviewers_id, a.Id)
+		}
+
+		err = batch.Append(
+			mr.Id,
+			mr.Iid,
+			mr.ProjectId,
+			convertTimestamp(mr.CreatedAt),
+			convertTimestamp(mr.UpdatedAt),
+			convertTimestamp(mr.MergedAt),
+			convertTimestamp(mr.ClosedAt),
+			mr.SourceProjectId,
+			mr.TargetProjectId,
+			mr.SourceBranch,
+			mr.TargetBranch,
+			mr.Title,
+			mr.State,
+			mr.DetailedMergeStatus,
+			mr.Draft,
+			mr.HasConflicts,
+			mr.MergeError,
+			mr.DiffRefs.BaseSha,
+			mr.DiffRefs.HeadSha,
+			mr.DiffRefs.StartSha,
+			mr.GetAuthor().GetId(),
+			mr.GetAssignee().GetId(),
+			assignees_id,
+			reviewers_id,
+			mr.GetMergeUser().GetId(),
+			mr.GetCloseUser().GetId(),
+			mr.Labels,
+			mr.Sha,
+			mr.MergeCommitSha,
+			mr.SquashCommitSha,
+			mr.ChangesCount,
+			mr.UserNotesCount,
+			mr.Upvotes,
+			mr.Downvotes,
+			mr.GetPipeline().GetId(),
+			mr.GetMilestone().GetId(),
+			mr.WebUrl,
+		)
+		if err != nil {
+			return 0, fmt.Errorf("append batch: %w", err)
+		}
+	}
+
+	if err := batch.Send(); err != nil {
+		return -1, fmt.Errorf("send batch: %w", err)
+	}
+
+	n := batch.Rows()
+	slog.Debug("Recorded mergerequests", "received", len(mrs), "inserted", n)
 
 	return n, nil
 }

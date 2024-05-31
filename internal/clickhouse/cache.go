@@ -14,6 +14,7 @@ type Cache struct {
 	testReports        map[string]struct{}
 	testSuites         map[string]struct{}
 	testCases          map[string]struct{}
+	mergeRequests      map[int64]float64
 	logEmbeddedMetrics map[int64]struct{}
 	traceSpans         map[string]struct{}
 }
@@ -27,6 +28,7 @@ func NewCache() *Cache {
 		testReports:        make(map[string]struct{}),
 		testSuites:         make(map[string]struct{}),
 		testCases:          make(map[string]struct{}),
+		mergeRequests:      make(map[int64]float64),
 		logEmbeddedMetrics: make(map[int64]struct{}),
 		traceSpans:         make(map[string]struct{}),
 	}
@@ -159,6 +161,24 @@ func (c *Cache) UpdateTestCases(keys map[string]bool) {
 
 	for suiteID := range newTestSuiteIDs {
 		c.testCases[suiteID] = struct{}{}
+	}
+}
+
+func (c *Cache) UpdateMergeRequests(data map[int64]float64, updated map[int64]bool) {
+	c.Lock()
+	defer c.Unlock()
+	for k, v := range data {
+		timestamp, ok := c.mergeRequests[k]
+		if !ok || timestamp < v {
+			c.mergeRequests[k] = v
+			if updated != nil {
+				updated[k] = true
+			}
+		} else {
+			if updated != nil {
+				updated[k] = false
+			}
+		}
 	}
 }
 
