@@ -156,12 +156,28 @@ func (c *Client) InitCache(ctx context.Context) error {
 	slog.Debug("Initializing testcases cache... done")
 
 	slog.Debug("Initializing metrics cache...")
-	metrics, err := SelectTableIDs[int64](c, ctx, LogEmbeddedMetricsTable, "job_id")
+	metrics, err := SelectTableIDs[int64](c, ctx, MetricsTable, "job_id")
 	if err != nil {
 		return err
 	}
-	c.cache.UpdateLogEmbeddedMetrics(keymap(metrics))
+	c.cache.UpdateMetrics(keymap(metrics))
 	slog.Debug("Initializing metrics cache... done")
+
+	slog.Debug("Initializing mergerequests cache...")
+	mergerequests, err := SelectTableIDLastestUpdates(c, ctx, MergeRequestsTable, "id", "updated_at")
+	if err != nil {
+		return err
+	}
+	c.cache.UpdateMergeRequests(mergerequests, nil)
+	slog.Debug("Initializing mergerequests cache... done")
+
+	slog.Debug("Initializing projects cache...")
+	projects, err := SelectTableIDLastestUpdates(c, ctx, ProjectsTable, "id", "last_activity_at")
+	if err != nil {
+		return err
+	}
+	c.cache.UpdateProjects(projects, nil)
+	slog.Debug("Initializing projects cache... done")
 
 	slog.Debug("Initializing tracespans cache...")
 	tracespans, err := SelectTraceSpanIDs(c, ctx)

@@ -7,30 +7,32 @@ import (
 type Cache struct {
 	sync.RWMutex
 
-	pipelines          map[int64]float64
-	jobs               map[int64]struct{}
-	sections           map[int64]struct{}
-	bridges            map[int64]struct{}
-	testReports        map[string]struct{}
-	testSuites         map[string]struct{}
-	testCases          map[string]struct{}
-	mergeRequests      map[int64]float64
-	logEmbeddedMetrics map[int64]struct{}
-	traceSpans         map[string]struct{}
+	pipelines     map[int64]float64
+	jobs          map[int64]struct{}
+	sections      map[int64]struct{}
+	bridges       map[int64]struct{}
+	testReports   map[string]struct{}
+	testSuites    map[string]struct{}
+	testCases     map[string]struct{}
+	mergeRequests map[int64]float64
+	metrics       map[int64]struct{}
+	projects      map[int64]float64
+	traceSpans    map[string]struct{}
 }
 
 func NewCache() *Cache {
 	return &Cache{
-		pipelines:          make(map[int64]float64),
-		jobs:               make(map[int64]struct{}),
-		sections:           make(map[int64]struct{}),
-		bridges:            make(map[int64]struct{}),
-		testReports:        make(map[string]struct{}),
-		testSuites:         make(map[string]struct{}),
-		testCases:          make(map[string]struct{}),
-		mergeRequests:      make(map[int64]float64),
-		logEmbeddedMetrics: make(map[int64]struct{}),
-		traceSpans:         make(map[string]struct{}),
+		pipelines:     make(map[int64]float64),
+		jobs:          make(map[int64]struct{}),
+		sections:      make(map[int64]struct{}),
+		bridges:       make(map[int64]struct{}),
+		testReports:   make(map[string]struct{}),
+		testSuites:    make(map[string]struct{}),
+		testCases:     make(map[string]struct{}),
+		mergeRequests: make(map[int64]float64),
+		metrics:       make(map[int64]struct{}),
+		projects:      make(map[int64]float64),
+		traceSpans:    make(map[string]struct{}),
 	}
 }
 
@@ -182,20 +184,20 @@ func (c *Cache) UpdateMergeRequests(data map[int64]float64, updated map[int64]bo
 	}
 }
 
-// UpdateLogEmbeddedMetrics updates the cache used to prevent inserting duplicate metrics.
+// UpdateMetrics updates the cache used to prevent inserting duplicate metrics.
 // For each key in the given map we check whether it is already cached.
 // If it is, the correspopnding map value is set to `false`, else it will be
 // added to the cache and the correponding map value is set to `true`.
 // In order to not require holding each individual metric ID in memory, we
 // use the metric's job ID as a cache key.
-func (c *Cache) UpdateLogEmbeddedMetrics(keys map[int64]bool) {
+func (c *Cache) UpdateMetrics(keys map[int64]bool) {
 	c.Lock()
 	defer c.Unlock()
 
 	newJobIDs := make(map[int64]struct{})
 
 	for jobID := range keys {
-		_, ok := c.logEmbeddedMetrics[jobID]
+		_, ok := c.metrics[jobID]
 		if !ok {
 			newJobIDs[jobID] = struct{}{}
 		}
@@ -204,7 +206,25 @@ func (c *Cache) UpdateLogEmbeddedMetrics(keys map[int64]bool) {
 	}
 
 	for jobID := range newJobIDs {
-		c.logEmbeddedMetrics[jobID] = struct{}{}
+		c.metrics[jobID] = struct{}{}
+	}
+}
+
+func (c *Cache) UpdateProjects(data map[int64]float64, updated map[int64]bool) {
+	c.Lock()
+	defer c.Unlock()
+	for k, v := range data {
+		timestamp, ok := c.projects[k]
+		if !ok || timestamp < v {
+			c.projects[k] = v
+			if updated != nil {
+				updated[k] = true
+			}
+		} else {
+			if updated != nil {
+				updated[k] = false
+			}
+		}
 	}
 }
 

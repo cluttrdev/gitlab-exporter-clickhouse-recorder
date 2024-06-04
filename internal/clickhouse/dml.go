@@ -17,16 +17,17 @@ import (
 )
 
 const (
-	PipelinesTable          string = "pipelines"
-	JobsTable               string = "jobs"
-	SectionsTable           string = "sections"
-	BridgesTable            string = "bridges"
-	TestReportsTable        string = "testreports"
-	TestSuitesTable         string = "testsuites"
-	TestCasesTable          string = "testcases"
-	MergeRequestsTable      string = "mergerequests"
-	LogEmbeddedMetricsTable string = "metrics"
-	TraceSpansTable         string = "traces"
+	PipelinesTable     string = "pipelines"
+	JobsTable          string = "jobs"
+	SectionsTable      string = "sections"
+	BridgesTable       string = "bridges"
+	TestReportsTable   string = "testreports"
+	TestSuitesTable    string = "testsuites"
+	TestCasesTable     string = "testcases"
+	MergeRequestsTable string = "mergerequests"
+	MetricsTable       string = "metrics"
+	ProjectsTable      string = "projects"
+	TraceSpansTable    string = "traces"
 )
 
 func convertTimestamp(ts *timestamppb.Timestamp) float64 {
@@ -577,14 +578,14 @@ func InsertMetrics(c *Client, ctx context.Context, metrics []*typespb.Metric) (i
 	const query string = `INSERT INTO {db:Identifier}.{table:Identifier}`
 	var params = map[string]string{
 		"db":    c.dbName,
-		"table": LogEmbeddedMetricsTable,
+		"table": MetricsTable,
 	}
 
 	updated := make(map[int64]bool, len(metrics))
 	for _, m := range metrics {
 		updated[m.Job.Id] = false
 	}
-	c.cache.UpdateLogEmbeddedMetrics(updated)
+	c.cache.UpdateMetrics(updated)
 
 	ctx = WithParameters(ctx, params)
 
@@ -617,6 +618,80 @@ func InsertMetrics(c *Client, ctx context.Context, metrics []*typespb.Metric) (i
 
 	n := batch.Rows()
 	slog.Debug("Recorded metrics", "received", len(metrics), "inserted", n)
+
+	return n, nil
+}
+
+func InsertProjects(c *Client, ctx context.Context, projects []*typespb.Project) (int, error) {
+	const query string = `INSERT INTO {db:Identifier}.{table:Identifier}`
+	var params = map[string]string{
+		"db":    c.dbName,
+		"table": ProjectsTable,
+	}
+
+	updates := make(map[int64]float64, len(projects))
+	updated := make(map[int64]bool, len(projects))
+	for _, p := range projects {
+		updates[p.Id] = convertTimestamp(p.LastActivityAt)
+	}
+	c.cache.UpdateProjects(updates, updated)
+
+	ctx = WithParameters(ctx, params)
+
+	batch, err := c.PrepareBatch(ctx, query)
+	if err != nil {
+		return 0, fmt.Errorf("prepare batch: %w", err)
+	}
+
+	for _, p := range projects {
+		if !updated[p.Id] {
+			continue
+		}
+
+		err = batch.Append(
+			p.Id,
+			p.GetNamespace().GetId(),
+			p.GetOwner().GetId(),
+			p.CreatorId,
+			p.Name,
+			p.NameWithNamespace,
+			p.Path,
+			p.PathWithNamespace,
+			p.Description,
+			p.Visibility,
+			convertTimestamp(p.CreatedAt),
+			convertTimestamp(p.LastActivityAt), //< real 'updated_at' not available, yet
+			convertTimestamp(p.LastActivityAt),
+			p.Topics,
+			p.DefaultBranch,
+			p.EmptyRepo,
+			p.Archived,
+			p.ForksCount,
+			p.StarsCount,
+			p.GetStatistics().GetCommitCount(),
+			p.GetStatistics().GetStorageSize(),
+			p.GetStatistics().GetRepositorySize(),
+			p.GetStatistics().GetWikiSize(),
+			p.GetStatistics().GetLfsObjectsSize(),
+			p.GetStatistics().GetJobArtifactsSize(),
+			p.GetStatistics().GetPipelineArtifactsSize(),
+			p.GetStatistics().GetPackagesSize(),
+			p.GetStatistics().GetSnippetsSize(),
+			p.GetStatistics().GetUploadsSize(),
+			p.OpenIssuesCount,
+			p.WebUrl,
+		)
+		if err != nil {
+			return 0, fmt.Errorf("append batch:  %w", err)
+		}
+	}
+
+	if err := batch.Send(); err != nil {
+		return -1, fmt.Errorf("send batch: %w", err)
+	}
+
+	n := batch.Rows()
+	slog.Debug("Recorded projects", "received", len(projects), "inserted", n)
 
 	return n, nil
 }
