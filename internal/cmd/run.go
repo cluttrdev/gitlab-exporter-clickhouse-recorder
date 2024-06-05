@@ -115,6 +115,10 @@ func (c *RunConfig) Exec(ctx context.Context, args []string) error {
 	}
 	client := clickhouse.NewClient(conn, cfg.ClickHouse.Database)
 
+	if err := c.checkSchemaVersion(ctx, client); err != nil {
+		return fmt.Errorf("error checking database schema: %w", err)
+	}
+
 	// create recorder
 	rec := recorder.New(client)
 
@@ -198,6 +202,29 @@ func (c *RunConfig) Exec(ctx context.Context, args []string) error {
 	}
 
 	return g.Run()
+}
+
+func (c *RunConfig) checkSchemaVersion(ctx context.Context, ch *clickhouse.Client) error {
+	schemaVersion, dirty, err := clickhouse.GetSchemaVersion(ch, ctx)
+	if err != nil {
+		return fmt.Errorf("error getting schema version: %w", err)
+	} else if dirty {
+		return fmt.Errorf("database schema is dirty")
+	}
+
+	fsys := MigrationsFileSystem
+	path := MigrationsPath
+	migrationsVersion, err := clickhouse.GetLatestMigrationVersion(fsys, path)
+	if err != nil {
+		return fmt.Errorf("error getting migrations version: %w", err)
+	}
+
+	if schemaVersion != migrationsVersion {
+		slog.Error("Database schema version does not match migrations", "schema", schemaVersion, "migrations", migrationsVersion)
+		return fmt.Errorf("database schema version mismatch")
+	}
+	slog.Debug("Database schema version matches migrations", "schema", schemaVersion, "migrations", migrationsVersion)
+	return nil
 }
 
 func serveHTTP(cfg config.HTTP, reg *prometheus.Registry) (func() error, func(error)) {

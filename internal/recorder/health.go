@@ -11,7 +11,11 @@ import (
 )
 
 func (r *ClickHouseRecorder) CheckReadiness(ctx context.Context) error {
-	return r.client.Ping(ctx)
+	if err := r.client.Ping(ctx); err != nil {
+		return fmt.Errorf("error pinging clickhouse: %w", err)
+	}
+
+	return nil
 }
 
 func (r *ClickHouseRecorder) WaitForReady(ctx context.Context) error {
