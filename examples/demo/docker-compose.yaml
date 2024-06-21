@@ -7,10 +7,10 @@ services:
     container_name: gitlab-exporter
     depends_on:
       - gitlab-exporter-clickhouse-recorder
-    # image: ghcr.io/cluttrdev/gitlab-exporter:latest
-    image: cluttrdev/gitlab-exporter:v0.7.1-14-20240422054926-c1690ffa2917-modified
+    image: ghcr.io/cluttrdev/gitlab-exporter:latest
     environment:
       GLE_GITLAB_API_TOKEN: ${GITLAB_API_TOKEN}
+      GLE_LOG_LEVEL: debug
     volumes:
       - ./gitlab-exporter/config.yaml:/etc/gitlab-exporter.yaml:ro
     expose:
@@ -24,6 +24,8 @@ services:
     depends_on:
       clickhouse:
         condition: service_healthy
+      gitlab-exporter-clickhouse-recorder-migrate:
+        condition: service_completed_successfully
     image: ghcr.io/cluttrdev/gitlab-exporter-clickhouse-recorder:latest
     environment:
       GLCHR_LOG_LEVEL: debug
@@ -36,6 +38,18 @@ services:
       - 127.0.0.1:36275:36275
       - 127.0.0.1:9101:9100
     command: ["run", "--config", "/etc/gitlab-exporter-clickhouse-recorder.yaml"]
+
+  gitlab-exporter-clickhouse-recorder-migrate:
+    container_name: gitlab-exporter-clickhouse-recorder-migrate
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    image: ghcr.io/cluttrdev/gitlab-exporter-clickhouse-recorder:latest
+    environment:
+      GLCHR_LOG_LEVEL: debug
+    volumes:
+      - ./gitlab-exporter-clickhouse-recorder/config.yaml:/etc/gitlab-exporter-clickhouse-recorder.yaml:ro
+    command: ["migrate", "--config", "/etc/gitlab-exporter-clickhouse-recorder.yaml"]
 
   clickhouse:
     container_name: clickhouse
