@@ -30,6 +30,7 @@ project_defaults:
 
 projects:
   - id: 50817395  # cluttrdev/gitlab-exporter
+  - id: 34675721  # gitlab-org/cli
 
 namespaces:
   - id: cluttrdev

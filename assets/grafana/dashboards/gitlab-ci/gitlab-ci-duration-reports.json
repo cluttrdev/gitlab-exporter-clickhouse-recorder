@@ -1,0 +1,668 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_CLICKHOUSE_UID",
+      "label": "ClickHouse Data Source",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "grafana-clickhouse-datasource",
+      "pluginName": "ClickHouse"
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${DS_CLICKHOUSE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic",
+            "seriesBy": "last"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "s",
+          "unitScale": true
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "count()"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "bars"
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "unit",
+                "value": "none"
+              },
+              {
+                "id": "custom.stacking",
+                "value": {
+                  "group": "A",
+                  "mode": "normal"
+                }
+              },
+              {
+                "id": "custom.gradientMode",
+                "value": "hue"
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 50
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/main/"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "semi-dark-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/merge-request/"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "semi-dark-orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/branch/"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "semi-dark-yellow",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/tag/"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "semi-dark-purple",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${DS_CLICKHOUSE}"
+          },
+          "editorType": "sql",
+          "format": 0,
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 100,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
+          "pluginVersion": "4.0.2",
+          "queryType": "timeseries",
+          "rawSql": "SELECT\n  toStartOfInterval(toDateTime64(finished_at, 3), INTERVAL ${interval_days} day) AS time,\n  quantileTiming(${percentile})(duration) AS duration,\n  count(),\n  CASE\n    WHEN ref LIKE 'refs/merge-requests/%' THEN 'merge-request'\n    WHEN ref IN ('main', 'master') THEN 'main'\n    WHEN tag THEN 'tag'\n    ELSE 'branch'\n  END AS ref_type\nFROM gitlab_ci.pipelines\nWHERE project_id = ${project_id}\n  AND $__timeFilter(finished_at)\n  AND ref_type IN splitByChar(',', '${ref_type:raw}')\n  AND status IN splitByChar(',', '${status:raw}')\nGROUP BY time, ref_type\nORDER BY time ASC",
+          "refId": "A"
+        }
+      ],
+      "title": "Pipeline Durations (${percentile} percentile) over ${interval_days} days",
+      "transformations": [
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "duration (.*)",
+            "renamePattern": "$1"
+          }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "count\\(\\) (.*)",
+            "renamePattern": "count($1)"
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${DS_CLICKHOUSE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "s",
+          "unitScale": true
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 24,
+        "x": 0,
+        "y": 11
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${DS_CLICKHOUSE}"
+          },
+          "editorType": "sql",
+          "format": 0,
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 100,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
+          "pluginVersion": "4.0.2",
+          "queryType": "timeseries",
+          "rawSql": "SELECT\n  toStartOfInterval(toDateTime64(jobs.finished_at, 3), INTERVAL ${interval_days} day) AS time,\n  quantileTiming(${percentile})(jobs.duration) AS duration,\n  regexpExtract(jobs.name, '([^\\[\\]]+)(?:\\s\\[(.+?)\\])?') AS name\nFROM gitlab_ci.jobs AS jobs\n  INNER JOIN gitlab_ci.pipelines AS pipelines ON pipelines.id = jobs.pipeline.id\nWHERE pipelines.project_id = ${project_id}\n  AND $__timeFilter(pipelines.finished_at)\n  AND CASE\n      WHEN pipelines.ref LIKE 'refs/merge-requests/%' THEN 'merge-request'\n      WHEN pipelines.ref IN ('main', 'master') THEN 'main'\n      WHEN pipelines.tag THEN 'tag'\n      ELSE 'branch'\n    END IN splitByChar(',', '${ref_type:raw}')\n  AND pipelines.status IN splitByChar(',', '${status:raw}')\n  AND match(jobs.name, '${job_filter:raw}')\nGROUP BY time, name\nORDER BY time ASC",
+          "refId": "A"
+        }
+      ],
+      "title": "Job Durations (${percentile} percentile) over ${interval_days} days",
+      "transformations": [
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "duration (.*)",
+            "renamePattern": "$1"
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "${DS_CLICKHOUSE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "s",
+          "unitScale": true
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 24,
+        "x": 0,
+        "y": 22
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "10.0.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "${DS_CLICKHOUSE}"
+          },
+          "editorType": "sql",
+          "format": 0,
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 100,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
+          "pluginVersion": "4.0.2",
+          "queryType": "timeseries",
+          "rawSql": "SELECT\n  toStartOfInterval(toDateTime64(sections.finished_at, 3), INTERVAL ${interval_days} day) AS time,\n  name,\n  quantileTiming(${percentile})(sections.duration) AS duration\nFROM gitlab_ci.sections AS sections\n  INNER JOIN gitlab_ci.pipelines AS pipelines ON pipelines.id = sections.pipeline.id\nWHERE pipelines.project_id = ${project_id}\n  AND $__timeFilter(pipelines.finished_at)\n  AND CASE\n      WHEN pipelines.ref LIKE 'refs/merge-requests/%' THEN 'merge-request'\n      WHEN pipelines.ref IN ('main', 'master') THEN 'main'\n      WHEN pipelines.tag THEN 'tag'\n      ELSE 'branch'\n    END IN splitByChar(',', '${ref_type:raw}')\n  AND pipelines.status IN splitByChar(',', '${status:raw}')\n  AND match(sections.job.name, '${job_filter:raw}')\nGROUP BY time, name\nORDER BY time ASC",
+          "refId": "A"
+        }
+      ],
+      "title": "Section Durations (${percentile} percentile) over ${interval_days} days",
+      "transformations": [
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "duration (.*)",
+            "renamePattern": "$1"
+          }
+        }
+      ],
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 39,
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "name": "DS_CLICKHOUSE",
+        "options": [],
+        "query": "grafana-clickhouse-datasource",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "${DS_CLICKHOUSE}"
+        },
+        "definition": "SELECT DISTINCT id, path_with_namespace FROM gitlab_ci.projects ORDER BY path_with_namespace",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Project",
+        "multi": false,
+        "name": "project_id",
+        "options": [],
+        "query": "SELECT DISTINCT id, path_with_namespace FROM gitlab_ci.projects ORDER BY path_with_namespace",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "${DS_CLICKHOUSE}"
+        },
+        "definition": "SELECT DISTINCT CASE\n    WHEN ref LIKE 'refs/merge-requests/%' THEN 'merge-request'\n    WHEN ref IN ('main', 'master') THEN 'main'\n    WHEN tag THEN 'tag'\n    ELSE 'branch'\n  END AS pipeline_type\nFROM gitlab_ci.pipelines\nWHERE project_id = ${project_id} AND $__timeFilter(finished_at)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Ref Type",
+        "multi": true,
+        "name": "ref_type",
+        "options": [],
+        "query": "SELECT DISTINCT CASE\n    WHEN ref LIKE 'refs/merge-requests/%' THEN 'merge-request'\n    WHEN ref IN ('main', 'master') THEN 'main'\n    WHEN tag THEN 'tag'\n    ELSE 'branch'\n  END AS pipeline_type\nFROM gitlab_ci.pipelines\nWHERE project_id = ${project_id} AND $__timeFilter(finished_at)",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "${DS_CLICKHOUSE}"
+        },
+        "definition": "SELECT DISTINCT status \nFROM gitlab_ci.pipelines\nWHERE project_id = ${project_id} AND $__timeFilter(finished_at)\n\nUNION ALL\n\nSELECT DISTINCT status \nFROM gitlab_ci.jobs\nWHERE pipeline.project_id = ${project_id} AND $__timeFilter(finished_at)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Status",
+        "multi": true,
+        "name": "status",
+        "options": [],
+        "query": "SELECT DISTINCT status \nFROM gitlab_ci.pipelines\nWHERE project_id = ${project_id} AND $__timeFilter(finished_at)\n\nUNION ALL\n\nSELECT DISTINCT status \nFROM gitlab_ci.jobs\nWHERE pipeline.project_id = ${project_id} AND $__timeFilter(finished_at)",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 2,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": ".*",
+          "value": ".*"
+        },
+        "hide": 0,
+        "label": "Job Filter",
+        "name": "job_filter",
+        "options": [
+          {
+            "selected": true,
+            "text": ".*",
+            "value": ".*"
+          }
+        ],
+        "query": ".*",
+        "skipUrlSync": false,
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "0.95",
+          "value": "0.95"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "name": "percentile",
+        "options": [
+          {
+            "selected": false,
+            "text": "0.5",
+            "value": "0.5"
+          },
+          {
+            "selected": false,
+            "text": "0.75",
+            "value": "0.75"
+          },
+          {
+            "selected": false,
+            "text": "0.9",
+            "value": "0.9"
+          },
+          {
+            "selected": true,
+            "text": "0.95",
+            "value": "0.95"
+          }
+        ],
+        "query": "0.5, 0.75, 0.9, 0.95",
+        "queryValue": "",
+        "skipUrlSync": false,
+        "type": "custom"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "7",
+          "value": "7"
+        },
+        "hide": 0,
+        "name": "interval_days",
+        "options": [
+          {
+            "selected": true,
+            "text": "7",
+            "value": "7"
+          }
+        ],
+        "query": "7",
+        "skipUrlSync": false,
+        "type": "textbox"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-90d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "GitLab CI - Duration Reports",
+  "uid": "gitlab-exporter-ci-duration-reports",
+  "version": 1,
+  "weekStart": ""
+}
