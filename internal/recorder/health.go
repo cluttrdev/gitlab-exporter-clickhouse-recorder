@@ -65,12 +65,6 @@ func (r *ClickHouseRecorder) GetReady(ctx context.Context) error {
 	}
 	slog.Debug("Checking readiness... done")
 
-	slog.Debug("Initializing cache... ")
-	if err := r.client.InitCache(ctx); err != nil {
-		return err
-	}
-	slog.Debug("Initializing cache... done")
-
 	return nil
 }
 
