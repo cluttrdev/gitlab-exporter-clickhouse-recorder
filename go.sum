@@ -26,8 +26,8 @@ github.com/cloudflare/golz4 v0.0.0-20150217214814-ef862a3cdc58 h1:F1EaeKL/ta07PY
 github.com/cloudflare/golz4 v0.0.0-20150217214814-ef862a3cdc58/go.mod h1:EOBUe0h4xcZ5GoxqC5SDxFQ8gwyZPKQoEzownBlhI80=
 github.com/cluttrdev/cli v0.0.0-20240318153739-b60d492ac8ff h1:sLmFPSp1na6ay0Z2BkxIK9zwuWZ+nW6EISyTQl6soec=
 github.com/cluttrdev/cli v0.0.0-20240318153739-b60d492ac8ff/go.mod h1:Yo/r2O/t6guxglvLWE11UXM/0uEcjWPlK3poxjXktWc=
-github.com/cluttrdev/gitlab-exporter v0.8.0 h1:i5lsQfcpjK0hGR8W9Op5izmRUZJrV8+8LC2whLelfOw=
-github.com/cluttrdev/gitlab-exporter v0.8.0/go.mod h1:E4EMCjDfa2Mge4ZqkFdVoYjAV2d4qhfaM4Mn3lhXs5Y=
+github.com/cluttrdev/gitlab-exporter v0.8.1 h1:UMk+Cy6sk4qUgs8/B38eDTVOeRjAH2TRYtLuVBDUcag=
+github.com/cluttrdev/gitlab-exporter v0.8.1/go.mod h1:E4EMCjDfa2Mge4ZqkFdVoYjAV2d4qhfaM4Mn3lhXs5Y=
 github.com/containerd/containerd v1.7.12 h1:+KQsnv4VnzyxWcfO9mlxxELaoztsDEjOuCMPAuPqgU0=
 github.com/containerd/containerd v1.7.12/go.mod h1:/5OMpE1p0ylxtEUGY8kuCYkDRzJm9NO1TFMWjUpdevk=
 github.com/containerd/log v0.1.0 h1:TCJt7ioM2cr/tfR8GPbGf9/VRAX8D2B4PjzCpfX540I=

@@ -5,7 +5,7 @@ go 1.22
 require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.24.0
 	github.com/cluttrdev/cli v0.0.0-20240318153739-b60d492ac8ff
-	github.com/cluttrdev/gitlab-exporter v0.8.0
+	github.com/cluttrdev/gitlab-exporter v0.8.1
 	github.com/creasty/defaults v1.7.0
 	github.com/docker/docker v26.1.3+incompatible
 	github.com/docker/go-connections v0.5.0
