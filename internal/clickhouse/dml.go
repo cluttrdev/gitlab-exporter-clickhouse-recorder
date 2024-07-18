@@ -41,7 +41,7 @@ func InsertPipelines(c *Client, ctx context.Context, pipelines []*typespb.Pipeli
 	if c == nil {
 		return 0, errors.New("nil client")
 	}
-	const query string = `INSERT INTO {db:Identifier}.{table:Identifier}`
+	const query string = `INSERT INTO {db:Identifier}.{table:Identifier} SETTINGS async_insert=1`
 	var params = map[string]string{
 		"db":    c.dbName,
 		"table": PipelinesTable + "_in",
@@ -92,7 +92,7 @@ func InsertPipelines(c *Client, ctx context.Context, pipelines []*typespb.Pipeli
 }
 
 func InsertJobs(c *Client, ctx context.Context, jobs []*typespb.Job) (int, error) {
-	const query string = `INSERT INTO {db:Identifier}.{table:Identifier}`
+	const query string = `INSERT INTO {db:Identifier}.{table:Identifier} SETTINGS async_insert=1`
 	var params = map[string]string{
 		"db":    c.dbName,
 		"table": JobsTable + "_in",
@@ -154,7 +154,7 @@ func InsertJobs(c *Client, ctx context.Context, jobs []*typespb.Job) (int, error
 }
 
 func InsertBridges(c *Client, ctx context.Context, bridges []*typespb.Bridge) (int, error) {
-	const query string = `INSERT INTO {db:Identifier}.{table:Identifier}`
+	const query string = `INSERT INTO {db:Identifier}.{table:Identifier} SETTINGS async_insert=1`
 	var params = map[string]string{
 		"db":    c.dbName,
 		"table": BridgesTable + "_in",
@@ -226,7 +226,7 @@ func InsertBridges(c *Client, ctx context.Context, bridges []*typespb.Bridge) (i
 }
 
 func InsertSections(c *Client, ctx context.Context, sections []*typespb.Section) (int, error) {
-	const query string = `INSERT INTO {db:Identifier}.{table:Identifier}`
+	const query string = `INSERT INTO {db:Identifier}.{table:Identifier} SETTINGS async_insert=1`
 	var params = map[string]string{
 		"db":    c.dbName,
 		"table": SectionsTable + "_in",
@@ -275,7 +275,7 @@ func InsertSections(c *Client, ctx context.Context, sections []*typespb.Section)
 }
 
 func InsertTestReports(c *Client, ctx context.Context, reports []*typespb.TestReport) (int, error) {
-	const query string = `INSERT INTO {db:Identifier}.{table:Identifier}`
+	const query string = `INSERT INTO {db:Identifier}.{table:Identifier} SETTINGS async_insert=1`
 	var params = map[string]string{
 		"db":    c.dbName,
 		"table": TestReportsTable + "_in",
@@ -315,7 +315,7 @@ func InsertTestReports(c *Client, ctx context.Context, reports []*typespb.TestRe
 }
 
 func InsertTestSuites(c *Client, ctx context.Context, suites []*typespb.TestSuite) (int, error) {
-	const query string = `INSERT INTO {db:Identifier}.{table:Identifier}`
+	const query string = `INSERT INTO {db:Identifier}.{table:Identifier} SETTINGS async_insert=1`
 	var params = map[string]string{
 		"db":    c.dbName,
 		"table": TestSuitesTable + "_in",
@@ -357,7 +357,7 @@ func InsertTestSuites(c *Client, ctx context.Context, suites []*typespb.TestSuit
 }
 
 func InsertTestCases(c *Client, ctx context.Context, cases []*typespb.TestCase) (int, error) {
-	const query string = `INSERT INTO {db:Identifier}.{table:Identifier}`
+	const query string = `INSERT INTO {db:Identifier}.{table:Identifier} SETTINGS async_insert=1`
 	var params = map[string]string{
 		"db":    c.dbName,
 		"table": TestCasesTable + "_in",
@@ -408,7 +408,7 @@ func InsertMergeRequests(c *Client, ctx context.Context, mrs []*typespb.MergeReq
 	if c == nil {
 		return 0, errors.New("nil client")
 	}
-	const query string = `INSERT INTO {db:Identifier}.{table:Identifier}`
+	const query string = `INSERT INTO {db:Identifier}.{table:Identifier} SETTINGS async_insert=1`
 	var params = map[string]string{
 		"db":    c.dbName,
 		"table": MergeRequestsTable + "_in",
@@ -486,7 +486,7 @@ func InsertMergeRequests(c *Client, ctx context.Context, mrs []*typespb.MergeReq
 }
 
 func InsertMetrics(c *Client, ctx context.Context, metrics []*typespb.Metric) (int, error) {
-	const query string = `INSERT INTO {db:Identifier}.{table:Identifier}`
+	const query string = `INSERT INTO {db:Identifier}.{table:Identifier} SETTINGS async_insert=1`
 	var params = map[string]string{
 		"db":    c.dbName,
 		"table": MetricsTable + "_in",
@@ -525,7 +525,7 @@ func InsertMetrics(c *Client, ctx context.Context, metrics []*typespb.Metric) (i
 }
 
 func InsertProjects(c *Client, ctx context.Context, projects []*typespb.Project) (int, error) {
-	const query string = `INSERT INTO {db:Identifier}.{table:Identifier}`
+	const query string = `INSERT INTO {db:Identifier}.{table:Identifier} SETTINGS async_insert=1`
 	var params = map[string]string{
 		"db":    c.dbName,
 		"table": ProjectsTable + "_in",
@@ -588,7 +588,7 @@ func InsertProjects(c *Client, ctx context.Context, projects []*typespb.Project)
 }
 
 func InsertTraces(c *Client, ctx context.Context, traces []*typespb.Trace) (int, error) {
-	const query string = `INSERT INTO {db:Identifier}.{table:Identifier}`
+	const query string = `INSERT INTO {db:Identifier}.{table:Identifier} SETTINGS async_insert=1`
 	var params = map[string]string{
 		"db":    c.dbName,
 		"table": TraceSpansTable + "_in",
