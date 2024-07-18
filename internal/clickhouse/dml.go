@@ -600,12 +600,13 @@ func InsertMetrics(c *Client, ctx context.Context, metrics []*typespb.Metric) (i
 		}
 
 		err = batch.Append(
+			m.Id,
+			m.Iid,
+			m.JobId,
 			m.Name,
 			convertLabels(m.Labels),
 			m.Value,
 			convertTimestamp(m.Timestamp),
-			m.Job.Id,
-			m.Job.Name,
 		)
 		if err != nil {
 			return 0, fmt.Errorf("append batch:  %w", err)
