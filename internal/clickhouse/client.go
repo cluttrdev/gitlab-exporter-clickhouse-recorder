@@ -14,8 +14,6 @@ type Client struct {
 	conn driver.Conn
 
 	dbName string
-
-	cache *Cache
 }
 
 type ClientConfig struct {
@@ -29,7 +27,6 @@ type ClientConfig struct {
 func NewClient(conn driver.Conn, database string) *Client {
 	return &Client{
 		conn:   conn,
-		cache:  NewCache(),
 		dbName: database,
 	}
 }

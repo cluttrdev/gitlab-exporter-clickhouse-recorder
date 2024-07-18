@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"strings"
 	"time"
 
 	otlp_comonpb "go.opentelemetry.io/proto/otlp/common/v1"
@@ -45,15 +44,8 @@ func InsertPipelines(c *Client, ctx context.Context, pipelines []*typespb.Pipeli
 	const query string = `INSERT INTO {db:Identifier}.{table:Identifier}`
 	var params = map[string]string{
 		"db":    c.dbName,
-		"table": PipelinesTable,
+		"table": PipelinesTable + "_in",
 	}
-
-	updates := make(map[int64]float64, len(pipelines))
-	updated := make(map[int64]bool, len(pipelines))
-	for _, p := range pipelines {
-		updates[p.Id] = convertTimestamp(p.UpdatedAt)
-	}
-	c.cache.UpdatePipelines(updates, updated)
 
 	ctx = WithParameters(ctx, params)
 
@@ -63,10 +55,6 @@ func InsertPipelines(c *Client, ctx context.Context, pipelines []*typespb.Pipeli
 	}
 
 	for _, p := range pipelines {
-		if !updated[p.Id] {
-			continue
-		}
-
 		err = batch.Append(
 			p.Id,
 			p.Iid,
@@ -107,15 +95,8 @@ func InsertJobs(c *Client, ctx context.Context, jobs []*typespb.Job) (int, error
 	const query string = `INSERT INTO {db:Identifier}.{table:Identifier}`
 	var params = map[string]string{
 		"db":    c.dbName,
-		"table": JobsTable,
+		"table": JobsTable + "_in",
 	}
-
-	updates := make([]int64, 0, len(jobs))
-	updated := make([]bool, len(jobs))
-	for _, j := range jobs {
-		updates = append(updates, j.Id)
-	}
-	c.cache.UpdateJobs(updates, updated)
 
 	ctx = WithParameters(ctx, params)
 
@@ -125,11 +106,7 @@ func InsertJobs(c *Client, ctx context.Context, jobs []*typespb.Job) (int, error
 	}
 
 	var errs error
-	for i, j := range jobs {
-		if !updated[i] {
-			continue
-		}
-
+	for _, j := range jobs {
 		if j.Pipeline == nil {
 			errs = errors.Join(errs, fmt.Errorf("job without pipeline: %d", j.Id))
 			continue
@@ -180,15 +157,8 @@ func InsertBridges(c *Client, ctx context.Context, bridges []*typespb.Bridge) (i
 	const query string = `INSERT INTO {db:Identifier}.{table:Identifier}`
 	var params = map[string]string{
 		"db":    c.dbName,
-		"table": BridgesTable,
+		"table": BridgesTable + "_in",
 	}
-
-	updates := make([]int64, 0, len(bridges))
-	updated := make([]bool, len(bridges))
-	for _, b := range bridges {
-		updates = append(updates, b.Id)
-	}
-	c.cache.UpdateBridges(updates, updated)
 
 	ctx = WithParameters(ctx, params)
 
@@ -197,11 +167,7 @@ func InsertBridges(c *Client, ctx context.Context, bridges []*typespb.Bridge) (i
 		return 0, fmt.Errorf("prepare batch: %w", err)
 	}
 
-	for i, b := range bridges {
-		if !updated[i] {
-			continue
-		}
-
+	for _, b := range bridges {
 		err = batch.Append(
 			b.Coverage,
 			b.AllowFailure,
@@ -263,14 +229,8 @@ func InsertSections(c *Client, ctx context.Context, sections []*typespb.Section)
 	const query string = `INSERT INTO {db:Identifier}.{table:Identifier}`
 	var params = map[string]string{
 		"db":    c.dbName,
-		"table": SectionsTable,
+		"table": SectionsTable + "_in",
 	}
-
-	updated := make(map[int64]bool, len(sections))
-	for _, s := range sections {
-		updated[s.Job.Id] = false
-	}
-	c.cache.UpdateSections(updated)
 
 	ctx = WithParameters(ctx, params)
 
@@ -280,10 +240,6 @@ func InsertSections(c *Client, ctx context.Context, sections []*typespb.Section)
 	}
 
 	for _, s := range sections {
-		if !updated[s.Job.Id] {
-			continue
-		}
-
 		err = batch.Append(
 			s.Id,
 			s.Name,
@@ -322,15 +278,8 @@ func InsertTestReports(c *Client, ctx context.Context, reports []*typespb.TestRe
 	const query string = `INSERT INTO {db:Identifier}.{table:Identifier}`
 	var params = map[string]string{
 		"db":    c.dbName,
-		"table": TestReportsTable,
+		"table": TestReportsTable + "_in",
 	}
-
-	updates := make([]string, 0, len(reports))
-	updated := make([]bool, len(reports))
-	for _, tr := range reports {
-		updates = append(updates, tr.Id)
-	}
-	c.cache.UpdateTestReports(updates, updated)
 
 	ctx = WithParameters(ctx, params)
 
@@ -339,13 +288,7 @@ func InsertTestReports(c *Client, ctx context.Context, reports []*typespb.TestRe
 		return 0, fmt.Errorf("prepare batch: %w", err)
 	}
 
-	for i, tr := range reports {
-		// always updating test reports we be better, but then we have to
-		// deduplicate in ClickHouse
-		if !updated[i] {
-			continue
-		}
-
+	for _, tr := range reports {
 		err = batch.Append(
 			tr.Id,
 			tr.PipelineId,
@@ -375,15 +318,8 @@ func InsertTestSuites(c *Client, ctx context.Context, suites []*typespb.TestSuit
 	const query string = `INSERT INTO {db:Identifier}.{table:Identifier}`
 	var params = map[string]string{
 		"db":    c.dbName,
-		"table": TestSuitesTable,
+		"table": TestSuitesTable + "_in",
 	}
-
-	updates := make([]string, 0, len(suites))
-	updated := make([]bool, len(suites))
-	for _, ts := range suites {
-		updates = append(updates, ts.Id)
-	}
-	c.cache.UpdateTestSuites(updates, updated)
 
 	ctx = WithParameters(ctx, params)
 
@@ -392,11 +328,7 @@ func InsertTestSuites(c *Client, ctx context.Context, suites []*typespb.TestSuit
 		return 0, fmt.Errorf("prepare batch: %w", err)
 	}
 
-	for i, ts := range suites {
-		if !updated[i] {
-			continue
-		}
-
+	for _, ts := range suites {
 		err = batch.Append(
 			ts.Id,
 			ts.TestreportId,
@@ -428,14 +360,8 @@ func InsertTestCases(c *Client, ctx context.Context, cases []*typespb.TestCase) 
 	const query string = `INSERT INTO {db:Identifier}.{table:Identifier}`
 	var params = map[string]string{
 		"db":    c.dbName,
-		"table": TestCasesTable,
+		"table": TestCasesTable + "_in",
 	}
-
-	updated := make(map[string]bool, len(cases))
-	for _, tc := range cases {
-		updated[tc.TestsuiteId] = false
-	}
-	c.cache.UpdateTestCases(updated)
 
 	ctx = WithParameters(ctx, params)
 
@@ -445,10 +371,6 @@ func InsertTestCases(c *Client, ctx context.Context, cases []*typespb.TestCase) 
 	}
 
 	for _, tc := range cases {
-		if !updated[tc.TestsuiteId] {
-			continue
-		}
-
 		err = batch.Append(
 			tc.Id,
 			tc.TestsuiteId,
@@ -489,15 +411,8 @@ func InsertMergeRequests(c *Client, ctx context.Context, mrs []*typespb.MergeReq
 	const query string = `INSERT INTO {db:Identifier}.{table:Identifier}`
 	var params = map[string]string{
 		"db":    c.dbName,
-		"table": MergeRequestsTable,
+		"table": MergeRequestsTable + "_in",
 	}
-
-	updates := make(map[int64]float64, len(mrs))
-	updated := make(map[int64]bool, len(mrs))
-	for _, mr := range mrs {
-		updates[mr.Id] = convertTimestamp(mr.UpdatedAt)
-	}
-	c.cache.UpdateMergeRequests(updates, updated)
 
 	ctx = WithParameters(ctx, params)
 
@@ -507,10 +422,6 @@ func InsertMergeRequests(c *Client, ctx context.Context, mrs []*typespb.MergeReq
 	}
 
 	for _, mr := range mrs {
-		if !updated[mr.Id] {
-			continue
-		}
-
 		assignees_id := make([]int64, 0, len(mr.Assignees))
 		for _, a := range mr.Assignees {
 			assignees_id = append(assignees_id, a.Id)
@@ -578,14 +489,8 @@ func InsertMetrics(c *Client, ctx context.Context, metrics []*typespb.Metric) (i
 	const query string = `INSERT INTO {db:Identifier}.{table:Identifier}`
 	var params = map[string]string{
 		"db":    c.dbName,
-		"table": MetricsTable,
+		"table": MetricsTable + "_in",
 	}
-
-	updated := make(map[int64]bool, len(metrics))
-	for _, m := range metrics {
-		updated[m.Job.Id] = false
-	}
-	c.cache.UpdateMetrics(updated)
 
 	ctx = WithParameters(ctx, params)
 
@@ -595,10 +500,6 @@ func InsertMetrics(c *Client, ctx context.Context, metrics []*typespb.Metric) (i
 	}
 
 	for _, m := range metrics {
-		if !updated[m.Job.Id] {
-			continue
-		}
-
 		err = batch.Append(
 			m.Id,
 			m.Iid,
@@ -627,15 +528,8 @@ func InsertProjects(c *Client, ctx context.Context, projects []*typespb.Project)
 	const query string = `INSERT INTO {db:Identifier}.{table:Identifier}`
 	var params = map[string]string{
 		"db":    c.dbName,
-		"table": ProjectsTable,
+		"table": ProjectsTable + "_in",
 	}
-
-	updates := make(map[int64]float64, len(projects))
-	updated := make(map[int64]bool, len(projects))
-	for _, p := range projects {
-		updates[p.Id] = convertTimestamp(p.LastActivityAt)
-	}
-	c.cache.UpdateProjects(updates, updated)
 
 	ctx = WithParameters(ctx, params)
 
@@ -645,10 +539,6 @@ func InsertProjects(c *Client, ctx context.Context, projects []*typespb.Project)
 	}
 
 	for _, p := range projects {
-		if !updated[p.Id] {
-			continue
-		}
-
 		err = batch.Append(
 			p.Id,
 			p.GetNamespace().GetId(),
@@ -701,40 +591,8 @@ func InsertTraces(c *Client, ctx context.Context, traces []*typespb.Trace) (int,
 	const query string = `INSERT INTO {db:Identifier}.{table:Identifier}`
 	var params = map[string]string{
 		"db":    c.dbName,
-		"table": TraceSpansTable,
+		"table": TraceSpansTable + "_in",
 	}
-
-	var spanCountTotal int = 0
-	for _, t := range traces {
-		for _, rs := range t.Data.ResourceSpans {
-			for _, ss := range rs.ScopeSpans {
-				spanCountTotal += len(ss.Spans)
-			}
-		}
-	}
-
-	buildTraceSpanID := func(s *otlp_tracepb.Span) string {
-		var sb strings.Builder
-
-		sb.Write(s.TraceId)
-		sb.WriteString("-")
-		sb.Write(s.SpanId)
-
-		return sb.String()
-	}
-
-	updates := make([]string, 0, spanCountTotal)
-	updated := make([]bool, spanCountTotal)
-	for _, t := range traces {
-		for _, rs := range t.Data.ResourceSpans {
-			for _, ss := range rs.ScopeSpans {
-				for _, s := range ss.Spans {
-					updates = append(updates, buildTraceSpanID(s))
-				}
-			}
-		}
-	}
-	c.cache.UpdateTraceSpans(updates, updated)
 
 	ctx = WithParameters(ctx, params)
 
@@ -743,7 +601,7 @@ func InsertTraces(c *Client, ctx context.Context, traces []*typespb.Trace) (int,
 		return 0, fmt.Errorf("prepare batch: %w", err)
 	}
 
-	var index int = -1
+	var spanCount int = 0
 	for _, trace := range traces {
 		for _, resourceSpans := range trace.Data.ResourceSpans {
 			resourceAttrs := convertAttributes(resourceSpans.Resource.Attributes)
@@ -755,10 +613,7 @@ func InsertTraces(c *Client, ctx context.Context, traces []*typespb.Trace) (int,
 				scopeName := scopeSpans.Scope.Name
 				scopeVersion := scopeSpans.Scope.Version
 				for _, span := range scopeSpans.Spans {
-					index++
-					if !updated[index] {
-						continue
-					}
+					spanCount++
 
 					spanAttrs := convertAttributes(span.Attributes)
 					eventTimes, eventNames, eventAttrs := convertEvents(span.Events)
@@ -802,7 +657,7 @@ func InsertTraces(c *Client, ctx context.Context, traces []*typespb.Trace) (int,
 	}
 
 	n := batch.Rows()
-	slog.Debug("Recorded trace spans", "received", len(updates), "inserted", n)
+	slog.Debug("Recorded trace spans", "received", spanCount, "inserted", n)
 
 	return n, nil
 }
