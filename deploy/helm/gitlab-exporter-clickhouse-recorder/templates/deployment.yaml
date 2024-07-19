@@ -32,6 +32,8 @@ spec:
           args:
             - "job"
             - "{{ include "gitlab-exporter-clickhouse-recorder.fullname" . }}-migrate-{{ .Release.Revision }}"
+          securityContext:
+              {{- toYaml .Values.securityContext | nindent 12 }}
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
