@@ -25,6 +25,13 @@ spec:
       serviceAccountName: {{ include "gitlab-exporter-clickhouse-recorder.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      initContainers:
+        - name: {{ .Chart.Name }}-init
+          image: "docker.io/groundnuty/k8s-wait-for:no-root-v2.0"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - "job"
+            - "{{ include "gitlab-exporter-clickhouse-recorder.fullname" . }}-migrate-{{ .Release.Revision }}"
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
