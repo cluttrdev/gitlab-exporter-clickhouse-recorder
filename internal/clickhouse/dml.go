@@ -16,17 +16,18 @@ import (
 )
 
 const (
-	PipelinesTable     string = "pipelines"
-	JobsTable          string = "jobs"
-	SectionsTable      string = "sections"
-	BridgesTable       string = "bridges"
-	TestReportsTable   string = "testreports"
-	TestSuitesTable    string = "testsuites"
-	TestCasesTable     string = "testcases"
-	MergeRequestsTable string = "mergerequests"
-	MetricsTable       string = "metrics"
-	ProjectsTable      string = "projects"
-	TraceSpansTable    string = "traces"
+	PipelinesTable              string = "pipelines"
+	JobsTable                   string = "jobs"
+	SectionsTable               string = "sections"
+	BridgesTable                string = "bridges"
+	TestReportsTable            string = "testreports"
+	TestSuitesTable             string = "testsuites"
+	TestCasesTable              string = "testcases"
+	MergeRequestsTable          string = "mergerequests"
+	MergeRequestNoteEventsTable string = "mergerequest_noteevents"
+	MetricsTable                string = "metrics"
+	ProjectsTable               string = "projects"
+	TraceSpansTable             string = "traces"
 )
 
 func convertTimestamp(ts *timestamppb.Timestamp) float64 {
@@ -481,6 +482,55 @@ func InsertMergeRequests(c *Client, ctx context.Context, mrs []*typespb.MergeReq
 
 	n := batch.Rows()
 	slog.Debug("Recorded mergerequests", "received", len(mrs), "inserted", n)
+
+	return n, nil
+}
+
+func InsertMergeRequestNoteEvents(c *Client, ctx context.Context, mres []*typespb.MergeRequestNoteEvent) (int, error) {
+	if c == nil {
+		return 0, errors.New("nil client")
+	}
+	const query string = `INSERT INTO {db:Identifier}.{table:Identifier} SETTINGS async_insert=1`
+	var params = map[string]string{
+		"db":    c.dbName,
+		"table": MergeRequestNoteEventsTable + "_in",
+	}
+
+	ctx = WithParameters(ctx, params)
+
+	batch, err := c.PrepareBatch(ctx, query)
+	if err != nil {
+		return 0, fmt.Errorf("prepare batch: %w", err)
+	}
+
+	for _, mre := range mres {
+		err = batch.Append(
+			mre.Id,
+			mre.MergerequestId,
+			mre.MergerequestIid,
+			mre.ProjectId,
+			convertTimestamp(mre.CreatedAt),
+			convertTimestamp(mre.UpdatedAt),
+			mre.Type,
+			mre.System,
+			mre.AuthorId,
+			mre.Resolveable,
+			mre.Resolved,
+			mre.ResolverId,
+			mre.Confidential,
+			mre.Internal,
+		)
+		if err != nil {
+			return 0, fmt.Errorf("append batch: %w", err)
+		}
+	}
+
+	if err := batch.Send(); err != nil {
+		return -1, fmt.Errorf("send batch: %w", err)
+	}
+
+	n := batch.Rows()
+	slog.Debug("Recorded mergerequest_noteevents", "received", len(mres), "inserted", n)
 
 	return n, nil
 }

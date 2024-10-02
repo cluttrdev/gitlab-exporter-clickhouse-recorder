@@ -68,6 +68,10 @@ func (s *ClickHouseRecorder) RecordMergeRequests(ctx context.Context, r *service
 	return record[typespb.MergeRequest](s, ctx, r.Data, clickhouse.InsertMergeRequests)
 }
 
+func (s *ClickHouseRecorder) RecordMergeRequestNoteEvents(ctx context.Context, r *servicepb.RecordMergeRequestNoteEventsRequest) (*servicepb.RecordSummary, error) {
+	return record[typespb.MergeRequestNoteEvent](s, ctx, r.Data, clickhouse.InsertMergeRequestNoteEvents)
+}
+
 func (s *ClickHouseRecorder) RecordProjects(ctx context.Context, r *servicepb.RecordProjectsRequest) (*servicepb.RecordSummary, error) {
 	return record[typespb.Project](s, ctx, r.Data, clickhouse.InsertProjects)
 }
