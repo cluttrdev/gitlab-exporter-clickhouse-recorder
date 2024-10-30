@@ -2,12 +2,12 @@
 # see: https://github.com/cluttrdev/gitlab-exporter/blob/main/configs/gitlab-exporter.yaml
 
 gitlab:
-  api:
-    url: "https://gitlab.com/api/v4"
+  url: "https://gitlab.com"
+  token: ""  # or set GLCHR_GITLAB_TOKEN environment variable
 
   client:
     rate:
-      limit: 30.0
+      limit: 60  # requests per second
 
 endpoints:
   - address: "gitlab-exporter-clickhouse-recorder:36275"
@@ -23,6 +23,10 @@ project_defaults:
 projects:
   - id: 50817395  # cluttrdev/gitlab-exporter
   - id: 34675721  # gitlab-org/cli
+
+namespaces:
+  - id: cluttrdev
+  - id: gitlab-exporter
 
 http:
   enabled: true

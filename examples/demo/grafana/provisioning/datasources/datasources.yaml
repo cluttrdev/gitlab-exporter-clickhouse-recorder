@@ -9,6 +9,11 @@ datasources:
       port: 9000
       server: clickhouse
       username: $GF_CLICKHOUSE_USER
+      traces:
+        defaultDatabase: gitlab_ci
+        defaultTable: traces
+        otelEnabled: true
+        otelVersion: latest
     secureJsonData:
       password: $GF_CLICKHOUSE_PASSWORD
   - name: Prometheus

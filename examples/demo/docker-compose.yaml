@@ -7,7 +7,7 @@ services:
       - gitlab-exporter-clickhouse-recorder
     image: ghcr.io/cluttrdev/gitlab-exporter:latest
     environment:
-      GLE_GITLAB_API_TOKEN: ${GITLAB_API_TOKEN}
+      GLE_GITLAB_TOKEN: ${GLE_GITLAB_TOKEN}
       GLE_LOG_LEVEL: debug
     volumes:
       - ./gitlab-exporter/config.yaml:/etc/gitlab-exporter.yaml:ro
