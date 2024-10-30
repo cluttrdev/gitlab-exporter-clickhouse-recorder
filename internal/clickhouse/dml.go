@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"strconv"
 	"time"
 
 	otlp_comonpb "go.opentelemetry.io/proto/otlp/common/v1"
@@ -59,23 +60,23 @@ func InsertPipelines(c *Client, ctx context.Context, pipelines []*typespb.Pipeli
 		err = batch.Append(
 			p.Id,
 			p.Iid,
-			p.ProjectId,
+			p.Project.Id,
 			p.Status,
 			p.Source,
 			p.Ref,
 			p.Sha,
-			p.BeforeSha,
-			p.Tag,
-			p.YamlErrors,
-			convertTimestamp(p.CreatedAt),
-			convertTimestamp(p.UpdatedAt),
-			convertTimestamp(p.StartedAt),
-			convertTimestamp(p.FinishedAt),
-			convertTimestamp(p.CommittedAt),
+			"",    // p.BeforeSha,
+			false, // p.Tag,
+			strconv.FormatBool(p.YamlErrors),
+			convertTimestamp(p.Timestamps.CreatedAt),
+			convertTimestamp(p.Timestamps.UpdatedAt),
+			convertTimestamp(p.Timestamps.StartedAt),
+			convertTimestamp(p.Timestamps.FinishedAt),
+			convertTimestamp(p.Timestamps.CommittedAt),
 			convertDuration(p.Duration),
 			convertDuration(p.QueuedDuration),
 			p.Coverage,
-			p.WebUrl,
+			"", // p.WebUrl,
 		)
 		if err != nil {
 			return 0, fmt.Errorf("append batch: %w", err)
@@ -116,28 +117,28 @@ func InsertJobs(c *Client, ctx context.Context, jobs []*typespb.Job) (int, error
 		err = batch.Append(
 			j.Coverage,
 			j.AllowFailure,
-			convertTimestamp(j.CreatedAt),
-			convertTimestamp(j.StartedAt),
-			convertTimestamp(j.FinishedAt),
-			convertTimestamp(j.ErasedAt),
+			convertTimestamp(j.Timestamps.CreatedAt),
+			convertTimestamp(j.Timestamps.StartedAt),
+			convertTimestamp(j.Timestamps.FinishedAt),
+			convertTimestamp(j.Timestamps.ErasedAt),
 			convertDuration(j.Duration),
 			convertDuration(j.QueuedDuration),
-			j.TagList,
+			j.Tags,
 			j.Id,
 			j.Name,
 			map[string]interface{}{
 				"id":         j.Pipeline.Id,
-				"project_id": j.Pipeline.ProjectId,
-				"ref":        j.Pipeline.Ref,
-				"sha":        j.Pipeline.Sha,
-				"status":     j.Pipeline.Status,
+				"project_id": j.Pipeline.Project.Id,
+				"ref":        "", // j.Pipeline.Ref,
+				"sha":        "", // j.Pipeline.Sha,
+				"status":     "", // j.Pipeline.Status,
 			},
 			j.Ref,
 			j.Stage,
 			j.Status,
 			j.FailureReason,
-			j.Tag,
-			j.WebUrl,
+			false, // j.Tag,
+			"",    // j.WebUrl,
 		)
 		if err != nil {
 			errs = errors.Join(errs, fmt.Errorf("append job %d to batch: %w", j.Id, err))
@@ -154,7 +155,7 @@ func InsertJobs(c *Client, ctx context.Context, jobs []*typespb.Job) (int, error
 	return n, errs
 }
 
-func InsertBridges(c *Client, ctx context.Context, bridges []*typespb.Bridge) (int, error) {
+func InsertBridges(c *Client, ctx context.Context, bridges []*typespb.Job) (int, error) {
 	const query string = `INSERT INTO {db:Identifier}.{table:Identifier} SETTINGS async_insert=1`
 	var params = map[string]string{
 		"db":    c.dbName,
@@ -172,43 +173,43 @@ func InsertBridges(c *Client, ctx context.Context, bridges []*typespb.Bridge) (i
 		err = batch.Append(
 			b.Coverage,
 			b.AllowFailure,
-			convertTimestamp(b.CreatedAt),
-			convertTimestamp(b.StartedAt),
-			convertTimestamp(b.FinishedAt),
-			convertTimestamp(b.ErasedAt),
+			convertTimestamp(b.GetTimestamps().GetCreatedAt()),
+			convertTimestamp(b.GetTimestamps().GetStartedAt()),
+			convertTimestamp(b.GetTimestamps().GetFinishedAt()),
+			convertTimestamp(b.GetTimestamps().GetErasedAt()),
 			convertDuration(b.Duration),
 			convertDuration(b.QueuedDuration),
 			b.Id,
 			b.Name,
 			map[string]interface{}{
-				"id":         b.Pipeline.Id,
-				"iid":        b.Pipeline.Iid,
-				"project_id": b.Pipeline.ProjectId,
-				"status":     b.Pipeline.Status,
-				"source":     b.Pipeline.Source,
-				"ref":        b.Pipeline.Source,
-				"sha":        b.Pipeline.Sha,
-				"web_url":    b.Pipeline.WebUrl,
-				"created_at": convertTimestamp(b.Pipeline.CreatedAt),
-				"updated_at": convertTimestamp(b.Pipeline.UpdatedAt),
+				"id":         b.GetPipeline().GetId(),
+				"iid":        b.GetPipeline().GetIid(),
+				"project_id": b.GetPipeline().GetProject().GetId(),
+				"status":     "", // b.Pipeline.Status,
+				"source":     "", // b.Pipeline.Source,
+				"ref":        "", // b.Pipeline.Source,
+				"sha":        "", // b.Pipeline.Sha,
+				"web_url":    "", // b.Pipeline.WebUrl,
+				"created_at": 0,  // convertTimestamp(b.Pipeline.CreatedAt),
+				"updated_at": 0,  // convertTimestamp(b.Pipeline.UpdatedAt),
 			},
 			b.Ref,
 			b.Stage,
 			b.Status,
 			b.FailureReason,
-			b.Tag,
-			b.WebUrl,
+			false, // b.Tag,
+			"",    // b.WebUrl,
 			map[string]interface{}{
-				"id":         b.DownstreamPipeline.Id,
-				"iid":        b.DownstreamPipeline.Iid,
-				"project_id": b.DownstreamPipeline.ProjectId,
-				"status":     b.DownstreamPipeline.Status,
-				"source":     b.DownstreamPipeline.Source,
-				"ref":        b.DownstreamPipeline.Source,
-				"sha":        b.DownstreamPipeline.Sha,
-				"web_url":    b.DownstreamPipeline.WebUrl,
-				"created_at": convertTimestamp(b.DownstreamPipeline.CreatedAt),
-				"updated_at": convertTimestamp(b.DownstreamPipeline.UpdatedAt),
+				"id":         b.DownstreamPipeline.GetId(),
+				"iid":        b.DownstreamPipeline.GetIid(),
+				"project_id": b.DownstreamPipeline.GetProject().GetId(),
+				"status":     "", // b.DownstreamPipeline.Status,
+				"source":     "", // b.DownstreamPipeline.Source,
+				"ref":        "", // b.DownstreamPipeline.Source,
+				"sha":        "", // b.DownstreamPipeline.Sha,
+				"web_url":    "", // b.DownstreamPipeline.WebUrl,
+				"created_at": 0,  // convertTimestamp(b.DownstreamPipeline.CreatedAt),
+				"updated_at": 0,  // convertTimestamp(b.DownstreamPipeline.UpdatedAt),
 			},
 		)
 		if err != nil {
@@ -247,14 +248,14 @@ func InsertSections(c *Client, ctx context.Context, sections []*typespb.Section)
 			map[string]interface{}{
 				"id":     s.Job.Id,
 				"name":   s.Job.Name,
-				"status": s.Job.Status,
+				"status": "", // s.Job.Status,
 			},
 			map[string]interface{}{
-				"id":         s.Pipeline.Id,
-				"project_id": s.Pipeline.ProjectId,
-				"ref":        s.Pipeline.Ref,
-				"sha":        s.Pipeline.Sha,
-				"status":     s.Pipeline.Status,
+				"id":         s.Job.Pipeline.Id,
+				"project_id": s.Job.Pipeline.Project.Id,
+				"ref":        "", // s.Pipeline.Ref,
+				"sha":        "", // s.Pipeline.Sha,
+				"status":     "", // s.Pipeline.Status,
 			},
 			convertTimestamp(s.StartedAt),
 			convertTimestamp(s.FinishedAt),
@@ -423,53 +424,53 @@ func InsertMergeRequests(c *Client, ctx context.Context, mrs []*typespb.MergeReq
 	}
 
 	for _, mr := range mrs {
-		assignees_id := make([]int64, 0, len(mr.Assignees))
-		for _, a := range mr.Assignees {
+		assignees_id := make([]int64, 0, len(mr.Participants.Assignees))
+		for _, a := range mr.Participants.Assignees {
 			assignees_id = append(assignees_id, a.Id)
 		}
-		reviewers_id := make([]int64, 0, len(mr.Reviewers))
-		for _, a := range mr.Reviewers {
+		reviewers_id := make([]int64, 0, len(mr.Participants.Reviewers))
+		for _, a := range mr.Participants.Reviewers {
 			reviewers_id = append(reviewers_id, a.Id)
 		}
 
 		err = batch.Append(
 			mr.Id,
 			mr.Iid,
-			mr.ProjectId,
-			convertTimestamp(mr.CreatedAt),
-			convertTimestamp(mr.UpdatedAt),
-			convertTimestamp(mr.MergedAt),
-			convertTimestamp(mr.ClosedAt),
+			mr.Project.Id,
+			convertTimestamp(mr.Timestamps.CreatedAt),
+			convertTimestamp(mr.Timestamps.UpdatedAt),
+			convertTimestamp(mr.Timestamps.MergedAt),
+			convertTimestamp(mr.Timestamps.ClosedAt),
 			mr.SourceProjectId,
 			mr.TargetProjectId,
 			mr.SourceBranch,
 			mr.TargetBranch,
 			mr.Title,
 			mr.State,
-			mr.DetailedMergeStatus,
-			mr.Draft,
-			mr.HasConflicts,
+			mr.MergeStatus,
+			mr.Flags.Draft,
+			mr.Flags.Conflicts,
 			mr.MergeError,
 			mr.DiffRefs.BaseSha,
 			mr.DiffRefs.HeadSha,
 			mr.DiffRefs.StartSha,
-			mr.GetAuthor().GetId(),
-			mr.GetAssignee().GetId(),
+			mr.Participants.GetAuthor().GetId(),
+			0, // mr.GetAssignee().GetId(),
 			assignees_id,
 			reviewers_id,
-			mr.GetMergeUser().GetId(),
-			mr.GetCloseUser().GetId(),
+			mr.Participants.GetMergeUser().GetId(),
+			0, // mr.GetCloseUser().GetId(),
 			mr.Labels,
-			mr.Sha,
-			mr.MergeCommitSha,
-			mr.SquashCommitSha,
-			mr.ChangesCount,
-			mr.UserNotesCount,
-			mr.Upvotes,
-			mr.Downvotes,
-			mr.GetPipeline().GetId(),
+			mr.DiffRefs.HeadSha,
+			mr.DiffRefs.MergeCommitSha,
+			"", // mr.SquashCommitSha,
+			"", // mr.ChangesCount,
+			0,  // mr.UserNotesCount,
+			0,  // mr.Upvotes,
+			0,  // mr.Downvotes,
+			0,  // mr.GetPipeline().GetId(),
 			mr.GetMilestone().GetId(),
-			mr.WebUrl,
+			"", // mr.WebUrl,
 		)
 		if err != nil {
 			return 0, fmt.Errorf("append batch: %w", err)
@@ -506,9 +507,9 @@ func InsertMergeRequestNoteEvents(c *Client, ctx context.Context, mres []*typesp
 	for _, mre := range mres {
 		err = batch.Append(
 			mre.Id,
-			mre.MergerequestId,
-			mre.MergerequestIid,
-			mre.ProjectId,
+			mre.MergeRequest.Id,
+			mre.MergeRequest.Iid,
+			mre.MergeRequest.Project.Id,
 			convertTimestamp(mre.CreatedAt),
 			convertTimestamp(mre.UpdatedAt),
 			mre.Type,
@@ -517,7 +518,7 @@ func InsertMergeRequestNoteEvents(c *Client, ctx context.Context, mres []*typesp
 			mre.Resolveable,
 			mre.Resolved,
 			mre.ResolverId,
-			mre.Confidential,
+			false, // mre.Confidential,
 			mre.Internal,
 		)
 		if err != nil {
@@ -553,7 +554,7 @@ func InsertMetrics(c *Client, ctx context.Context, metrics []*typespb.Metric) (i
 		err = batch.Append(
 			m.Id,
 			m.Iid,
-			m.JobId,
+			m.Job.Id,
 			m.Name,
 			convertLabels(m.Labels),
 			m.Value,
@@ -592,23 +593,23 @@ func InsertProjects(c *Client, ctx context.Context, projects []*typespb.Project)
 		err = batch.Append(
 			p.Id,
 			p.GetNamespace().GetId(),
-			p.GetOwner().GetId(),
-			p.CreatorId,
+			0, // p.GetOwner().GetId(),
+			0, // p.CreatorId,
 			p.Name,
-			p.NameWithNamespace,
+			p.FullName,
 			p.Path,
-			p.PathWithNamespace,
+			p.FullPath,
 			p.Description,
 			p.Visibility,
-			convertTimestamp(p.CreatedAt),
-			convertTimestamp(p.LastActivityAt), //< real 'updated_at' not available, yet
-			convertTimestamp(p.LastActivityAt),
-			p.Topics,
-			p.DefaultBranch,
-			p.EmptyRepo,
+			convertTimestamp(p.Timestamps.CreatedAt),
+			convertTimestamp(p.Timestamps.LastActivityAt), //< real 'updated_at' not available, yet
+			convertTimestamp(p.Timestamps.LastActivityAt),
+			[]string{}, // p.Topics,
+			"",         // p.DefaultBranch,
+			false,      // p.EmptyRepo,
 			p.Archived,
-			p.ForksCount,
-			p.StarsCount,
+			p.Statistics.GetForksCount(),
+			p.Statistics.GetStarsCount(),
 			p.GetStatistics().GetCommitCount(),
 			p.GetStatistics().GetStorageSize(),
 			p.GetStatistics().GetRepositorySize(),
@@ -619,8 +620,8 @@ func InsertProjects(c *Client, ctx context.Context, projects []*typespb.Project)
 			p.GetStatistics().GetPackagesSize(),
 			p.GetStatistics().GetSnippetsSize(),
 			p.GetStatistics().GetUploadsSize(),
-			p.OpenIssuesCount,
-			p.WebUrl,
+			p.Statistics.GetOpenIssuesCount(),
+			"", // p.WebUrl,
 		)
 		if err != nil {
 			return 0, fmt.Errorf("append batch:  %w", err)

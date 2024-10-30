@@ -41,15 +41,34 @@ func (s *ClickHouseRecorder) RecordPipelines(ctx context.Context, r *servicepb.R
 }
 
 func (s *ClickHouseRecorder) RecordJobs(ctx context.Context, r *servicepb.RecordJobsRequest) (*servicepb.RecordSummary, error) {
-	return record[typespb.Job](s, ctx, r.Data, clickhouse.InsertJobs)
+	var (
+		builds  []*typespb.Job
+		bridges []*typespb.Job
+	)
+	for _, job := range r.Data {
+		if job.Kind == typespb.JobKind_JOBKIND_BRIDGE {
+			bridges = append(bridges, job)
+		} else {
+			builds = append(builds, job)
+		}
+	}
+
+	buildsSummary, err := record[typespb.Job](s, ctx, builds, clickhouse.InsertJobs)
+	if err != nil {
+		return buildsSummary, err
+	}
+	bridgesSummary, err := record[typespb.Job](s, ctx, bridges, clickhouse.InsertBridges)
+	if err != nil {
+		return bridgesSummary, err
+	}
+
+	return &servicepb.RecordSummary{
+		RecordedCount: buildsSummary.RecordedCount + bridgesSummary.RecordedCount,
+	}, nil
 }
 
 func (s *ClickHouseRecorder) RecordSections(ctx context.Context, r *servicepb.RecordSectionsRequest) (*servicepb.RecordSummary, error) {
 	return record[typespb.Section](s, ctx, r.Data, clickhouse.InsertSections)
-}
-
-func (s *ClickHouseRecorder) RecordBridges(ctx context.Context, r *servicepb.RecordBridgesRequest) (*servicepb.RecordSummary, error) {
-	return record[typespb.Bridge](s, ctx, r.Data, clickhouse.InsertBridges)
 }
 
 func (s *ClickHouseRecorder) RecordTestReports(ctx context.Context, r *servicepb.RecordTestReportsRequest) (*servicepb.RecordSummary, error) {

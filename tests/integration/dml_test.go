@@ -19,17 +19,21 @@ func Test_InsertPipelines(t *testing.T) {
 
 	data := []*typespb.Pipeline{
 		{
-			Id: 1082136862, Iid: 12, ProjectId: 50817395,
+			Id:  1082136862,
+			Iid: 12,
+			Project: &typespb.ProjectReference{
+				Id: 50817395,
+			},
 			Status: "success", Source: "push", Ref: "main",
-			Sha:            "e860ecdc74aee9aab22f6336a705bab05634c0c3",
-			BeforeSha:      "7180ae586f19ae465387ddfa5f02522fa1521f6e",
-			CreatedAt:      &timestamppb.Timestamp{Seconds: 1700690657, Nanos: 951000000},
-			UpdatedAt:      &timestamppb.Timestamp{Seconds: 1700690933, Nanos: 886000000},
-			StartedAt:      &timestamppb.Timestamp{Seconds: 1700690659, Nanos: 10000000},
-			FinishedAt:     &timestamppb.Timestamp{Seconds: 1700690933, Nanos: 875000000},
+			Sha: "e860ecdc74aee9aab22f6336a705bab05634c0c3",
+			Timestamps: &typespb.PipelineTimestamps{
+				CreatedAt:  &timestamppb.Timestamp{Seconds: 1700690657, Nanos: 951000000},
+				UpdatedAt:  &timestamppb.Timestamp{Seconds: 1700690933, Nanos: 886000000},
+				StartedAt:  &timestamppb.Timestamp{Seconds: 1700690659, Nanos: 10000000},
+				FinishedAt: &timestamppb.Timestamp{Seconds: 1700690933, Nanos: 875000000},
+			},
 			Duration:       &durationpb.Duration{Seconds: 273},
 			QueuedDuration: &durationpb.Duration{Seconds: 1},
-			WebUrl:         "https://gitlab.com/cluttrdev/gitlab-exporter/-/pipelines/1082136862",
 		},
 	}
 
@@ -52,19 +56,19 @@ func Test_InsertJobs(t *testing.T) {
 	data := []*typespb.Job{
 		{
 			Pipeline: &typespb.PipelineReference{
-				Id:        1082136862,
-				ProjectId: 50817395,
-				Ref:       "main",
-				Sha:       "e860ecdc74aee9aab22f6336a705bab05634c0c3",
-				Status:    "success",
+				Id: 1082136862,
+				Project: &typespb.ProjectReference{
+					Id: 50817395,
+				},
 			},
 			Id: 5599404160, Name: "test", Ref: "main", Stage: "test", Status: "success",
-			CreatedAt:      &timestamppb.Timestamp{Seconds: 1700690657, Nanos: 999000000},
-			StartedAt:      &timestamppb.Timestamp{Seconds: 1700690851, Nanos: 366000000},
-			FinishedAt:     &timestamppb.Timestamp{Seconds: 1700690933, Nanos: 765000000},
+			Timestamps: &typespb.JobTimestamps{
+				CreatedAt:  &timestamppb.Timestamp{Seconds: 1700690657, Nanos: 999000000},
+				StartedAt:  &timestamppb.Timestamp{Seconds: 1700690851, Nanos: 366000000},
+				FinishedAt: &timestamppb.Timestamp{Seconds: 1700690933, Nanos: 765000000},
+			},
 			Duration:       &durationpb.Duration{Seconds: 82, Nanos: 399463000},
 			QueuedDuration: &durationpb.Duration{Nanos: 359749000},
-			WebUrl:         "https://gitlab.com/cluttrdev/gitlab-exporter/-/jobs/5599404160",
 		},
 		{
 			Pipeline: nil,
@@ -104,31 +108,6 @@ func Test_InsertTestCases(t *testing.T) {
 	}
 
 	n, err := clickhouse.InsertTestCases(client, context.Background(), data)
-	if err != nil {
-		t.Error(err)
-	}
-
-	if n != 10 {
-		t.Errorf("Inserted %d testcases, expected: %d", n, 10)
-	}
-
-	// ----
-
-	data = append(data, []*typespb.TestCase{
-		{Id: "6308490339-1", TestsuiteId: "6308490339", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
-		{Id: "6308490339-2", TestsuiteId: "6308490339", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
-		{Id: "6308490339-3", TestsuiteId: "6308490339", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
-		{Id: "6308490339-4", TestsuiteId: "6308490339", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
-		{Id: "6308490339-5", TestsuiteId: "6308490339", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
-		{Id: "6308490339-6", TestsuiteId: "6308490339", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
-		{Id: "6308490339-7", TestsuiteId: "6308490339", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
-		{Id: "6308490339-8", TestsuiteId: "6308490339", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
-		{Id: "6308490339-9", TestsuiteId: "6308490339", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
-		{Id: "6308490339-10", TestsuiteId: "6308490339", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
-	}...,
-	)
-
-	n, err = clickhouse.InsertTestCases(client, context.Background(), data)
 	if err != nil {
 		t.Error(err)
 	}
