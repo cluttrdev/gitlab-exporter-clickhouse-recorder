@@ -25,6 +25,10 @@ func New(client *clickhouse.Client) *ClickHouseRecorder {
 type insertFunc[T any] func(client *clickhouse.Client, ctx context.Context, data []*T) (int, error)
 
 func record[T any](srv *ClickHouseRecorder, ctx context.Context, data []*T, insert insertFunc[T]) (*servicepb.RecordSummary, error) {
+	if len(data) == 0 {
+		return &servicepb.RecordSummary{}, nil
+	}
+
 	n, err := insert(srv.client, context.Background(), data)
 	if err != nil {
 		slog.Error("Failed to insert data", "error", err)

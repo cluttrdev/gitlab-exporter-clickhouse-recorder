@@ -703,6 +703,10 @@ func InsertTraces(c *Client, ctx context.Context, traces []*typespb.Trace) (int,
 		}
 	}
 
+	if spanCount == 0 {
+		return 0, nil
+	}
+
 	if err := batch.Send(); err != nil {
 		return -1, fmt.Errorf("send batch: %w", err)
 	}
