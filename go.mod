@@ -7,7 +7,7 @@ toolchain go1.22.2
 require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.30.0
 	github.com/cluttrdev/cli v0.0.0-20240318153739-b60d492ac8ff
-	github.com/cluttrdev/gitlab-exporter v0.10.2
+	github.com/cluttrdev/gitlab-exporter v0.10.3
 	github.com/creasty/defaults v1.8.0
 	github.com/docker/docker v27.3.0+incompatible
 	github.com/docker/go-connections v0.5.0
