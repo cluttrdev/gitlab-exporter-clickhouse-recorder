@@ -3,17 +3,18 @@ package clickhouse
 import (
 	"context"
 	"fmt"
-	"sync"
+
+	"golang.org/x/sync/semaphore"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 )
 
 type Client struct {
-	sync.RWMutex
-	conn driver.Conn
-
+	conn   driver.Conn
 	dbName string
+
+	sem *semaphore.Weighted
 }
 
 type ClientConfig struct {
@@ -29,6 +30,28 @@ func NewClient(conn driver.Conn, database string) *Client {
 		conn:   conn,
 		dbName: database,
 	}
+}
+
+func (c *Client) SetMaxConcurrentQueries(n int64) {
+	if n > 0 {
+		c.sem = semaphore.NewWeighted(n)
+	} else {
+		c.sem = nil
+	}
+}
+
+func (c *Client) acquire(ctx context.Context, n int64) error {
+	if c.sem == nil {
+		return nil
+	}
+	return c.sem.Acquire(ctx, n)
+}
+
+func (c *Client) release(n int64) {
+	if c.sem == nil {
+		return
+	}
+	c.sem.Release(n)
 }
 
 func ClientOptions(cfg ClientConfig) clickhouse.Options {
@@ -67,8 +90,6 @@ func Connect(options *clickhouse.Options) (driver.Conn, error) {
 }
 
 func (c *Client) Ping(ctx context.Context) error {
-	c.RLock()
-	defer c.RUnlock()
 	return c.conn.Ping(ctx)
 }
 
@@ -77,19 +98,25 @@ func WithParameters(ctx context.Context, params map[string]string) context.Conte
 }
 
 func (c *Client) Exec(ctx context.Context, query string, args ...any) error {
-	c.RLock()
-	defer c.RUnlock()
+	if err := c.acquire(ctx, 1); err != nil {
+		return err
+	}
+	defer c.release(1)
 	return c.conn.Exec(ctx, query, args...)
 }
 
 func (c *Client) Select(ctx context.Context, dest any, query string, args ...any) error {
-	c.RLock()
-	defer c.RUnlock()
+	if err := c.acquire(ctx, 1); err != nil {
+		return err
+	}
+	defer c.release(1)
 	return c.conn.Select(ctx, dest, query, args...)
 }
 
 func (c *Client) PrepareBatch(ctx context.Context, query string) (driver.Batch, error) {
-	c.RLock()
-	defer c.RUnlock()
+	if err := c.acquire(ctx, 1); err != nil {
+		return nil, err
+	}
+	defer c.release(1)
 	return c.conn.PrepareBatch(ctx, query)
 }

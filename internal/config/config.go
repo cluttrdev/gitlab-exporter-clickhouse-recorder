@@ -17,6 +17,12 @@ type ClickHouse struct {
 	Database string `default:"default" yaml:"database"`
 	User     string `default:"default" yaml:"user"`
 	Password string `default:"" yaml:"password"`
+
+	Client ClickHouseClient `default:"{}" yaml:"client"`
+}
+
+type ClickHouseClient struct {
+	MaxConcurrentQueries int64 `default:"0" yaml:"max_concurrent_queries"`
 }
 
 type Server struct {

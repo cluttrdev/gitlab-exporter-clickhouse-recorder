@@ -9,6 +9,7 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"strconv"
 
 	"github.com/cluttrdev/cli"
 	"github.com/cluttrdev/gitlab-exporter-clickhouse-recorder/internal/config"
@@ -44,6 +45,8 @@ func (c *RootConfig) RegisterFlags(fs *flag.FlagSet) {
 	_ = fs.String("clickhouse-user", "default", "The ClickHouse username to connect with (default: 'default').")
 	_ = fs.String("clickhouse-password", "", "The ClickHouse password (default: '').")
 
+	_ = fs.Int64("clickhouse-client-max-concurrent-queries", 0, "The maximum number of concurrent queries the client sends to clickhouse (default: 0, unlimited).")
+
 	fs.StringVar(&c.filename, "config", "", "The configuration file to use.")
 
 	fs.BoolVar(&c.debug, "debug", false, "Run in debug mode.")
@@ -74,8 +77,19 @@ func loadConfig(filename string, flags *flag.FlagSet, cfg *config.Config) error 
 			cfg.ClickHouse.User = f.Value.String()
 		case "clickhouse-password":
 			cfg.ClickHouse.Password = f.Value.String()
+
+		case "clickhouse-client-max-concurrent-queries":
+			n, err := strconv.ParseInt(f.Value.String(), 10, 64)
+			if err != nil {
+				n = -1
+			}
+			cfg.ClickHouse.Client.MaxConcurrentQueries = n
 		}
 	})
+
+	if cfg.ClickHouse.Client.MaxConcurrentQueries < 0 {
+		return fmt.Errorf("invalid config: max_concurrent_queries")
+	}
 
 	return nil
 }

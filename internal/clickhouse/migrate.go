@@ -29,6 +29,11 @@ var (
 const migrationsTable string = "schema_migrations"
 
 func GetSchemaVersion(c *Client, ctx context.Context) (uint, bool, error) {
+	if err := c.acquire(ctx, 1); err != nil {
+		return 0, false, err
+	}
+	defer c.release(1)
+
 	var (
 		version int64
 		dirty   uint8
