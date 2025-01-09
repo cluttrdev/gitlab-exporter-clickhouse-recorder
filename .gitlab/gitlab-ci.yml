@@ -1,0 +1,167 @@
+stages:
+  - lint
+  - build
+  - test
+  - release
+
+variables:
+  CACHE_DIR: ${CI_PROJECT_DIR}/.cache
+  GOPATH: ${CI_PROJECT_DIR}/.go
+  GOCACHE: ${CACHE_DIR}/go-build
+  GOMAXPROCS: "8"
+  GOVERSION: "1.22"
+
+default:
+  image: golang:${GOVERSION}
+
+download:
+  stage: .pre
+  script:
+    - |
+      start=$(date +%s%N)
+      go mod download
+      end=$(date +%s%N)
+      duration=$(printf %.6f "$(( end-start ))e-9")
+      timestamp=$(( end/1000000 ))
+      echo "METRIC_go_mod_download_time{module=\"$(go list .)\", commit_ref=\"${CI_COMMIT_REF_NAME}\"} ${duration} ${timestamp}"
+  cache: &cache-defaults
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+      - ${CACHE_DIR}
+      - ${GOPATH}
+    policy: pull-push
+
+lint:
+  stage: lint
+  cache:
+    - <<: *cache-defaults
+  variables:
+    GOLANGCI_LINT_VERSION: v1.62.0
+    GOLANGCI_LINT_CACHE: ${CACHE_DIR}/golangci-lint
+  before_script:
+    - | # Download golangci-lint binary
+      echo -e "\e[0Ksection_start:$(date +%s):script_step_before\r\e[0KRunning script_step_before"
+      curl -sSfL https://github.com/golangci/golangci-lint/releases/download/${GOLANGCI_LINT_VERSION}/golangci-lint-${GOLANGCI_LINT_VERSION#v}-linux-amd64.tar.gz -o /tmp/golangci-lint.tar.gz
+      mkdir -p ${GOPATH}/bin
+      tar -C ${GOPATH}/bin/ -zxof /tmp/golangci-lint.tar.gz --strip-components=1 golangci-lint-${GOLANGCI_LINT_VERSION#v}-linux-amd64/golangci-lint
+      echo -e "\e[0Ksection_end:$(date +%s):script_step_before\r\e[0K"
+  script:
+    - ${GOPATH}/bin/golangci-lint run --verbose ./...
+  allow_failure: true
+
+build:
+  stage: build
+  cache:
+    - <<: *cache-defaults
+  script:
+    - |
+      start=$(date +%s%N)
+      make build
+      end=$(date +%s%N)
+      duration=$(printf %.6f "$(( end-start ))e-9")
+      timestamp=$(( end/1000000 ))
+      echo "METRIC_go_build_time{package=\"$(go list .)\"} ${duration} ${timestamp}"
+
+test:
+  stage: test
+  cache:
+    - <<: *cache-defaults
+  variables:
+    GOTESTSUM_VERSION: v1.12.0
+  before_script:
+    - | # Download gotestsum binary
+      echo -e "\e[0Ksection_start:$(date +%s):script_step_before\r\e[0KRunning script_step_before"
+      curl -sSfL https://github.com/gotestyourself/gotestsum/releases/download/${GOTESTSUM_VERSION}/gotestsum_${GOTESTSUM_VERSION#v}_linux_amd64.tar.gz -o /tmp/gotestsum.tar.gz
+      mkdir -p ${GOPATH}/bin
+      tar -C ${GOPATH}/bin/ -zxof /tmp/gotestsum.tar.gz gotestsum
+      echo -e "\e[0Ksection_end:$(date +%s):script_step_before\r\e[0K"
+  script:
+    - |
+      # Run tests
+      echo -e "\e[0Ksection_start:$(date +%s):script_step_run\r\e[0KRunning script_step_run"
+      ${GOPATH}/bin/gotestsum \
+        --junitfile report.xml --format testname \
+        -- \
+        -coverprofile coverage.txt -covermode=atomic \
+        ./...
+      echo -e "\e[0Ksection_end:$(date +%s):script_step_run\r\e[0K"
+
+    - |
+      # Embed metrics on test results in job log
+      echo -e "\e[0Ksection_start:$(date +%s):script_step_after\r\e[0KRunning script_step_after"
+      go run ./tools/junitmetrics ./report.xml
+      echo -e "\e[0Ksection_end:$(date +%s):script_step_after\r\e[0K"
+  artifacts:
+    when: always
+    paths:
+      - report.xml
+    reports:
+      junit: report.xml
+
+release:
+  stage: release
+  rules:
+    - if: $CI_COMMIT_TAG != null
+  cache:
+    - <<: *cache-defaults
+  variables:
+    ARCHIVER_VERSION: v3.5.0
+  before_script:
+    - | # Download archiver binary (for windows .zip support)
+      curl -sSL --fail-with-body https://github.com/mholt/archiver/releases/download/${ARCHIVER_VERSION}/arc_${ARCHIVER_VERSION#v}_linux_amd64 -o /tmp/arc
+      mkdir -p ${GOPATH}/bin
+      install -t ${GOPATH}/bin /tmp/arc
+  script:
+    - .gitlab/release.sh
+
+release-sync:
+  stage: release
+  rules:
+    - if: $CI_COMMIT_TAG != null
+  needs:
+    - release
+  variables:
+    GITHUB_OWNER: cluttrdev
+    GITHUB_REPO: gitlab-exporter-clickhouse-recorder
+  script:
+    - | # Trigger GitHub release sync workflow
+      curl \
+        -sSL --fail-with-body \
+        --header "Accept: application/vnd.github.v3+json" \
+        --header "Authorization: Bearer ${GITHUB_TOKEN}" \
+        --data "{\"ref\":\"${CI_COMMIT_TAG}\"}" \
+        "https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/release.yml/dispatches"
+
+release-image:
+  stage: release
+  rules:
+    - if: $CI_COMMIT_TAG != null
+  needs:
+    - release
+  image: docker:27.3.1
+  services:
+    - name: docker:27.3.1-dind
+      alias: docker
+  variables:
+    DOCKER_IMAGE: gitlab-exporter
+    DOCKER_TAG: $CI_COMMIT_TAG
+  script:
+    - | # Build image
+      docker build \
+        --file ${CI_PROJECT_DIR}/Dockerfile \
+        --build-arg GOVERSION \
+        --build-arg VERSION="${CI_COMMIT_TAG}" \
+        --tag "${DOCKER_IMAGE}:${DOCKER_TAG}" \
+        ${CI_PROJECT_DIR}
+    - | # Push to GitLab container registry
+      docker tag "${DOCKER_IMAGE}:${DOCKER_TAG}" "${CI_REGISTRY_IMAGE}/${DOCKER_IMAGE}:${DOCKER_TAG}"
+      docker tag "${DOCKER_IMAGE}:${DOCKER_TAG}" "${CI_REGISTRY_IMAGE}/${DOCKER_IMAGE}:latest"
+      echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" --username "$CI_REGISTRY_USER" --password-stdin
+      docker push "${CI_REGISTRY_IMAGE}/${DOCKER_IMAGE}:${DOCKER_TAG}"
+      docker push "${CI_REGISTRY_IMAGE}/${DOCKER_IMAGE}:latest"
+    - | # Push to GitHub container registry
+      docker tag "${DOCKER_IMAGE}:${DOCKER_TAG}" "ghcr.io/cluttrdev/${DOCKER_IMAGE}:${DOCKER_TAG}"
+      docker tag "${DOCKER_IMAGE}:${DOCKER_TAG}" "ghcr.io/cluttrdev/${DOCKER_IMAGE}:latest"
+      echo "$GITHUB_TOKEN" | docker login ghcr.io --username cluttrdev --password-stdin
+      docker push "ghcr.io/cluttrdev/${DOCKER_IMAGE}:${DOCKER_TAG}"
+      docker push "ghcr.io/cluttrdev/${DOCKER_IMAGE}:latest"
