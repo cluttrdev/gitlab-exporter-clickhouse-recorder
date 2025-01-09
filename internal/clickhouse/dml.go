@@ -293,7 +293,7 @@ func InsertTestReports(c *Client, ctx context.Context, reports []*typespb.TestRe
 	for _, tr := range reports {
 		err = batch.Append(
 			tr.Id,
-			tr.PipelineId,
+			tr.Pipeline.Id,
 			tr.TotalTime,
 			tr.TotalCount,
 			tr.SuccessCount,
@@ -333,8 +333,8 @@ func InsertTestSuites(c *Client, ctx context.Context, suites []*typespb.TestSuit
 	for _, ts := range suites {
 		err = batch.Append(
 			ts.Id,
-			ts.TestreportId,
-			ts.PipelineId,
+			ts.TestReport.Id,
+			ts.TestReport.Pipeline.Id,
 			ts.Name,
 			ts.TotalTime,
 			ts.TotalCount,
@@ -342,6 +342,7 @@ func InsertTestSuites(c *Client, ctx context.Context, suites []*typespb.TestSuit
 			ts.FailedCount,
 			ts.SkippedCount,
 			ts.ErrorCount,
+			convertTestProperties(ts.Properties),
 		)
 		if err != nil {
 			return 0, fmt.Errorf("append batch: %w", err)
@@ -375,9 +376,9 @@ func InsertTestCases(c *Client, ctx context.Context, cases []*typespb.TestCase) 
 	for _, tc := range cases {
 		err = batch.Append(
 			tc.Id,
-			tc.TestsuiteId,
-			tc.TestreportId,
-			tc.PipelineId,
+			tc.TestSuite.Id,
+			tc.TestSuite.TestReport.Id,
+			tc.TestSuite.TestReport.Pipeline.Id,
 			tc.Status,
 			tc.Name,
 			tc.Classname,
@@ -387,9 +388,10 @@ func InsertTestCases(c *Client, ctx context.Context, cases []*typespb.TestCase) 
 			tc.StackTrace,
 			tc.AttachmentUrl,
 			map[string]interface{}{
-				"count":       tc.RecentFailures.Count,
-				"base_branch": tc.RecentFailures.BaseBranch,
+				"count":       0,
+				"base_branch": "",
 			},
+			convertTestProperties(tc.Properties),
 		)
 		if err != nil {
 			return 0, fmt.Errorf("append batch: %w", err)
@@ -775,4 +777,12 @@ func convertLabels(labels []*typespb.Metric_Label) map[string]string {
 	}
 
 	return m
+}
+
+func convertTestProperties(properties []*typespb.TestProperty) [][]string {
+	ps := make([][]string, 0, len(properties))
+	for _, p := range properties {
+		ps = append(ps, []string{p.Name, p.Value})
+	}
+	return ps
 }

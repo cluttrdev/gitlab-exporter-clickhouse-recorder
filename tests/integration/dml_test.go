@@ -94,17 +94,27 @@ func Test_InsertTestCases(t *testing.T) {
 		t.Error(err)
 	}
 
+	testSuiteRef := &typespb.TestSuiteReference{
+		Id: "6252785472",
+		TestReport: &typespb.TestReportReference{
+			Id: "1190130970",
+			Pipeline: &typespb.PipelineReference{
+				Id: 1190130970,
+			},
+		},
+	}
+
 	data := []*typespb.TestCase{
-		{Id: "6252785472-1", TestsuiteId: "6252785472", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
-		{Id: "6252785472-2", TestsuiteId: "6252785472", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
-		{Id: "6252785472-3", TestsuiteId: "6252785472", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
-		{Id: "6252785472-4", TestsuiteId: "6252785472", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
-		{Id: "6252785472-5", TestsuiteId: "6252785472", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
-		{Id: "6252785472-6", TestsuiteId: "6252785472", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
-		{Id: "6252785472-7", TestsuiteId: "6252785472", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
-		{Id: "6252785472-8", TestsuiteId: "6252785472", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
-		{Id: "6252785472-9", TestsuiteId: "6252785472", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
-		{Id: "6252785472-10", TestsuiteId: "6252785472", TestreportId: "1190130970", PipelineId: 1190130970, RecentFailures: &typespb.TestCase_RecentFailures{}},
+		{Id: "6252785472-1", TestSuite: testSuiteRef},
+		{Id: "6252785472-2", TestSuite: testSuiteRef},
+		{Id: "6252785472-3", TestSuite: testSuiteRef},
+		{Id: "6252785472-4", TestSuite: testSuiteRef},
+		{Id: "6252785472-5", TestSuite: testSuiteRef},
+		{Id: "6252785472-6", TestSuite: testSuiteRef},
+		{Id: "6252785472-7", TestSuite: testSuiteRef},
+		{Id: "6252785472-8", TestSuite: testSuiteRef},
+		{Id: "6252785472-9", TestSuite: testSuiteRef},
+		{Id: "6252785472-10", TestSuite: testSuiteRef},
 	}
 
 	n, err := clickhouse.InsertTestCases(client, context.Background(), data)
