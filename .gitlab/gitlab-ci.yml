@@ -66,31 +66,24 @@ test:
   stage: test
   cache:
     - <<: *cache-defaults
+  services:
+    - name: docker:27.3.1-dind
+      alias: docker
   variables:
     GOTESTSUM_VERSION: v1.12.0
   before_script:
     - | # Download gotestsum binary
-      echo -e "\e[0Ksection_start:$(date +%s):script_step_before\r\e[0KRunning script_step_before"
       curl -sSfL https://github.com/gotestyourself/gotestsum/releases/download/${GOTESTSUM_VERSION}/gotestsum_${GOTESTSUM_VERSION#v}_linux_amd64.tar.gz -o /tmp/gotestsum.tar.gz
       mkdir -p ${GOPATH}/bin
       tar -C ${GOPATH}/bin/ -zxof /tmp/gotestsum.tar.gz gotestsum
-      echo -e "\e[0Ksection_end:$(date +%s):script_step_before\r\e[0K"
   script:
     - |
       # Run tests
-      echo -e "\e[0Ksection_start:$(date +%s):script_step_run\r\e[0KRunning script_step_run"
       ${GOPATH}/bin/gotestsum \
         --junitfile report.xml --format testname \
         -- \
         -coverprofile coverage.txt -covermode=atomic \
         ./...
-      echo -e "\e[0Ksection_end:$(date +%s):script_step_run\r\e[0K"
-
-    - |
-      # Embed metrics on test results in job log
-      echo -e "\e[0Ksection_start:$(date +%s):script_step_after\r\e[0KRunning script_step_after"
-      go run ./tools/junitmetrics ./report.xml
-      echo -e "\e[0Ksection_end:$(date +%s):script_step_after\r\e[0K"
   artifacts:
     when: always
     paths:
@@ -143,7 +136,7 @@ release-image:
     - name: docker:27.3.1-dind
       alias: docker
   variables:
-    DOCKER_IMAGE: gitlab-exporter
+    DOCKER_IMAGE: gitlab-exporter-clickhouse-recorder
     DOCKER_TAG: $CI_COMMIT_TAG
   script:
     - | # Build image
