@@ -66,15 +66,15 @@ test:
   stage: test
   cache:
     - <<: *cache-defaults
-  services:
-    - name: docker:27.3.1-dind
-      command: ["--tls=false"]
+  # services:
+  #   - name: docker:27.3.1-dind
+  #     command: ["--tls=false"]
   variables:
     GOTESTSUM_VERSION: v1.12.0
-    # https://golang.testcontainers.org/system_requirements/ci/gitlab_ci/#example-using-dind-docker-in-docker
-    DOCKER_HOST: "tcp://docker:2375"
-    DOCKER_TLS_CERTDIR: ""
-    DOCKER_DRIVER: overlay2
+    # # https://golang.testcontainers.org/system_requirements/ci/gitlab_ci/#example-using-dind-docker-in-docker
+    # DOCKER_HOST: "tcp://docker:2375"
+    # DOCKER_TLS_CERTDIR: ""
+    # DOCKER_DRIVER: overlay2
   before_script:
     - | # Download gotestsum binary
       curl -sSfL https://github.com/gotestyourself/gotestsum/releases/download/${GOTESTSUM_VERSION}/gotestsum_${GOTESTSUM_VERSION#v}_linux_amd64.tar.gz -o /tmp/gotestsum.tar.gz
