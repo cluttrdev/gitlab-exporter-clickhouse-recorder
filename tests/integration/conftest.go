@@ -65,7 +65,7 @@ func CreateClickHouseTestEnvironment(testSet string) (ClickHouseTestEnvironment,
 	}
 	err = provider.Health(ctx)
 	if err != nil {
-		fmt.Printf("Docker is not running and no clickhouse connections details were provided. Skipping IT tests: %s\n", err)
+		fmt.Printf("Docker provider health check failed, skipping integration tests: %v\n", err)
 		os.Exit(0)
 	}
 	fmt.Printf("Using Docker for IT tests\n")
