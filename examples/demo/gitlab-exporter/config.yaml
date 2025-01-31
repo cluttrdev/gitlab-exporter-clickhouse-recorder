@@ -3,7 +3,7 @@
 
 gitlab:
   url: "https://gitlab.com"
-  token: ""  # or set GLCHR_GITLAB_TOKEN environment variable
+  token: ""  # or set GLE_GITLAB_TOKEN environment variable
 
   client:
     rate:
