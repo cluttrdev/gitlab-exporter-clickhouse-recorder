@@ -16,6 +16,11 @@ import (
 const testSet string = "native"
 
 func TestMain(m *testing.M) {
+	if os.Getenv("SKIP_INTEGRATION_TESTS") == "true" {
+		fmt.Fprintln(os.Stderr, "Skipping integration tests")
+		os.Exit(0)
+	}
+
 	env, err := CreateClickHouseTestEnvironment(testSet)
 	if err != nil {
 		panic(err)

@@ -11,7 +11,7 @@ import (
 	"github.com/cluttrdev/gitlab-exporter-clickhouse-recorder/internal/clickhouse"
 )
 
-func Test_InsertPipelines(t *testing.T) {
+func TestIntegration_InsertPipelines(t *testing.T) {
 	client, err := GetTestClient(testSet)
 	if err != nil {
 		t.Error(err)
@@ -47,7 +47,7 @@ func Test_InsertPipelines(t *testing.T) {
 	}
 }
 
-func Test_InsertJobs(t *testing.T) {
+func TestIntegration_InsertJobs(t *testing.T) {
 	client, err := GetTestClient(testSet)
 	if err != nil {
 		t.Error(err)
@@ -88,7 +88,7 @@ func Test_InsertJobs(t *testing.T) {
 	}
 }
 
-func Test_InsertSections(t *testing.T) {
+func TestIntegration_InsertSections(t *testing.T) {
 	client, err := GetTestClient(testSet)
 	if err != nil {
 		t.Error(err)
@@ -123,7 +123,7 @@ func Test_InsertSections(t *testing.T) {
 	}
 }
 
-func Test_InsertTestCases(t *testing.T) {
+func TestIntegration_InsertTestCases(t *testing.T) {
 	client, err := GetTestClient(testSet)
 	if err != nil {
 		t.Error(err)

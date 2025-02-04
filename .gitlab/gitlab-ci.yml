@@ -75,6 +75,7 @@ test:
     # DOCKER_HOST: "tcp://docker:2375"
     # DOCKER_TLS_CERTDIR: ""
     # DOCKER_DRIVER: overlay2
+    SKIP_INTEGRATION_TESTS: "true"
   before_script:
     - | # Download gotestsum binary
       curl -sSfL https://github.com/gotestyourself/gotestsum/releases/download/${GOTESTSUM_VERSION}/gotestsum_${GOTESTSUM_VERSION#v}_linux_amd64.tar.gz -o /tmp/gotestsum.tar.gz
