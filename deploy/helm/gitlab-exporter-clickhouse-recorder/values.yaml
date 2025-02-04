@@ -64,6 +64,8 @@ env: []
 
 # config options for db migrations job
 job:
+  enabled: true
+
   resources:
     requests:
       cpu: 100m
