@@ -87,5 +87,12 @@ func RunSchemaMigrations(testSet string) error {
 		FileSystem: &fsys,
 		Path:       "",
 	}
+
+	if err := clickhouse.MigrateUp(opts); err != nil {
+		return err
+	}
+	if err := clickhouse.MigrateDown(opts); err != nil {
+		return err
+	}
 	return clickhouse.MigrateUp(opts)
 }

@@ -88,6 +88,41 @@ func Test_InsertJobs(t *testing.T) {
 	}
 }
 
+func Test_InsertSections(t *testing.T) {
+	client, err := GetTestClient(testSet)
+	if err != nil {
+		t.Error(err)
+	}
+
+	data := []*typespb.Section{
+		{
+			Id:   5599404160001,
+			Name: "script",
+			Job: &typespb.JobReference{
+				Id: 5599404160,
+				Pipeline: &typespb.PipelineReference{
+					Id: 1082136862,
+					Project: &typespb.ProjectReference{
+						Id: 50817395,
+					},
+				},
+			},
+			StartedAt:  &timestamppb.Timestamp{Seconds: 1700690851, Nanos: 366000000},
+			FinishedAt: &timestamppb.Timestamp{Seconds: 1700690933, Nanos: 765000000},
+			Duration:   &durationpb.Duration{Seconds: 82, Nanos: 399463000},
+		},
+	}
+
+	n, err := clickhouse.InsertSections(client, context.Background(), data)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if n != len(data) {
+		t.Errorf("Inserted %d sections, expected: %d", n, len(data))
+	}
+}
+
 func Test_InsertTestCases(t *testing.T) {
 	client, err := GetTestClient(testSet)
 	if err != nil {

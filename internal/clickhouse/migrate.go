@@ -118,3 +118,15 @@ func MigrateUp(opts MigrationOptions) error {
 	}
 	return nil
 }
+
+func MigrateDown(opts MigrationOptions) error {
+	m, err := NewMigration(opts)
+	if err != nil {
+		return fmt.Errorf("create migration instance: %w", err)
+	}
+
+	if err := m.Down(); err != nil {
+		return fmt.Errorf("apply down migrations: %w", err)
+	}
+	return nil
+}

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"strconv"
 	"time"
 
 	otlp_comonpb "go.opentelemetry.io/proto/otlp/common/v1"
@@ -57,27 +56,43 @@ func InsertPipelines(c *Client, ctx context.Context, pipelines []*typespb.Pipeli
 	}
 
 	for _, p := range pipelines {
-		err = batch.Append(
-			p.Id,
-			p.Iid,
-			p.Project.Id,
-			p.Status,
-			p.Source,
-			p.Ref,
-			p.Sha,
-			"",    // p.BeforeSha,
-			false, // p.Tag,
-			strconv.FormatBool(p.YamlErrors),
-			convertTimestamp(p.Timestamps.CreatedAt),
-			convertTimestamp(p.Timestamps.UpdatedAt),
-			convertTimestamp(p.Timestamps.StartedAt),
-			convertTimestamp(p.Timestamps.FinishedAt),
-			convertTimestamp(p.Timestamps.CommittedAt),
-			convertDuration(p.Duration),
-			convertDuration(p.QueuedDuration),
-			p.Coverage,
-			"", // p.WebUrl,
-		)
+		err = batch.AppendStruct(&Pipeline{
+			Id:        p.Id,
+			Iid:       p.Iid,
+			ProjectId: p.GetProject().GetId(),
+
+			Name:          p.Name,
+			Ref:           p.Ref,
+			Sha:           p.Sha,
+			Source:        p.Source,
+			Status:        p.Status,
+			FailureReason: p.FailureReason,
+
+			CommittedAt: convertTimestamp(p.Timestamps.GetCommittedAt()),
+			CreatedAt:   convertTimestamp(p.Timestamps.GetCreatedAt()),
+			UpdatedAt:   convertTimestamp(p.Timestamps.GetUpdatedAt()),
+			StartedAt:   convertTimestamp(p.Timestamps.GetStartedAt()),
+			FinishedAt:  convertTimestamp(p.Timestamps.GetFinishedAt()),
+
+			QueuedDuration: convertDuration(p.QueuedDuration),
+			Duration:       convertDuration(p.Duration),
+
+			Coverage: p.Coverage,
+
+			Warnings:   p.Warnings,
+			YamlErrors: p.YamlErrors,
+
+			Child:                     p.Child,
+			UpstreamPipelineId:        p.UpstreamPipeline.GetId(),
+			UpstreamPipelineIid:       p.UpstreamPipeline.GetIid(),
+			UpstreamPipelineProjectId: p.UpstreamPipeline.GetProject().GetId(),
+
+			MergeRequestId:        p.MergeRequest.GetId(),
+			MergeRequestIid:       p.MergeRequest.GetIid(),
+			MergeRequestProjectId: p.MergeRequest.GetProject().GetId(),
+
+			UserId: p.User.GetId(),
+		})
 		if err != nil {
 			return 0, fmt.Errorf("append batch: %w", err)
 		}
@@ -114,32 +129,63 @@ func InsertJobs(c *Client, ctx context.Context, jobs []*typespb.Job) (int, error
 			continue
 		}
 
-		err = batch.Append(
-			j.Coverage,
-			j.AllowFailure,
-			convertTimestamp(j.Timestamps.CreatedAt),
-			convertTimestamp(j.Timestamps.StartedAt),
-			convertTimestamp(j.Timestamps.FinishedAt),
-			convertTimestamp(j.Timestamps.ErasedAt),
-			convertDuration(j.Duration),
-			convertDuration(j.QueuedDuration),
-			j.Tags,
-			j.Id,
-			j.Name,
-			map[string]interface{}{
-				"id":         j.Pipeline.Id,
-				"project_id": j.Pipeline.Project.Id,
-				"ref":        "", // j.Pipeline.Ref,
-				"sha":        "", // j.Pipeline.Sha,
-				"status":     "", // j.Pipeline.Status,
+		var jobKind string
+		switch j.Kind {
+		case typespb.JobKind_JOBKIND_UNSPECIFIED:
+			jobKind = "unspecified"
+		case typespb.JobKind_JOBKIND_BUILD:
+			jobKind = "build"
+		case typespb.JobKind_JOBKIND_BRIDGE:
+			jobKind = "bridge"
+		default:
+			jobKind = "unknown"
+		}
+
+		err = batch.AppendStruct(&Job{
+			Id:         j.Id,
+			PipelineId: j.Pipeline.GetId(),
+			ProjectId:  j.Pipeline.GetProject().GetId(),
+
+			Name:          j.Name,
+			Ref:           j.Ref,
+			Status:        j.Status,
+			FailureReason: j.FailureReason,
+
+			CreatedAt:  convertTimestamp(j.Timestamps.GetCreatedAt()),
+			QueuedAt:   convertTimestamp(j.Timestamps.GetQueuedAt()),
+			StartedAt:  convertTimestamp(j.Timestamps.GetStartedAt()),
+			FinishedAt: convertTimestamp(j.Timestamps.GetFinishedAt()),
+			ErasedAt:   convertTimestamp(j.Timestamps.GetErasedAt()),
+
+			QueuedDuration: convertDuration(j.QueuedDuration),
+			Duration:       convertDuration(j.Duration),
+
+			Coverage: j.Coverage,
+
+			Stage:   j.Stage,
+			TagList: j.Tags,
+
+			AllowFailure: j.AllowFailure,
+			Manual:       j.Manual,
+			Retried:      j.Retried,
+			Retryable:    j.Retryable,
+
+			Kind:                        jobKind,
+			DownstreamPipelineId:        j.DownstreamPipeline.GetId(),
+			DownstreamPipelineIid:       j.DownstreamPipeline.GetIid(),
+			DownstreamPipelineProjectId: j.DownstreamPipeline.GetProject().GetId(),
+
+			RunnerId: j.Runner.GetId(),
+
+			// deprecated
+			Pipeline: []any{
+				j.Pipeline.GetId(),
+				j.Pipeline.GetProject().GetId(),
+				j.Ref,
+				"", // sha
+				"", // status
 			},
-			j.Ref,
-			j.Stage,
-			j.Status,
-			j.FailureReason,
-			false, // j.Tag,
-			"",    // j.WebUrl,
-		)
+		})
 		if err != nil {
 			errs = errors.Join(errs, fmt.Errorf("append job %d to batch: %w", j.Id, err))
 		}
@@ -242,25 +288,33 @@ func InsertSections(c *Client, ctx context.Context, sections []*typespb.Section)
 	}
 
 	for _, s := range sections {
-		err = batch.Append(
-			s.Id,
-			s.Name,
-			map[string]interface{}{
-				"id":     s.Job.Id,
-				"name":   s.Job.Name,
-				"status": "", // s.Job.Status,
+		err = batch.AppendStruct(&Section{
+			Id:         s.Id,
+			JobId:      s.Job.GetId(),
+			PipelineId: s.Job.GetPipeline().GetId(),
+			ProjectId:  s.Job.GetPipeline().GetProject().GetId(),
+
+			Name: s.Name,
+
+			StartedAt:  convertTimestamp(s.StartedAt),
+			FinishedAt: convertTimestamp(s.FinishedAt),
+
+			Duration: convertDuration(s.Duration),
+
+			// deprecated
+			Job: []any{
+				s.Job.GetId(),
+				s.Job.GetName(),
+				"", // status
 			},
-			map[string]interface{}{
-				"id":         s.Job.Pipeline.Id,
-				"project_id": s.Job.Pipeline.Project.Id,
-				"ref":        "", // s.Pipeline.Ref,
-				"sha":        "", // s.Pipeline.Sha,
-				"status":     "", // s.Pipeline.Status,
+			Pipeline: []any{
+				s.Job.GetPipeline().GetId(),
+				s.Job.GetPipeline().GetProject().GetId(),
+				"", // ref
+				"", // sha
+				"", // status
 			},
-			convertTimestamp(s.StartedAt),
-			convertTimestamp(s.FinishedAt),
-			convertDuration(s.Duration),
-		)
+		})
 		if err != nil {
 			return 0, fmt.Errorf("append batch: %w", err)
 		}
@@ -291,16 +345,18 @@ func InsertTestReports(c *Client, ctx context.Context, reports []*typespb.TestRe
 	}
 
 	for _, tr := range reports {
-		err = batch.Append(
-			tr.Id,
-			tr.Pipeline.Id,
-			tr.TotalTime,
-			tr.TotalCount,
-			tr.SuccessCount,
-			tr.FailedCount,
-			tr.SkippedCount,
-			tr.ErrorCount,
-		)
+		err = batch.AppendStruct(&TestReport{
+			Id:         tr.Id,
+			PipelineId: tr.Pipeline.GetId(),
+			ProjectId:  tr.Pipeline.GetProject().GetId(),
+
+			TotalTime:    tr.TotalTime,
+			TotalCount:   tr.TotalCount,
+			ErrorCount:   tr.ErrorCount,
+			FailedCount:  tr.FailedCount,
+			SkippedCount: tr.SkippedCount,
+			SuccessCount: tr.SuccessCount,
+		})
 		if err != nil {
 			return 0, fmt.Errorf("append batch: %w", err)
 		}
@@ -331,19 +387,22 @@ func InsertTestSuites(c *Client, ctx context.Context, suites []*typespb.TestSuit
 	}
 
 	for _, ts := range suites {
-		err = batch.Append(
-			ts.Id,
-			ts.TestReport.Id,
-			ts.TestReport.Pipeline.Id,
-			ts.Name,
-			ts.TotalTime,
-			ts.TotalCount,
-			ts.SuccessCount,
-			ts.FailedCount,
-			ts.SkippedCount,
-			ts.ErrorCount,
-			convertTestProperties(ts.Properties),
-		)
+		err = batch.AppendStruct(&TestSuite{
+			Id:           ts.Id,
+			TestReportId: ts.TestReport.GetId(),
+			PipelineId:   ts.TestReport.GetPipeline().GetId(),
+			ProjectId:    ts.TestReport.GetPipeline().GetProject().GetId(),
+
+			Name:         ts.Name,
+			TotalTime:    ts.TotalTime,
+			TotalCount:   ts.TotalCount,
+			ErrorCount:   ts.ErrorCount,
+			FailedCount:  ts.FailedCount,
+			SkippedCount: ts.SkippedCount,
+			SuccessCount: ts.SuccessCount,
+
+			Properties: convertTestProperties(ts.Properties),
+		})
 		if err != nil {
 			return 0, fmt.Errorf("append batch: %w", err)
 		}
@@ -374,25 +433,23 @@ func InsertTestCases(c *Client, ctx context.Context, cases []*typespb.TestCase) 
 	}
 
 	for _, tc := range cases {
-		err = batch.Append(
-			tc.Id,
-			tc.TestSuite.Id,
-			tc.TestSuite.TestReport.Id,
-			tc.TestSuite.TestReport.Pipeline.Id,
-			tc.Status,
-			tc.Name,
-			tc.Classname,
-			tc.File,
-			tc.ExecutionTime,
-			tc.SystemOutput,
-			tc.StackTrace,
-			tc.AttachmentUrl,
-			map[string]interface{}{
-				"count":       0,
-				"base_branch": "",
-			},
-			convertTestProperties(tc.Properties),
-		)
+		err = batch.AppendStruct(&TestCase{
+			Id:           tc.Id,
+			TestSuiteId:  tc.TestSuite.GetId(),
+			TestReportId: tc.TestSuite.GetTestReport().GetId(),
+			PipelineId:   tc.TestSuite.GetTestReport().GetPipeline().GetId(),
+			ProjectId:    tc.TestSuite.GetTestReport().GetPipeline().GetProject().GetId(),
+
+			Status:        tc.Status,
+			Name:          tc.Name,
+			Classname:     tc.Classname,
+			File:          tc.File,
+			ExecutionTime: tc.ExecutionTime,
+			SystemOutput:  tc.SystemOutput,
+			AttachmentUrl: tc.AttachmentUrl,
+
+			Properties: convertTestProperties(tc.Properties),
+		})
 		if err != nil {
 			return 0, fmt.Errorf("append batch: %w", err)
 		}
@@ -426,54 +483,69 @@ func InsertMergeRequests(c *Client, ctx context.Context, mrs []*typespb.MergeReq
 	}
 
 	for _, mr := range mrs {
-		assignees_id := make([]int64, 0, len(mr.Participants.Assignees))
-		for _, a := range mr.Participants.Assignees {
+		assignees_id := make([]int64, 0, len(mr.Participants.GetAssignees()))
+		for _, a := range mr.Participants.GetAssignees() {
 			assignees_id = append(assignees_id, a.Id)
 		}
-		reviewers_id := make([]int64, 0, len(mr.Participants.Reviewers))
-		for _, a := range mr.Participants.Reviewers {
+		reviewers_id := make([]int64, 0, len(mr.Participants.GetReviewers()))
+		for _, a := range mr.Participants.GetReviewers() {
 			reviewers_id = append(reviewers_id, a.Id)
 		}
+		approvers_id := make([]int64, 0, len(mr.Participants.GetApprovers()))
+		for _, a := range mr.Participants.GetApprovers() {
+			approvers_id = append(approvers_id, a.Id)
+		}
 
-		err = batch.Append(
-			mr.Id,
-			mr.Iid,
-			mr.Project.Id,
-			convertTimestamp(mr.Timestamps.CreatedAt),
-			convertTimestamp(mr.Timestamps.UpdatedAt),
-			convertTimestamp(mr.Timestamps.MergedAt),
-			convertTimestamp(mr.Timestamps.ClosedAt),
-			mr.SourceProjectId,
-			mr.TargetProjectId,
-			mr.SourceBranch,
-			mr.TargetBranch,
-			mr.Title,
-			mr.State,
-			mr.MergeStatus,
-			mr.Flags.Draft,
-			mr.Flags.Conflicts,
-			mr.MergeError,
-			mr.DiffRefs.BaseSha,
-			mr.DiffRefs.HeadSha,
-			mr.DiffRefs.StartSha,
-			mr.Participants.GetAuthor().GetId(),
-			0, // mr.GetAssignee().GetId(),
-			assignees_id,
-			reviewers_id,
-			mr.Participants.GetMergeUser().GetId(),
-			0, // mr.GetCloseUser().GetId(),
-			mr.Labels,
-			mr.DiffRefs.HeadSha,
-			mr.DiffRefs.MergeCommitSha,
-			"", // mr.SquashCommitSha,
-			"", // mr.ChangesCount,
-			0,  // mr.UserNotesCount,
-			0,  // mr.Upvotes,
-			0,  // mr.Downvotes,
-			0,  // mr.GetPipeline().GetId(),
-			mr.GetMilestone().GetId(),
-			"", // mr.WebUrl,
-		)
+		err = batch.AppendStruct(&MergeRequest{
+			Id:        mr.Id,
+			Iid:       mr.Iid,
+			ProjectId: mr.Project.GetId(),
+
+			CreatedAt: convertTimestamp(mr.Timestamps.GetCreatedAt()),
+			UpdatedAt: convertTimestamp(mr.Timestamps.GetUpdatedAt()),
+			MergedAt:  convertTimestamp(mr.Timestamps.GetMergedAt()),
+			ClosedAt:  convertTimestamp(mr.Timestamps.GetClosedAt()),
+
+			Name:   mr.Name,
+			Title:  mr.Title,
+			Labels: mr.Labels,
+
+			State:       mr.State,
+			MergeStatus: mr.MergeStatus,
+			MergeError:  mr.MergeError,
+
+			SourceProjectId: mr.SourceProjectId,
+			SourceBranch:    mr.SourceBranch,
+			TargetProjectId: mr.TargetProjectId,
+			TargetBranch:    mr.TargetBranch,
+
+			Additions:   mr.DiffStats.GetAdditions(),
+			Changes:     mr.DiffStats.GetChanges(),
+			Deletions:   mr.DiffStats.GetDeletions(),
+			FileCount:   mr.DiffStats.GetFileCount(),
+			CommitCount: mr.DiffStats.GetCommitCount(),
+
+			BaseSha:         mr.DiffRefs.GetBaseSha(),
+			HeadSha:         mr.DiffRefs.GetHeadSha(),
+			StartSha:        mr.DiffRefs.GetStartSha(),
+			MergeCommitSha:  mr.DiffRefs.GetMergeCommitSha(),
+			RebaseCommitSha: mr.DiffRefs.GetRebaseCommitSha(),
+
+			AuthorId:    mr.Participants.GetAuthor().GetId(),
+			AssigneesId: assignees_id,
+			ReviewersId: reviewers_id,
+			ApproversId: approvers_id,
+			MergeUserId: mr.Participants.GetMergeUser().GetId(),
+
+			Approved:  mr.Flags.GetApproved(),
+			Conflicts: mr.Flags.GetConflicts(),
+			Draft:     mr.Flags.GetDraft(),
+			Mergeable: mr.Flags.GetMergeable(),
+
+			MilestoneId:        mr.Milestone.GetId(),
+			MilestoneIid:       mr.Milestone.GetIid(),
+			MilestoneProjectId: mr.Milestone.GetProject().GetId(),
+		})
 		if err != nil {
 			return 0, fmt.Errorf("append batch: %w", err)
 		}
@@ -507,22 +579,25 @@ func InsertMergeRequestNoteEvents(c *Client, ctx context.Context, mres []*typesp
 	}
 
 	for _, mre := range mres {
-		err = batch.Append(
-			mre.Id,
-			mre.MergeRequest.Id,
-			mre.MergeRequest.Iid,
-			mre.MergeRequest.Project.Id,
-			convertTimestamp(mre.CreatedAt),
-			convertTimestamp(mre.UpdatedAt),
-			mre.Type,
-			mre.System,
-			mre.AuthorId,
-			mre.Resolveable,
-			mre.Resolved,
-			mre.ResolverId,
-			false, // mre.Confidential,
-			mre.Internal,
-		)
+		err = batch.AppendStruct(&MergeRequestNoteEvent{
+			Id:                    mre.Id,
+			MergeRequestId:        mre.MergeRequest.GetId(),
+			MergeRequestIid:       mre.MergeRequest.GetIid(),
+			MergeRequestProjectId: mre.MergeRequest.GetProject().GetId(),
+
+			CreatedAt:  convertTimestamp(mre.CreatedAt),
+			UpdatedAt:  convertTimestamp(mre.UpdatedAt),
+			ResolvedAt: convertTimestamp(mre.ResolvedAt),
+
+			Type:     mre.Type,
+			System:   mre.System,
+			Internal: mre.Internal,
+
+			AuthorId:   mre.AuthorId,
+			Resolvable: mre.Resolveable,
+			Resolved:   mre.Resolved,
+			ResolverId: mre.ResolverId,
+		})
 		if err != nil {
 			return 0, fmt.Errorf("append batch: %w", err)
 		}
@@ -553,15 +628,18 @@ func InsertMetrics(c *Client, ctx context.Context, metrics []*typespb.Metric) (i
 	}
 
 	for _, m := range metrics {
-		err = batch.Append(
-			m.Id,
-			m.Iid,
-			m.Job.Id,
-			m.Name,
-			convertLabels(m.Labels),
-			m.Value,
-			convertTimestamp(m.Timestamp),
-		)
+		err = batch.AppendStruct(&Metric{
+			Id:         string(m.Id),
+			Iid:        m.Iid,
+			JobId:      m.Job.GetId(),
+			PipelineId: m.Job.GetPipeline().GetId(),
+			ProjectId:  m.Job.GetPipeline().GetProject().GetId(),
+
+			Name:      m.Name,
+			Labels:    convertLabels(m.Labels),
+			Value:     m.Value,
+			Timestamp: m.Timestamp.AsTime().UnixMilli(),
+		})
 		if err != nil {
 			return 0, fmt.Errorf("append batch:  %w", err)
 		}
@@ -592,39 +670,41 @@ func InsertProjects(c *Client, ctx context.Context, projects []*typespb.Project)
 	}
 
 	for _, p := range projects {
-		err = batch.Append(
-			p.Id,
-			p.GetNamespace().GetId(),
-			0, // p.GetOwner().GetId(),
-			0, // p.CreatorId,
-			p.Name,
-			p.FullName,
-			p.Path,
-			p.FullPath,
-			p.Description,
-			p.Visibility,
-			convertTimestamp(p.Timestamps.CreatedAt),
-			convertTimestamp(p.Timestamps.LastActivityAt), //< real 'updated_at' not available, yet
-			convertTimestamp(p.Timestamps.LastActivityAt),
-			[]string{}, // p.Topics,
-			"",         // p.DefaultBranch,
-			false,      // p.EmptyRepo,
-			p.Archived,
-			p.Statistics.GetForksCount(),
-			p.Statistics.GetStarsCount(),
-			p.GetStatistics().GetCommitCount(),
-			p.GetStatistics().GetStorageSize(),
-			p.GetStatistics().GetRepositorySize(),
-			p.GetStatistics().GetWikiSize(),
-			p.GetStatistics().GetLfsObjectsSize(),
-			p.GetStatistics().GetJobArtifactsSize(),
-			p.GetStatistics().GetPipelineArtifactsSize(),
-			p.GetStatistics().GetPackagesSize(),
-			p.GetStatistics().GetSnippetsSize(),
-			p.GetStatistics().GetUploadsSize(),
-			p.Statistics.GetOpenIssuesCount(),
-			"", // p.WebUrl,
-		)
+		err = batch.AppendStruct(&Project{
+			Id:          p.Id,
+			NamespaceId: p.Namespace.GetId(),
+
+			Name:     p.Name,
+			FullName: p.FullName,
+			Path:     p.Path,
+			FullPath: p.FullPath,
+
+			Description: p.Description,
+			Topics:      []string{},
+
+			CreatedAt:      convertTimestamp(p.Timestamps.GetCreatedAt()),
+			UpdatedAt:      convertTimestamp(p.Timestamps.GetUpdatedAt()),
+			LastActivityAt: convertTimestamp(p.Timestamps.GetLastActivityAt()),
+
+			JobArtifactsSize:      p.Statistics.GetJobArtifactsSize(),
+			ContainerRegistrySize: p.Statistics.GetContainerRegistrySize(),
+			LfsObjectsSize:        p.Statistics.GetLfsObjectsSize(),
+			PackagesSize:          p.Statistics.GetPackagesSize(),
+			PipelineArtifactsSize: p.Statistics.GetPipelineArtifactsSize(),
+			RepositorySize:        p.Statistics.GetRepositorySize(),
+			SnippetsSize:          p.Statistics.GetSnippetsSize(),
+			StorageSize:           p.Statistics.GetStorageSize(),
+			UploadsSize:           p.Statistics.GetUploadsSize(),
+			WikiSize:              p.Statistics.GetWikiSize(),
+
+			ForksCount:      p.Statistics.GetForksCount(),
+			StarsCount:      p.Statistics.GetStarsCount(),
+			CommitCount:     p.Statistics.GetCommitCount(),
+			OpenIssuesCount: p.Statistics.GetOpenIssuesCount(),
+
+			Archived:   p.Archived,
+			Visibility: p.Visibility,
+		})
 		if err != nil {
 			return 0, fmt.Errorf("append batch:  %w", err)
 		}
