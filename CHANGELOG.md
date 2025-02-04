@@ -1,7 +1,24 @@
 # Changelog
 
+## [0.10.0](https://gitlab.com/cluttrdev/gitlab-exporter-clickhouse-recorder/-/compare/v0.9.0..v0.10.0)
+
+- fe23f09 chore(release): v0.10.0
+- daccd6a ci: Skip integration tests
+- 0aaeb93 chore: Update dependencies
+- 4698250 refactor: Use table model structs for batch insertion
+- 85ec729 fix: Fix some down migrations
+- df75a58 refactor: Alter table mergerequests
+- b3dbbb3 refactor: Alter table metrics
+- ff09f89 refactor: Alter tables testreports, -suites, -cases
+- a057b8d refactor: Alter table sections
+- 09dda28 refactor: Alter table jobs
+- 68d7c1d refactor: Alter table pipelines
+- d19d524 refactor: Alter table projects
+- e296702 chore: Remove unused cache struct
+
 ## [0.9.0](https://gitlab.com/cluttrdev/gitlab-exporter-clickhouse-recorder/-/compare/v0.8.3..v0.9.0)
 
+- 08bdc6d chore(release): v0.9.0
 - 2cd8e8f ci: Disable/skip integrations tests
 - d18adc6 ci: Fix dind
 - 755d0a0 ci: Fix tests job
