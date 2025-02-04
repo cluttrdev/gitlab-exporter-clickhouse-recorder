@@ -36,7 +36,7 @@ DROP VIEW IF EXISTS mergerequests_mv;
 
 -- metrics
 DROP TABLE IF EXISTS metrics_in;
-DROP VIEW IF EXISTS metrics_mv
+DROP VIEW IF EXISTS metrics_mv;
 
 -- traces
 DROP TABLE IF EXISTS traces_in;
