@@ -1,8 +1,14 @@
 # Changelog
 
+## [0.10.1](https://gitlab.com/cluttrdev/gitlab-exporter-clickhouse-recorder/-/compare/v0.10.0..v0.10.1)
+
+- b2e8e35 patch: Add user reference names in mr tables
+- 0418208 fix: Update dependencies
+- dfc1ae0 chore: Allow disabling migrations job in helm chart
+
 ## [0.10.0](https://gitlab.com/cluttrdev/gitlab-exporter-clickhouse-recorder/-/compare/v0.9.0..v0.10.0)
 
-- fe23f09 chore(release): v0.10.0
+- 175e5f1 chore(release): v0.10.0
 - daccd6a ci: Skip integration tests
 - 0aaeb93 chore: Update dependencies
 - 4698250 refactor: Use table model structs for batch insertion
