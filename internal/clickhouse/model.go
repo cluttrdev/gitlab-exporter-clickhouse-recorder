@@ -228,11 +228,21 @@ type MergeRequest struct {
 	MergeCommitSha  string `ch:"merge_commit_sha"`
 	RebaseCommitSha string `ch:"rebase_commit_sha"`
 
-	AuthorId    int64   `ch:"author_id"`
-	AssigneesId []int64 `ch:"assignees_id"`
-	ReviewersId []int64 `ch:"reviewers_id"`
-	ApproversId []int64 `ch:"approvers_id"`
-	MergeUserId int64   `ch:"merge_user_id"`
+	AuthorId          int64    `ch:"author_id"`
+	AuthorUsername    string   `ch:"author_username"`
+	AuthorName        string   `ch:"author_name"`
+	AssigneesId       []int64  `ch:"assignees_id"`
+	AssigneesUsername []string `ch:"assignees_username"`
+	AssigneesName     []string `ch:"assignees_name"`
+	ReviewersId       []int64  `ch:"reviewers_id"`
+	ReviewersUsername []string `ch:"reviewers_username"`
+	ReviewersName     []string `ch:"reviewers_name"`
+	ApproversId       []int64  `ch:"approvers_id"`
+	ApproversUsername []string `ch:"approvers_username"`
+	ApproversName     []string `ch:"approvers_name"`
+	MergeUserId       int64    `ch:"merge_user_id"`
+	MergeUserUsername string   `ch:"merge_user_username"`
+	MergeUserName     string   `ch:"merge_user_name"`
 
 	Approved  bool `ch:"approved"`
 	Conflicts bool `ch:"conflicts"`
@@ -258,9 +268,13 @@ type MergeRequestNoteEvent struct {
 	System   bool   `ch:"system"`
 	Internal bool   `ch:"internal"`
 
-	AuthorId int64 `ch:"author_id"`
+	AuthorId       int64  `ch:"author_id"`
+	AuthorUsername string `ch:"author_username"`
+	AuthorName     string `ch:"author_name"`
 
-	Resolvable bool  `ch:"resolvable"`
-	Resolved   bool  `ch:"resolved"`
-	ResolverId int64 `ch:"resolver_id"`
+	Resolvable       bool   `ch:"resolvable"`
+	Resolved         bool   `ch:"resolved"`
+	ResolverId       int64  `ch:"resolver_id"`
+	ResolverUsername string `ch:"resolver_username"`
+	ResolverName     string `ch:"resolver_name"`
 }

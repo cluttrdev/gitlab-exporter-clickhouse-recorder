@@ -483,18 +483,9 @@ func InsertMergeRequests(c *Client, ctx context.Context, mrs []*typespb.MergeReq
 	}
 
 	for _, mr := range mrs {
-		assignees_id := make([]int64, 0, len(mr.Participants.GetAssignees()))
-		for _, a := range mr.Participants.GetAssignees() {
-			assignees_id = append(assignees_id, a.Id)
-		}
-		reviewers_id := make([]int64, 0, len(mr.Participants.GetReviewers()))
-		for _, a := range mr.Participants.GetReviewers() {
-			reviewers_id = append(reviewers_id, a.Id)
-		}
-		approvers_id := make([]int64, 0, len(mr.Participants.GetApprovers()))
-		for _, a := range mr.Participants.GetApprovers() {
-			approvers_id = append(approvers_id, a.Id)
-		}
+		assignees_id, assignees_username, assignees_name := convertUserReferences(mr.Participants.GetAssignees())
+		reviewers_id, reviewers_username, reviewers_name := convertUserReferences(mr.Participants.GetAssignees())
+		approvers_id, approvers_username, approvers_name := convertUserReferences(mr.Participants.GetAssignees())
 
 		err = batch.AppendStruct(&MergeRequest{
 			Id:        mr.Id,
@@ -531,11 +522,21 @@ func InsertMergeRequests(c *Client, ctx context.Context, mrs []*typespb.MergeReq
 			MergeCommitSha:  mr.DiffRefs.GetMergeCommitSha(),
 			RebaseCommitSha: mr.DiffRefs.GetRebaseCommitSha(),
 
-			AuthorId:    mr.Participants.GetAuthor().GetId(),
-			AssigneesId: assignees_id,
-			ReviewersId: reviewers_id,
-			ApproversId: approvers_id,
-			MergeUserId: mr.Participants.GetMergeUser().GetId(),
+			AuthorId:          mr.Participants.GetAuthor().GetId(),
+			AuthorUsername:    mr.Participants.GetAuthor().GetUsername(),
+			AuthorName:        mr.Participants.GetAuthor().GetName(),
+			AssigneesId:       assignees_id,
+			AssigneesUsername: assignees_username,
+			AssigneesName:     assignees_name,
+			ReviewersId:       reviewers_id,
+			ReviewersUsername: reviewers_username,
+			ReviewersName:     reviewers_name,
+			ApproversId:       approvers_id,
+			ApproversUsername: approvers_username,
+			ApproversName:     approvers_name,
+			MergeUserId:       mr.Participants.GetMergeUser().GetId(),
+			MergeUserUsername: mr.Participants.GetMergeUser().GetUsername(),
+			MergeUserName:     mr.Participants.GetMergeUser().GetName(),
 
 			Approved:  mr.Flags.GetApproved(),
 			Conflicts: mr.Flags.GetConflicts(),
@@ -559,6 +560,22 @@ func InsertMergeRequests(c *Client, ctx context.Context, mrs []*typespb.MergeReq
 	slog.Debug("Recorded mergerequests", "received", len(mrs), "inserted", n)
 
 	return n, nil
+}
+
+func convertUserReferences(users []*typespb.UserReference) ([]int64, []string, []string) {
+	var (
+		ids       = make([]int64, 0, len(users))
+		usernames = make([]string, 0, len(users))
+		names     = make([]string, 0, len(users))
+	)
+
+	for _, user := range users {
+		ids = append(ids, user.GetId())
+		usernames = append(usernames, user.GetUsername())
+		names = append(names, user.GetName())
+	}
+
+	return ids, usernames, names
 }
 
 func InsertMergeRequestNoteEvents(c *Client, ctx context.Context, mres []*typespb.MergeRequestNoteEvent) (int, error) {
@@ -593,10 +610,14 @@ func InsertMergeRequestNoteEvents(c *Client, ctx context.Context, mres []*typesp
 			System:   mre.System,
 			Internal: mre.Internal,
 
-			AuthorId:   mre.AuthorId,
-			Resolvable: mre.Resolveable,
-			Resolved:   mre.Resolved,
-			ResolverId: mre.ResolverId,
+			AuthorId:         mre.GetAuthor().GetId(),
+			AuthorUsername:   mre.GetAuthor().GetUsername(),
+			AuthorName:       mre.GetAuthor().GetName(),
+			Resolvable:       mre.Resolveable,
+			Resolved:         mre.Resolved,
+			ResolverId:       mre.GetResolver().GetId(),
+			ResolverUsername: mre.GetResolver().GetUsername(),
+			ResolverName:     mre.GetResolver().GetName(),
 		})
 		if err != nil {
 			return 0, fmt.Errorf("append batch: %w", err)
