@@ -2,7 +2,7 @@
 set -euo pipefail
 
 echo "Fetching GitLab release"
-project_id=66001551 # gitlab.com/cluttrdev/gitlab-exporter-clickhouse-recorder
+project_id=66001551 # gitlab.com/akun73/gitlab-exporter-clickhouse-recorder
 response=$(
     curl -sSL --fail-with-body \
         "https://gitlab.com/api/v4/projects/${project_id}/releases/${TAG_NAME}"
@@ -16,7 +16,7 @@ fi
 release_notes=$(jq -r '.description' <<< "${response}" | sed 's/$/\\n/' | tr -d '\n')
 
 # adjust commit link url
-release_notes=$(sed 's#gitlab.com/cluttrdev/gitlab-exporter-clickhouse-recorder/-/commit/#github.com/cluttrdev/gitlab-exporter-clickhouse-recorder/commit/#g' <<< "${release_notes}")
+release_notes=$(sed 's#gitlab.com/akun73/gitlab-exporter-clickhouse-recorder/-/commit/#github.com/cluttrdev/gitlab-exporter-clickhouse-recorder/commit/#g' <<< "${release_notes}")
 
 release_assets=$(jq -r '.assets.links[]|[.name, .url] | @tsv' <<< "${response}")
 
