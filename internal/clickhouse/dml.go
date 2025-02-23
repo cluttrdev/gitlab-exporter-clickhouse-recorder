@@ -28,6 +28,7 @@ const (
 	MetricsTable                string = "metrics"
 	ProjectsTable               string = "projects"
 	TraceSpansTable             string = "traces"
+	DeploymentsTable            string = "deployments"
 )
 
 func convertTimestamp(ts *timestamppb.Timestamp) float64 {
@@ -737,6 +738,100 @@ func InsertProjects(c *Client, ctx context.Context, projects []*typespb.Project)
 
 	n := batch.Rows()
 	slog.Debug("Recorded projects", "received", len(projects), "inserted", n)
+
+	return n, nil
+}
+
+func InsertDeployments(c *Client, ctx context.Context, deployments []*typespb.Deployment) (int, error) {
+	if c == nil {
+		return 0, errors.New("nil client")
+	}
+	const query string = `INSERT INTO {db:Identifier}.{table:Identifier} SETTINGS async_insert=1`
+	var params = map[string]string{
+		"db":    c.dbName,
+		"table": DeploymentsTable + "_in",
+	}
+
+	ctx = WithParameters(ctx, params)
+
+	batch, err := c.PrepareBatch(ctx, query)
+	if err != nil {
+		return 0, fmt.Errorf("prepare batch: %w", err)
+	}
+
+	for _, deployment := range deployments {
+		var environmentTier string
+		switch deployment.GetEnvironment().GetTier() {
+		case typespb.DeploymentTier_DEPLOYMENT_TIER_UNSPECIFIED:
+			environmentTier = "unspecified"
+		case typespb.DeploymentTier_DEPLOYMENT_TIER_PRODUCTION:
+			environmentTier = "production"
+		case typespb.DeploymentTier_DEPLOYMENT_TIER_STAGING:
+			environmentTier = "staging"
+		case typespb.DeploymentTier_DEPLOYMENT_TIER_TESTING:
+			environmentTier = "testing"
+		case typespb.DeploymentTier_DEPLOYMENT_TIER_DEVELOPMENT:
+			environmentTier = "development"
+		case typespb.DeploymentTier_DEPLOYMENT_TIER_OTHER:
+			environmentTier = "other"
+		}
+
+		var deploymentStatus string
+		switch deployment.Status {
+		case typespb.DeploymentStatus_DEPLOYMENT_STATUS_UNSPECIFIED:
+			deploymentStatus = "unspecified"
+		case typespb.DeploymentStatus_DEPLOYMENT_STATUS_CREATED:
+			deploymentStatus = "created"
+		case typespb.DeploymentStatus_DEPLOYMENT_STATUS_RUNNING:
+			deploymentStatus = "running"
+		case typespb.DeploymentStatus_DEPLOYMENT_STATUS_SUCCESS:
+			deploymentStatus = "success"
+		case typespb.DeploymentStatus_DEPLOYMENT_STATUS_FAILED:
+			deploymentStatus = "failed"
+		case typespb.DeploymentStatus_DEPLOYMENT_STATUS_CANCELED:
+			deploymentStatus = "canceled"
+		case typespb.DeploymentStatus_DEPLOYMENT_STATUS_SKIPPED:
+			deploymentStatus = "skipped"
+		case typespb.DeploymentStatus_DEPLOYMENT_STATUS_BLOCKED:
+			deploymentStatus = "blocked"
+		}
+
+		err = batch.AppendStruct(&Deployment{
+			Id:  deployment.Id,
+			Iid: deployment.Iid,
+
+			EnvironmentId:   deployment.GetEnvironment().GetId(),
+			EnvironmentName: deployment.GetEnvironment().GetName(),
+			EnvironmentTier: environmentTier,
+
+			ProjectId: deployment.GetEnvironment().GetProject().GetId(),
+
+			JobId:      deployment.GetJob().GetId(),
+			PipelineId: deployment.GetJob().GetPipeline().GetId(),
+
+			TriggererId:       deployment.GetTriggerer().GetId(),
+			TriggererUsername: deployment.GetTriggerer().GetUsername(),
+			TriggererName:     deployment.GetTriggerer().GetName(),
+
+			CreatedAt:  convertTimestamp(deployment.Timestamps.GetCreatedAt()),
+			FinishedAt: convertTimestamp(deployment.Timestamps.GetFinishedAt()),
+			UpdatedAt:  convertTimestamp(deployment.Timestamps.GetUpdatedAt()),
+
+			Status: deploymentStatus,
+			Ref:    deployment.Ref,
+			Sha:    deployment.Sha,
+		})
+		if err != nil {
+			return 0, fmt.Errorf("append batch: %w", err)
+		}
+	}
+
+	if err := batch.Send(); err != nil {
+		return -1, fmt.Errorf("send batch: %w", err)
+	}
+
+	n := batch.Rows()
+	slog.Debug("Recorded pipelines", "received", len(deployments))
 
 	return n, nil
 }

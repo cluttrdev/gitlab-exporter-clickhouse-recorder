@@ -278,3 +278,29 @@ type MergeRequestNoteEvent struct {
 	ResolverUsername string `ch:"resolver_username"`
 	ResolverName     string `ch:"resolver_name"`
 }
+
+type Deployment struct {
+	Id  int64 `ch:"id"`
+	Iid int64 `ch:"iid"`
+
+	EnvironmentId   int64  `ch:"environment_id"`
+	EnvironmentName string `ch:"environment_name"`
+	EnvironmentTier string `ch:"environment_tier"`
+
+	ProjectId int64 `ch:"project_id"`
+
+	JobId      int64 `ch:"job_id"`
+	PipelineId int64 `ch:"pipeline_id"`
+
+	TriggererId       int64  `ch:"triggerer_id"`
+	TriggererUsername string `ch:"triggerer_username"`
+	TriggererName     string `ch:"triggerer_name"`
+
+	CreatedAt  float64 `ch:"created_at"`
+	FinishedAt float64 `ch:"finished_at"`
+	UpdatedAt  float64 `ch:"updated_at"`
+
+	Status string `ch:"status"`
+	Ref    string `ch:"ref"`
+	Sha    string `ch:"sha"`
+}

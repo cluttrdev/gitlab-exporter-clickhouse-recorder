@@ -99,6 +99,10 @@ func (s *ClickHouseRecorder) RecordProjects(ctx context.Context, r *servicepb.Re
 	return record[typespb.Project](s, ctx, r.Data, clickhouse.InsertProjects)
 }
 
+func (s *ClickHouseRecorder) RecordDeployments(ctx context.Context, r *servicepb.RecordDeploymentsRequest) (*servicepb.RecordSummary, error) {
+	return record[typespb.Deployment](s, ctx, r.Data, clickhouse.InsertDeployments)
+}
+
 func (s *ClickHouseRecorder) RecordMetrics(ctx context.Context, r *servicepb.RecordMetricsRequest) (*servicepb.RecordSummary, error) {
 	return record[typespb.Metric](s, ctx, r.Data, clickhouse.InsertMetrics)
 }
