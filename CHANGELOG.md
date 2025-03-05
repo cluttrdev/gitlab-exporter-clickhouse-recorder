@@ -1,7 +1,16 @@
 # Changelog
 
+## [0.11.1](https://gitlab.com/akun73/gitlab-exporter-clickhouse-recorder/-/compare/v0.11.0..v0.11.1)
+
+- 562f2e9 patch: Add job_id to test entity tables
+- 231b708 ci: Update golangci-lint
+- 531852b ci: Update go version
+- dec0038 build: Update Dockerfile go version
+- 401363a fix: Update dependencies
+
 ## [0.11.0](https://gitlab.com/akun73/gitlab-exporter-clickhouse-recorder/-/compare/v0.10.1..v0.11.0)
 
+- 819b9fa chore(release): v0.11.0
 - a24833a ci: Use go version 1.23
 - dc815f5 chore: Update gitlab remote references
 - 5b5bd8d build: Bump container image go version
