@@ -133,8 +133,12 @@ func TestIntegration_InsertTestCases(t *testing.T) {
 		Id: "6252785472",
 		TestReport: &typespb.TestReportReference{
 			Id: "1190130970",
-			Pipeline: &typespb.PipelineReference{
-				Id: 1190130970,
+			Job: &typespb.JobReference{
+				Id:   0,
+				Name: "",
+				Pipeline: &typespb.PipelineReference{
+					Id: 1190130970,
+				},
 			},
 		},
 	}

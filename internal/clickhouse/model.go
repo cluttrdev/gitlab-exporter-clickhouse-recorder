@@ -134,6 +134,7 @@ type Section struct {
 
 type TestReport struct {
 	Id         string `ch:"id"`
+	JobId      int64  `ch:"job_id"`
 	PipelineId int64  `ch:"pipeline_id"`
 	ProjectId  int64  `ch:"project_id"`
 
@@ -148,6 +149,7 @@ type TestReport struct {
 type TestSuite struct {
 	Id           string `ch:"id"`
 	TestReportId string `ch:"testreport_id"`
+	JobId        int64  `ch:"job_id"`
 	PipelineId   int64  `ch:"pipeline_id"`
 	ProjectId    int64  `ch:"project_id"`
 
@@ -166,6 +168,7 @@ type TestCase struct {
 	Id           string `ch:"id"`
 	TestSuiteId  string `ch:"testsuite_id"`
 	TestReportId string `ch:"testreport_id"`
+	JobId        int64  `ch:"job_id"`
 	PipelineId   int64  `ch:"pipeline_id"`
 	ProjectId    int64  `ch:"project_id"`
 

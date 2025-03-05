@@ -348,8 +348,9 @@ func InsertTestReports(c *Client, ctx context.Context, reports []*typespb.TestRe
 	for _, tr := range reports {
 		err = batch.AppendStruct(&TestReport{
 			Id:         tr.Id,
-			PipelineId: tr.Pipeline.GetId(),
-			ProjectId:  tr.Pipeline.GetProject().GetId(),
+			JobId:      tr.GetJob().GetId(),
+			PipelineId: tr.GetJob().GetPipeline().GetId(),
+			ProjectId:  tr.GetJob().GetPipeline().GetProject().GetId(),
 
 			TotalTime:    tr.TotalTime,
 			TotalCount:   tr.TotalCount,
@@ -390,9 +391,10 @@ func InsertTestSuites(c *Client, ctx context.Context, suites []*typespb.TestSuit
 	for _, ts := range suites {
 		err = batch.AppendStruct(&TestSuite{
 			Id:           ts.Id,
-			TestReportId: ts.TestReport.GetId(),
-			PipelineId:   ts.TestReport.GetPipeline().GetId(),
-			ProjectId:    ts.TestReport.GetPipeline().GetProject().GetId(),
+			TestReportId: ts.GetTestReport().GetId(),
+			JobId:        ts.GetTestReport().GetJob().GetId(),
+			PipelineId:   ts.GetTestReport().GetJob().GetPipeline().GetId(),
+			ProjectId:    ts.GetTestReport().GetJob().GetPipeline().GetProject().GetId(),
 
 			Name:         ts.Name,
 			TotalTime:    ts.TotalTime,
@@ -436,10 +438,11 @@ func InsertTestCases(c *Client, ctx context.Context, cases []*typespb.TestCase) 
 	for _, tc := range cases {
 		err = batch.AppendStruct(&TestCase{
 			Id:           tc.Id,
-			TestSuiteId:  tc.TestSuite.GetId(),
-			TestReportId: tc.TestSuite.GetTestReport().GetId(),
-			PipelineId:   tc.TestSuite.GetTestReport().GetPipeline().GetId(),
-			ProjectId:    tc.TestSuite.GetTestReport().GetPipeline().GetProject().GetId(),
+			TestSuiteId:  tc.GetTestSuite().GetId(),
+			TestReportId: tc.GetTestSuite().GetTestReport().GetId(),
+			JobId:        tc.GetTestSuite().GetTestReport().GetJob().GetId(),
+			PipelineId:   tc.GetTestSuite().GetTestReport().GetJob().GetPipeline().GetId(),
+			ProjectId:    tc.GetTestSuite().GetTestReport().GetJob().GetPipeline().GetProject().GetId(),
 
 			Status:        tc.Status,
 			Name:          tc.Name,
