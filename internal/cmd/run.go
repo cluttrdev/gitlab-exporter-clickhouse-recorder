@@ -168,6 +168,7 @@ func (c *RunConfig) Exec(ctx context.Context, args []string) error {
 					} else if latestErr != nil {
 						slog.Info("Readiness check successful")
 						grpcServer.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
+						latestErr = nil
 					}
 				}
 			}, func(err error) { // interrupt
