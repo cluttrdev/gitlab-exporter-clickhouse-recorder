@@ -1,7 +1,13 @@
 # Changelog
 
+## [0.11.2](https://gitlab.com/akun73/gitlab-exporter-clickhouse-recorder/-/compare/v0.11.1..v0.11.2)
+
+- 73f925c fix: InsertDeployments log message
+- 447ebc5 fix: Nullify latest error in health check
+
 ## [0.11.1](https://gitlab.com/akun73/gitlab-exporter-clickhouse-recorder/-/compare/v0.11.0..v0.11.1)
 
+- d115c2f chore(release): v0.11.1
 - 562f2e9 patch: Add job_id to test entity tables
 - 231b708 ci: Update golangci-lint
 - 531852b ci: Update go version
