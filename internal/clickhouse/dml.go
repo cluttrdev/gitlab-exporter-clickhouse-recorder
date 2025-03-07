@@ -834,7 +834,7 @@ func InsertDeployments(c *Client, ctx context.Context, deployments []*typespb.De
 	}
 
 	n := batch.Rows()
-	slog.Debug("Recorded pipelines", "received", len(deployments))
+	slog.Debug("Recorded deployments", "received", len(deployments))
 
 	return n, nil
 }
