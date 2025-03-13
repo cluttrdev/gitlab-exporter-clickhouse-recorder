@@ -44,5 +44,6 @@ UPDATE failure_reason = CASE
     WHEN startsWith(failure_reason, 'This job could not be executed because group IP address restrictions') THEN 'ip_restriction_failure'
     WHEN startsWith(failure_reason, 'The deployment job is older than the latest deployment') THEN 'failed_outdated_deployment_job'
     WHEN startsWith(failure_reason, 'Too many downstream pipelines triggered in the last minute') THEN 'reached_downstream_pipeline_trigger_rate_limit'
+    ELSE failure_reason
 END
 WHERE status = 'failed'
