@@ -219,7 +219,7 @@ func formatQuery(ctx context.Context, cont testcontainers.Container, query strin
 func createContainer(ctx context.Context) (testcontainers.Container, error) {
 	provider, err := testcontainers.ProviderDocker.GetProvider()
 	if err != nil {
-		return nil, fmt.Errorf("get provider: %w")
+		return nil, fmt.Errorf("get provider: %w", err)
 	}
 	if err := provider.Health(ctx); err != nil {
 		return nil, fmt.Errorf("check health: %w", err)
