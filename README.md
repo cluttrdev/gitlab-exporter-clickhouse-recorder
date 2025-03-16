@@ -1,7 +1,7 @@
 # gitlab-exporter-clickhouse-recorder
 
 `gitlab-exporter-clickhouse-recorder` serves a gRPC endpoint that records data from 
-a [gitlab-exporter][github-gitlab-exporter] and exports it to a
+a [gitlab-exporter][repo-gitlab-exporter] and exports it to a
 [ClickHouse][clickhouse] database.
 
 <p>
@@ -16,19 +16,13 @@ To install `gitlab-exporter-clickhouse-recorder` you can download a
 
 ```shell
 # download latest release archive
-RELEASE_TAG=$(curl -sSfL https://api.github.com/repos/cluttrdev/gitlab-exporter-clickhouse-recorder/releases/latest | jq -r '.tag_name')
-curl -sSfL -o /tmp/gitlab-exporter-clickhouse-recorder.tar.gz \
-    https://github.com/cluttrdev/gitlab-exporter-clickhouse-recorder/releases/download/${RELEASE_TAG}/gitlab-exporter-clickhouse-recorder_${RELEASE_TAG}_linux_amd64.tar.gz
+RELEASES_URL=https://gitlab.com/api/v4/projects/akun73%2Fgitlab-exporter-clickhouse-recorder/releases
+RELEASE_TAG=$(curl -sSfL ${RELEASES_URL} | jq -r '.[0].tag_name')
+curl -sSfL ${RELEASES_URL}/download/${RELEASE_TAG}/gitlab-exporter-clickhouse-recorder_${RELEASE_TAG}_linux_amd64.tar.gz \
+    -o /tmp/gitlab-exporter-clickhouse-recorder.tar.gz
 # extract executable binary into install dir (must exist)
 INSTALL_DIR=$HOME/.local/bin
 tar -C ${INSTALL_DIR} -zxof /tmp/gitlab-exporter-clickhouse-recorder.tar.gz gitlab-exporter-clickhouse-recorder
-```
-
-Alternatively, if you have the [Go][go-install] tools installed on your
-machine, you can use
-
-```shell
-go install github.com/cluttrdev/gitlab-exporter-clickhouse-recorder@latest
 ```
 
 ## Usage
@@ -92,7 +86,6 @@ and a Grafana instance that includes predefined dashboards.
 This project is licensed under the [MIT License](./LICENSE).
 
 <!-- Links -->
-[github-gitlab-exporter]: https://github.com/cluttrdev/gitlab-exporter
+[repo-gitlab-exporter]: https://gitlab.com/akun73/gitlab-exporter
 [clickhouse]: https://clickhouse.com/
-[go-install]: https://go.dev/doc/install
-[prebuilt-binaries]: https://github.com/cluttrdev/gitlab-exporter-clickhouse-recorder/releases/latest
+[prebuilt-binaries]: https://gitlab.com/akun73/gitlab-exporter-clickhouse-recorder/-/releases
