@@ -24,7 +24,7 @@ services:
         condition: service_healthy
       gitlab-exporter-clickhouse-recorder-migrate:
         condition: service_completed_successfully
-    image: ghcr.io/cluttrdev/gitlab-exporter-clickhouse-recorder:latest
+    image: docker.io/akun73/gitlab-exporter-clickhouse-recorder:latest
     environment:
       GLCHR_LOG_LEVEL: debug
     volumes:
@@ -42,7 +42,7 @@ services:
     depends_on:
       clickhouse:
         condition: service_healthy
-    image: ghcr.io/cluttrdev/gitlab-exporter-clickhouse-recorder:latest
+    image: docker.io/akun73/gitlab-exporter-clickhouse-recorder:latest
     environment:
       GLCHR_LOG_LEVEL: debug
     volumes:
