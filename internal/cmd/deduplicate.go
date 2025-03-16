@@ -9,8 +9,8 @@ import (
 
 	"github.com/cluttrdev/cli"
 
-	"github.com/cluttrdev/gitlab-exporter-clickhouse-recorder/internal/clickhouse"
-	"github.com/cluttrdev/gitlab-exporter-clickhouse-recorder/internal/config"
+	"go.cluttr.dev/gitlab-exporter-clickhouse-recorder/internal/clickhouse"
+	"go.cluttr.dev/gitlab-exporter-clickhouse-recorder/internal/config"
 )
 
 type DeduplicateConfig struct {

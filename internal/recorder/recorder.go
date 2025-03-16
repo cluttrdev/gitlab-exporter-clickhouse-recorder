@@ -7,7 +7,7 @@ import (
 	"github.com/cluttrdev/gitlab-exporter/protobuf/servicepb"
 	"github.com/cluttrdev/gitlab-exporter/protobuf/typespb"
 
-	"github.com/cluttrdev/gitlab-exporter-clickhouse-recorder/internal/clickhouse"
+	"go.cluttr.dev/gitlab-exporter-clickhouse-recorder/internal/clickhouse"
 )
 
 type ClickHouseRecorder struct {

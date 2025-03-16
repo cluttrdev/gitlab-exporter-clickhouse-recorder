@@ -7,7 +7,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/cluttrdev/gitlab-exporter-clickhouse-recorder/internal/retry"
+	"go.cluttr.dev/gitlab-exporter-clickhouse-recorder/internal/retry"
 )
 
 func (r *ClickHouseRecorder) CheckReadiness(ctx context.Context) error {

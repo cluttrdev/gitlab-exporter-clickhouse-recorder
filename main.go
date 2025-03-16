@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/cluttrdev/gitlab-exporter-clickhouse-recorder/internal/cmd"
+	"go.cluttr.dev/gitlab-exporter-clickhouse-recorder/internal/cmd"
 )
 
 var version string

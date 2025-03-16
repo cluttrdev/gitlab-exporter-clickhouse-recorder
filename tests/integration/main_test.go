@@ -10,7 +10,7 @@ import (
 
 	ch "github.com/ClickHouse/clickhouse-go/v2"
 
-	"github.com/cluttrdev/gitlab-exporter-clickhouse-recorder/internal/clickhouse"
+	"go.cluttr.dev/gitlab-exporter-clickhouse-recorder/internal/clickhouse"
 )
 
 const testSet string = "native"
