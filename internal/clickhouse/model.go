@@ -282,6 +282,78 @@ type MergeRequestNoteEvent struct {
 	ResolverName     string `ch:"resolver_name"`
 }
 
+type CoverageReport struct {
+	Id         string `ch:"id"`
+	JobId      int64  `ch:"job_id"`
+	PipelineId int64  `ch:"pipeline_id"`
+	ProjectId  int64  `ch:"project_id"`
+
+	LineRate     float32 `ch:"line_rate"`
+	LinesCovered int32   `ch:"lines_covered"`
+	LinesValid   int32   `ch:"lines_valid"`
+
+	BranchRate      float32 `ch:"branch_rate"`
+	BranchesCovered int32   `ch:"branches_covered"`
+	BranchesValid   int32   `ch:"branches_valid"`
+
+	Complexity float32 `ch:"complexity"`
+
+	Version   string `ch:"version"`
+	Timestamp int64  `ch:"timestamp"`
+
+	SourcePaths []string `ch:"source_paths"`
+}
+
+type CoveragePackage struct {
+	Id         string `ch:"id"`
+	ReportId   string `ch:"report_id"`
+	JobId      int64  `ch:"job_id"`
+	PipelineId int64  `ch:"pipeline_id"`
+	ProjectId  int64  `ch:"project_id"`
+
+	Name string `ch:"name"`
+
+	LineRate   float32 `ch:"line_rate"`
+	BranchRate float32 `ch:"branch_rate"`
+	Complexity float32 `ch:"complexity"`
+}
+
+type CoverageClass struct {
+	Id         string `ch:"id"`
+	PackageId  string `ch:"package_id"`
+	ReportId   string `ch:"report_id"`
+	JobId      int64  `ch:"job_id"`
+	PipelineId int64  `ch:"pipeline_id"`
+	ProjectId  int64  `ch:"project_id"`
+
+	PackageName string `ch:"package_name"`
+	Name        string `ch:"name"`
+	Filename    string `ch:"filename"`
+
+	LineRate   float32 `ch:"line_rate"`
+	BranchRate float32 `ch:"branch_rate"`
+	Complexity float32 `ch:"complexity"`
+}
+
+type CoverageMethod struct {
+	Id         string `ch:"id"`
+	ClassId    string `ch:"class_id"`
+	PackageId  string `ch:"package_id"`
+	ReportId   string `ch:"report_id"`
+	JobId      int64  `ch:"job_id"`
+	PipelineId int64  `ch:"pipeline_id"`
+	ProjectId  int64  `ch:"project_id"`
+
+	PackageName string `ch:"package_name"`
+	ClassName   string `ch:"class_name"`
+	Name        string `ch:"name"`
+	Signature   string `ch:"signature"`
+
+	LineRate   float32 `ch:"line_rate"`
+	BranchRate float32 `ch:"branch_rate"`
+	Complexity float32 `ch:"complexity"`
+}
+
 type Deployment struct {
 	Id  int64 `ch:"id"`
 	Iid int64 `ch:"iid"`

@@ -34,6 +34,10 @@ const (
 
 var tables = []string{
 	"bridges",
+	"coverage_reports",
+	"coverage_packages",
+	"coverage_classes",
+	"coverage_methods",
 	"deployments",
 	"jobs",
 	"mergerequest_noteevents",

@@ -16,19 +16,23 @@ import (
 )
 
 const (
-	PipelinesTable              string = "pipelines"
-	JobsTable                   string = "jobs"
-	SectionsTable               string = "sections"
 	BridgesTable                string = "bridges"
+	CoverageReportsTable        string = "coverage_reports"
+	CoveragePackagesTable       string = "coverage_packages"
+	CoverageClassesTable        string = "coverage_classes"
+	CoverageMethodsTable        string = "coverage_methods"
+	DeploymentsTable            string = "deployments"
+	JobsTable                   string = "jobs"
+	MergeRequestNoteEventsTable string = "mergerequest_noteevents"
+	MergeRequestsTable          string = "mergerequests"
+	MetricsTable                string = "metrics"
+	PipelinesTable              string = "pipelines"
+	ProjectsTable               string = "projects"
+	SectionsTable               string = "sections"
+	TestCasesTable              string = "testcases"
 	TestReportsTable            string = "testreports"
 	TestSuitesTable             string = "testsuites"
-	TestCasesTable              string = "testcases"
-	MergeRequestsTable          string = "mergerequests"
-	MergeRequestNoteEventsTable string = "mergerequest_noteevents"
-	MetricsTable                string = "metrics"
-	ProjectsTable               string = "projects"
 	TraceSpansTable             string = "traces"
-	DeploymentsTable            string = "deployments"
 )
 
 func convertTimestamp(ts *timestamppb.Timestamp) float64 {
@@ -741,6 +745,206 @@ func InsertProjects(c *Client, ctx context.Context, projects []*typespb.Project)
 
 	n := batch.Rows()
 	slog.Debug("Recorded projects", "received", len(projects), "inserted", n)
+
+	return n, nil
+}
+
+func InsertCoverageReports(c *Client, ctx context.Context, reports []*typespb.CoverageReport) (int, error) {
+	if c == nil {
+		return 0, errors.New("nil client")
+	}
+	const query string = `INSERT INTO {db:Identifier}.{table:Identifier} SETTINGS async_insert=1`
+	var params = map[string]string{
+		"db":    c.dbName,
+		"table": CoverageReportsTable + "_in",
+	}
+
+	ctx = WithParameters(ctx, params)
+
+	batch, err := c.PrepareBatch(ctx, query)
+	if err != nil {
+		return 0, fmt.Errorf("prepare batch: %w", err)
+	}
+
+	for _, report := range reports {
+		err = batch.AppendStruct(&CoverageReport{
+			Id:         report.Id,
+			JobId:      report.Job.GetId(),
+			PipelineId: report.Job.GetPipeline().GetId(),
+			ProjectId:  report.Job.GetPipeline().GetProject().GetId(),
+
+			LineRate:     report.LineRate,
+			LinesCovered: report.LinesCovered,
+			LinesValid:   report.LinesValid,
+
+			BranchRate:      report.BranchRate,
+			BranchesCovered: report.BranchesCovered,
+			BranchesValid:   report.BranchesValid,
+
+			Complexity: report.Complexity,
+
+			Version:   report.Version,
+			Timestamp: report.Timestamp.GetSeconds(),
+
+			SourcePaths: report.SourcePaths,
+		})
+		if err != nil {
+			return 0, fmt.Errorf("append batch: %w", err)
+		}
+	}
+
+	if err := batch.Send(); err != nil {
+		return -1, fmt.Errorf("send batch: %w", err)
+	}
+
+	n := batch.Rows()
+	slog.Debug("Recorded coverage reports", "received", len(reports))
+
+	return n, nil
+}
+
+func InsertCoveragePackages(c *Client, ctx context.Context, pkgs []*typespb.CoveragePackage) (int, error) {
+	if c == nil {
+		return 0, errors.New("nil client")
+	}
+	const query string = `INSERT INTO {db:Identifier}.{table:Identifier} SETTINGS async_insert=1`
+	var params = map[string]string{
+		"db":    c.dbName,
+		"table": CoveragePackagesTable + "_in",
+	}
+
+	ctx = WithParameters(ctx, params)
+
+	batch, err := c.PrepareBatch(ctx, query)
+	if err != nil {
+		return 0, fmt.Errorf("prepare batch: %w", err)
+	}
+
+	for _, pkg := range pkgs {
+		err = batch.AppendStruct(&CoveragePackage{
+			Id:         pkg.Id,
+			ReportId:   pkg.Report.GetId(),
+			JobId:      pkg.Report.GetJob().GetId(),
+			PipelineId: pkg.Report.GetJob().GetPipeline().GetId(),
+			ProjectId:  pkg.Report.GetJob().GetPipeline().GetProject().GetId(),
+
+			Name: pkg.Name,
+
+			LineRate:   pkg.LineRate,
+			BranchRate: pkg.BranchRate,
+			Complexity: pkg.Complexity,
+		})
+		if err != nil {
+			return 0, fmt.Errorf("append batch: %w", err)
+		}
+	}
+
+	if err := batch.Send(); err != nil {
+		return -1, fmt.Errorf("send batch: %w", err)
+	}
+
+	n := batch.Rows()
+	slog.Debug("Recorded coverage packages", "received", len(pkgs))
+
+	return n, nil
+}
+
+func InsertCoverageClasses(c *Client, ctx context.Context, clss []*typespb.CoverageClass) (int, error) {
+	if c == nil {
+		return 0, errors.New("nil client")
+	}
+	const query string = `INSERT INTO {db:Identifier}.{table:Identifier} SETTINGS async_insert=1`
+	var params = map[string]string{
+		"db":    c.dbName,
+		"table": CoverageClassesTable + "_in",
+	}
+
+	ctx = WithParameters(ctx, params)
+
+	batch, err := c.PrepareBatch(ctx, query)
+	if err != nil {
+		return 0, fmt.Errorf("prepare batch: %w", err)
+	}
+
+	for _, cls := range clss {
+		err = batch.AppendStruct(&CoverageClass{
+			Id:         cls.Id,
+			PackageId:  cls.Package.GetId(),
+			ReportId:   cls.Package.GetReport().GetId(),
+			JobId:      cls.Package.GetReport().GetJob().GetId(),
+			PipelineId: cls.Package.GetReport().GetJob().GetPipeline().GetId(),
+			ProjectId:  cls.Package.GetReport().GetJob().GetPipeline().GetProject().GetId(),
+
+			PackageName: cls.Package.GetName(),
+			Name:        cls.Name,
+			Filename:    cls.Filename,
+
+			LineRate:   cls.LineRate,
+			BranchRate: cls.BranchRate,
+			Complexity: cls.Complexity,
+		})
+		if err != nil {
+			return 0, fmt.Errorf("append batch: %w", err)
+		}
+	}
+
+	if err := batch.Send(); err != nil {
+		return -1, fmt.Errorf("send batch: %w", err)
+	}
+
+	n := batch.Rows()
+	slog.Debug("Recorded coverage classes", "received", len(clss))
+
+	return n, nil
+}
+
+func InsertCoverageMethods(c *Client, ctx context.Context, mtds []*typespb.CoverageMethod) (int, error) {
+	if c == nil {
+		return 0, errors.New("nil client")
+	}
+	const query string = `INSERT INTO {db:Identifier}.{table:Identifier} SETTINGS async_insert=1`
+	var params = map[string]string{
+		"db":    c.dbName,
+		"table": CoverageMethodsTable + "_in",
+	}
+
+	ctx = WithParameters(ctx, params)
+
+	batch, err := c.PrepareBatch(ctx, query)
+	if err != nil {
+		return 0, fmt.Errorf("prepare batch: %w", err)
+	}
+
+	for _, mtd := range mtds {
+		err = batch.AppendStruct(&CoverageMethod{
+			Id:         mtd.Id,
+			ClassId:    mtd.Class.GetId(),
+			PackageId:  mtd.Class.GetPackage().GetId(),
+			ReportId:   mtd.Class.GetPackage().GetReport().GetId(),
+			JobId:      mtd.Class.GetPackage().GetReport().GetJob().GetId(),
+			PipelineId: mtd.Class.GetPackage().GetReport().GetJob().GetPipeline().GetId(),
+			ProjectId:  mtd.Class.GetPackage().GetReport().GetJob().GetPipeline().GetProject().GetId(),
+
+			PackageName: mtd.GetClass().GetPackage().GetName(),
+			ClassName:   mtd.GetClass().GetName(),
+			Name:        mtd.Name,
+			Signature:   mtd.Signature,
+
+			LineRate:   mtd.LineRate,
+			BranchRate: mtd.BranchRate,
+			Complexity: mtd.Complexity,
+		})
+		if err != nil {
+			return 0, fmt.Errorf("append batch: %w", err)
+		}
+	}
+
+	if err := batch.Send(); err != nil {
+		return -1, fmt.Errorf("send batch: %w", err)
+	}
+
+	n := batch.Rows()
+	slog.Debug("Recorded coverage methods", "received", len(mtds))
 
 	return n, nil
 }

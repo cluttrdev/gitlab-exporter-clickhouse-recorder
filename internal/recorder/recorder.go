@@ -99,6 +99,22 @@ func (s *ClickHouseRecorder) RecordProjects(ctx context.Context, r *servicepb.Re
 	return record[typespb.Project](s, ctx, r.Data, clickhouse.InsertProjects)
 }
 
+func (s *ClickHouseRecorder) RecordCoverageReports(ctx context.Context, r *servicepb.RecordCoverageReportsRequest) (*servicepb.RecordSummary, error) {
+	return record[typespb.CoverageReport](s, ctx, r.Data, clickhouse.InsertCoverageReports)
+}
+
+func (s *ClickHouseRecorder) RecordCoveragePackages(ctx context.Context, r *servicepb.RecordCoveragePackagesRequest) (*servicepb.RecordSummary, error) {
+	return record[typespb.CoveragePackage](s, ctx, r.Data, clickhouse.InsertCoveragePackages)
+}
+
+func (s *ClickHouseRecorder) RecordCoverageClasses(ctx context.Context, r *servicepb.RecordCoverageClassesRequest) (*servicepb.RecordSummary, error) {
+	return record[typespb.CoverageClass](s, ctx, r.Data, clickhouse.InsertCoverageClasses)
+}
+
+func (s *ClickHouseRecorder) RecordCoverageMethods(ctx context.Context, r *servicepb.RecordCoverageMethodsRequest) (*servicepb.RecordSummary, error) {
+	return record[typespb.CoverageMethod](s, ctx, r.Data, clickhouse.InsertCoverageMethods)
+}
+
 func (s *ClickHouseRecorder) RecordDeployments(ctx context.Context, r *servicepb.RecordDeploymentsRequest) (*servicepb.RecordSummary, error) {
 	return record[typespb.Deployment](s, ctx, r.Data, clickhouse.InsertDeployments)
 }
