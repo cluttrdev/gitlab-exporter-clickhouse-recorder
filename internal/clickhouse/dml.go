@@ -68,6 +68,7 @@ func InsertPipelines(c *Client, ctx context.Context, pipelines []*typespb.Pipeli
 
 			Name:          p.Name,
 			Ref:           p.Ref,
+			RefPath:       p.RefPath,
 			Sha:           p.Sha,
 			Source:        p.Source,
 			Status:        p.Status,
@@ -153,6 +154,7 @@ func InsertJobs(c *Client, ctx context.Context, jobs []*typespb.Job) (int, error
 
 			Name:          j.Name,
 			Ref:           j.Ref,
+			RefPath:       j.RefPath,
 			Status:        j.Status,
 			FailureReason: j.FailureReason,
 

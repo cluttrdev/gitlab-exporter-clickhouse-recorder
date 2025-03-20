@@ -45,6 +45,7 @@ type Pipeline struct {
 
 	Name          string `ch:"name"`
 	Ref           string `ch:"ref"`
+	RefPath       string `ch:"ref_path"`
 	Sha           string `ch:"sha"`
 	Source        string `ch:"source"`
 	Status        string `ch:"status"`
@@ -83,6 +84,7 @@ type Job struct {
 
 	Name          string `ch:"name"`
 	Ref           string `ch:"ref"`
+	RefPath       string `ch:"ref_path"`
 	Status        string `ch:"status"`
 	FailureReason string `ch:"failure_reason"`
 
