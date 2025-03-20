@@ -34,6 +34,8 @@ type Project struct {
 
 	Archived   bool   `ch:"archived"`
 	Visibility string `ch:"visibility"`
+
+	DefaultBranch string `ch:"default_branch"`
 }
 
 type Pipeline struct {

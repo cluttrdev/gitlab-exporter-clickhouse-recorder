@@ -733,6 +733,8 @@ func InsertProjects(c *Client, ctx context.Context, projects []*typespb.Project)
 
 			Archived:   p.Archived,
 			Visibility: p.Visibility,
+
+			DefaultBranch: p.DefaultBranch,
 		})
 		if err != nil {
 			return 0, fmt.Errorf("append batch:  %w", err)
