@@ -63,7 +63,9 @@ func run(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("create container: %w", err)
 	}
-	defer cont.Terminate(context.Background())
+	defer func() {
+        _ = cont.Terminate(context.Background())
+    }()
 
 	p, _ := cont.MappedPort(ctx, "9000")
 	conn, err := getConnection("127.0.0.1", p.Port(), "default")
