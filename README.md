@@ -1,8 +1,8 @@
 # gitlab-exporter-clickhouse-recorder
 
 `gitlab-exporter-clickhouse-recorder` serves a gRPC endpoint that records data from 
-a [gitlab-exporter][repo-gitlab-exporter] and exports it to a
-[ClickHouse][clickhouse] database.
+a [gitlab-exporter](https://gitlab.com/akun73/gitlab-exporter) and exports it to a
+[ClickHouse](https://clickhouse.com) database.
 
 <p>
     <img src="./assets/project-overview.webp" />
@@ -12,17 +12,22 @@ a [gitlab-exporter][repo-gitlab-exporter] and exports it to a
 ## Installation
 
 To install `gitlab-exporter-clickhouse-recorder` you can download a 
-[prebuilt binary][prebuilt-binaries] that matches your system, e.g.
+[prebuilt binary](https://gitlab.com/akun73/gitlab-exporter-clickhouse-recorder/-/releases)
+that matches your system, e.g.
 
 ```shell
 # download latest release archive
 RELEASES_URL=https://gitlab.com/api/v4/projects/akun73%2Fgitlab-exporter-clickhouse-recorder/releases
 RELEASE_TAG=$(curl -sSfL ${RELEASES_URL} | jq -r '.[0].tag_name')
-curl -sSfL ${RELEASES_URL}/download/${RELEASE_TAG}/gitlab-exporter-clickhouse-recorder_${RELEASE_TAG}_linux_amd64.tar.gz \
+curl -sSfL ${RELEASES_URL}/${RELEASE_TAG}/downloads/gitlab-exporter-clickhouse-recorder_${RELEASE_TAG}_linux_amd64.tar.gz \
     -o /tmp/gitlab-exporter-clickhouse-recorder.tar.gz
+
 # extract executable binary into install dir (must exist)
 INSTALL_DIR=$HOME/.local/bin
 tar -C ${INSTALL_DIR} -zxof /tmp/gitlab-exporter-clickhouse-recorder.tar.gz gitlab-exporter-clickhouse-recorder
+
+# check
+${INSTALL_DIR}/gitlab-exporter-clickhouse-recorder version
 ```
 
 ## Usage
@@ -84,8 +89,3 @@ and a Grafana instance that includes predefined dashboards.
 ## License
 
 This project is licensed under the [MIT License](./LICENSE).
-
-<!-- Links -->
-[repo-gitlab-exporter]: https://gitlab.com/akun73/gitlab-exporter
-[clickhouse]: https://clickhouse.com/
-[prebuilt-binaries]: https://gitlab.com/akun73/gitlab-exporter-clickhouse-recorder/-/releases
