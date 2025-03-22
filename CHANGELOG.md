@@ -1,7 +1,26 @@
 # Changelog
 
+## [0.12.0](https://gitlab.com/akun73/gitlab-exporter-clickhouse-recorder/-/compare/v0.11.2..v0.12.0)
+
+- 457abd2 chore: Fix linting errors
+- b00b196 ci: Set release name in github release script
+- 00aa6a9 ci: Add chart release job
+- d39df91 chore: Fix README
+- 8321fd4 path: Add pipelines and jbos column ref_path
+- 33617f7 path: Add projects column default_branch
+- fc2fb84 feat: Record coverage report data
+- 1733925 fix: Update dependencies
+- 2954ed9 ci: Push to docker hub
+- c551d86 docs: Move repo references to gitlab
+- cc990a3 refactor: Move to module vanity url
+- eb51d61 chore: Fix db schema cli
+- 69ace73 chore: Fix failure_reason mutation snippet
+- e02f5de chore: Add sql snippet to map job failure reasons
+- 55d1eb4 chore: Add cli to generate schema from migrations
+
 ## [0.11.2](https://gitlab.com/akun73/gitlab-exporter-clickhouse-recorder/-/compare/v0.11.1..v0.11.2)
 
+- c1b07f6 chore(release): v0.11.2
 - 73f925c fix: InsertDeployments log message
 - 447ebc5 fix: Nullify latest error in health check
 
