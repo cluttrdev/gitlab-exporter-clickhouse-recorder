@@ -19,7 +19,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 
-	"github.com/cluttrdev/gitlab-exporter/grpc/server"
+	"go.cluttr.dev/gitlab-exporter/grpc/server"
 
 	"go.cluttr.dev/gitlab-exporter-clickhouse-recorder/internal/clickhouse"
 	"go.cluttr.dev/gitlab-exporter-clickhouse-recorder/internal/config"

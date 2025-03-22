@@ -10,7 +10,7 @@ import (
 	otlp_comonpb "go.opentelemetry.io/proto/otlp/common/v1"
 	otlp_tracepb "go.opentelemetry.io/proto/otlp/trace/v1"
 
-	"github.com/cluttrdev/gitlab-exporter/protobuf/typespb"
+	"go.cluttr.dev/gitlab-exporter/protobuf/typespb"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
