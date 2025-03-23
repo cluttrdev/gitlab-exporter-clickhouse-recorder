@@ -178,10 +178,10 @@ release-chart:
     - release-image
   image: quay.io/helmpack/chart-testing:v3.12.0
   variables:
-    HELM_REGISTRY: registry.gitlab.com
+    HELM_REGISTRY: $CI_REGISTRY
     HELM_REGISTRY_PROJECT: gitlab-exporter/helm-charts
-    HELM_REGISTRY_USER: $CI_REGISTRY_USER
-    HELM_REGISTRY_PASSWORD: $CI_REGISTRY_PASSWORD
+    # HELM_REGISTRY_USER:
+    # HELM_REGISTRY_PASSWORD:
     HELM_CHART_DIR: deploy/helm/gitlab-exporter-clickhouse-recorder
   before_script:
     - echo "${HELM_REGISTRY_PASSWORD}" | helm registry login ${HELM_REGISTRY} --username ${HELM_REGISTRY_USER} --password-stdin
