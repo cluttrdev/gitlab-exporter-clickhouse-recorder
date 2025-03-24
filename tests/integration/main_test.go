@@ -26,8 +26,8 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 	defer func() {
-        _ = env.Container.Terminate(context.Background())
-    }()
+		_ = env.Container.Terminate(context.Background())
+	}()
 
 	SetTestEnvironment(testSet, env)
 
