@@ -1,7 +1,19 @@
 # Changelog
 
+## [0.13.0](https://gitlab.com/akun73/gitlab-exporter-clickhouse-recorder/-/compare/v0.12.0..v0.13.0)
+
+- b4f7cad Merge branch 'job-properties' into 'main'
+- f335909 chore: Update demo example
+- 7e93bd3 chore: Update README
+- 3af22cd fix: Update dependencies
+- dae0cfa style: Format code
+- 48554e4 feat: Record job log properties
+- f238fa7 ci: Fix release-chart job
+- 0a72230 ci: Specify chart release job image tag
+
 ## [0.12.0](https://gitlab.com/akun73/gitlab-exporter-clickhouse-recorder/-/compare/v0.11.2..v0.12.0)
 
+- c3c1ebf chore(release): v0.12.0
 - 457abd2 chore: Fix linting errors
 - b00b196 ci: Set release name in github release script
 - 00aa6a9 ci: Add chart release job
