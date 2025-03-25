@@ -5,7 +5,7 @@ services:
     container_name: gitlab-exporter
     depends_on:
       - gitlab-exporter-clickhouse-recorder
-    image: ghcr.io/cluttrdev/gitlab-exporter:latest
+    image: registry.gitlab.com/akun73/gitlab-exporter:latest
     environment:
       GLE_GITLAB_TOKEN: ${GLE_GITLAB_TOKEN}
       GLE_LOG_LEVEL: debug
@@ -24,7 +24,7 @@ services:
         condition: service_healthy
       gitlab-exporter-clickhouse-recorder-migrate:
         condition: service_completed_successfully
-    image: docker.io/akun73/gitlab-exporter-clickhouse-recorder:latest
+    image: registry.gitlab.com/akun73/gitlab-exporter-clickhouse-recorder:latest
     environment:
       GLCHR_LOG_LEVEL: debug
     volumes:
@@ -42,7 +42,7 @@ services:
     depends_on:
       clickhouse:
         condition: service_healthy
-    image: docker.io/akun73/gitlab-exporter-clickhouse-recorder:latest
+    image: registry.gitlab.com/akun73/gitlab-exporter-clickhouse-recorder:latest
     environment:
       GLCHR_LOG_LEVEL: debug
     volumes:
@@ -103,9 +103,10 @@ services:
       GF_CLICKHOUSE_USER: grafana
       GF_CLICKHOUSE_PASSWORD: grafana
     volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/dashboards/:/var/lib/grafana/dashboards/
       - ./grafana/provisioning/datasources/:/etc/grafana/provisioning/datasources/
       - ./grafana/provisioning/dashboards/:/etc/grafana/provisioning/dashboards/
-      - grafana_data:/var/lib/grafana
     ports:
       - 127.0.0.1:3000:3000
 
