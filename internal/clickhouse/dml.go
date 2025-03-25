@@ -169,8 +169,9 @@ func InsertJobs(c *Client, ctx context.Context, jobs []*typespb.Job) (int, error
 
 			Coverage: j.Coverage,
 
-			Stage:   j.Stage,
-			TagList: j.Tags,
+			Stage:      j.Stage,
+			TagList:    j.Tags,
+			Properties: convertJobProperties(j.Properties),
 
 			AllowFailure: j.AllowFailure,
 			Manual:       j.Manual,
@@ -1184,6 +1185,14 @@ func convertLabels(labels []*typespb.Metric_Label) map[string]string {
 	}
 
 	return m
+}
+
+func convertJobProperties(properties []*typespb.JobProperty) [][]string {
+	ps := make([][]string, 0, len(properties))
+	for _, p := range properties {
+		ps = append(ps, []string{p.Name, p.Value})
+	}
+	return ps
 }
 
 func convertTestProperties(properties []*typespb.TestProperty) [][]string {

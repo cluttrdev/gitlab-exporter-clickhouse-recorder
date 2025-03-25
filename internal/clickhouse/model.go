@@ -99,8 +99,9 @@ type Job struct {
 
 	Coverage float64 `ch:"coverage"`
 
-	Stage   string   `ch:"stage"`
-	TagList []string `ch:"tag_list"`
+	Stage      string     `ch:"stage"`
+	TagList    []string   `ch:"tag_list"`
+	Properties [][]string `ch:"properties"`
 
 	AllowFailure bool `ch:"allow_failure"`
 	Manual       bool `ch:"manual"`

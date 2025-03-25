@@ -21,11 +21,39 @@ project_defaults:
     updated_before: ""
 
 projects:
-  - id: 50817395  # cluttrdev/gitlab-exporter
+  - id: 50817395  # akun73/gitlab-exporter
+    export:
+      reports:
+        enabled: true
+        junit:
+          enabled: true
+          paths:
+            - report.xml
+            - junit.xml
+        coverage:
+          enabled: true
+          paths:
+            - cobertura.xml
+            - cobertura-coverage.xml
+  - id: 66001551  # akun73/gitlab-exporter-clickhouse-recorder
+    export:
+      reports:
+        enabled: true
+        junit:
+          enabled: true
+          paths:
+            - report.xml
+            - junit.xml
+        coverage:
+          enabled: true
+          paths:
+            - cobertura.xml
+            - cobertura-coverage.xml
+
   - id: 34675721  # gitlab-org/cli
+  - id: 65271576  # gitlab-org/api/client-go
 
 namespaces:
-  - id: cluttrdev
   - id: gitlab-exporter
 
 http:

@@ -1,13 +1,12 @@
 # gitlab-exporter-clickhouse-recorder
 
-`gitlab-exporter-clickhouse-recorder` serves a gRPC endpoint that records data from 
-a [gitlab-exporter](https://gitlab.com/akun73/gitlab-exporter) and exports it to a
-[ClickHouse](https://clickhouse.com) database.
+`gitlab-exporter-clickhouse-recorder` serves a gRPC endpoint that can receive data
+from a [gitlab-exporter](https://gitlab.com/akun73/gitlab-exporter) and records it
+in a [ClickHouse](https://clickhouse.com) database.
 
-<p>
-    <img src="./assets/project-overview.webp" />
-    <img src="./assets/pipeline-trace.webp" />
-</p>
+## Dashboards
+
+For some Grafana dashboards and screenshots see [here](https://gitlab.com/gitlab-exporter/grafana-dashboards).
 
 ## Installation
 
