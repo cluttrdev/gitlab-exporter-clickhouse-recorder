@@ -1,7 +1,18 @@
 # Changelog
 
+## [0.13.1](https://gitlab.com/akun73/gitlab-exporter-clickhouse-recorder/-/compare/v0.13.0..v0.13.1)
+
+- 3a08e83 ci(github): Link to gitlab release assets instead of re-uploading to github
+- f700c76 patch: Record pipeline downstream references
+- 624dd4c fix: Update dependencies
+- 89ecf9f ci: Fix release artifacts builds
+- 6222dca build: Fix build target os/arch usage
+- 7e48599 ci: Print some job properties
+- 1df8d70 fix(db): Add missing pipelines name column
+
 ## [0.13.0](https://gitlab.com/akun73/gitlab-exporter-clickhouse-recorder/-/compare/v0.12.0..v0.13.0)
 
+- 9bb44ac chore(release): v0.13.0
 - b4f7cad Merge branch 'job-properties' into 'main'
 - f335909 chore: Update demo example
 - 7e93bd3 chore: Update README

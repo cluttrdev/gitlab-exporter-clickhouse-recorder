@@ -4,8 +4,8 @@ nameOverride: ""
 fullnameOverride: ""
 
 image:
-  registry: ghcr.io
-  repository: cluttrdev/gitlab-exporter-clickhouse-recorder
+  registry: registry.gitlab.com
+  repository: akun73/gitlab-exporter-clickhouse-recorder
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
   pullPolicy: Always
