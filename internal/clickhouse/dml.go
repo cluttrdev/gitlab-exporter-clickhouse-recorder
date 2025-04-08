@@ -92,6 +92,7 @@ func InsertPipelines(c *Client, ctx context.Context, pipelines []*typespb.Pipeli
 			UpstreamPipelineId:        p.UpstreamPipeline.GetId(),
 			UpstreamPipelineIid:       p.UpstreamPipeline.GetIid(),
 			UpstreamPipelineProjectId: p.UpstreamPipeline.GetProject().GetId(),
+			DownstreamPipelines:       convertPipelineReferences(p.DownstreamPipelines),
 
 			MergeRequestId:        p.MergeRequest.GetId(),
 			MergeRequestIid:       p.MergeRequest.GetIid(),
@@ -1193,6 +1194,22 @@ func convertJobProperties(properties []*typespb.JobProperty) [][]string {
 		ps = append(ps, []string{p.Name, p.Value})
 	}
 	return ps
+}
+
+func convertPipelineReferences(pipelines []*typespb.PipelineReference) []pipelineReference {
+	prs := make([]pipelineReference, 0, len(pipelines))
+	for _, pr := range pipelines {
+		if pr == nil {
+			continue
+		}
+
+		prs = append(prs, pipelineReference{
+			Id:        pr.Id,
+			Iid:       pr.Iid,
+			ProjectId: pr.Project.Id,
+		})
+	}
+	return prs
 }
 
 func convertTestProperties(properties []*typespb.TestProperty) [][]string {

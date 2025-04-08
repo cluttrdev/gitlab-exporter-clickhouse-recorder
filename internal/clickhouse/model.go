@@ -65,16 +65,23 @@ type Pipeline struct {
 	Warnings   bool `ch:"warnings"`
 	YamlErrors bool `ch:"yaml_errors"`
 
-	Child                     bool  `ch:"child"`
-	UpstreamPipelineId        int64 `ch:"upstream_pipeline_id"`
-	UpstreamPipelineIid       int64 `ch:"upstream_pipeline_iid"`
-	UpstreamPipelineProjectId int64 `ch:"upstream_pipeline_project_id"`
+	Child                     bool                `ch:"child"`
+	UpstreamPipelineId        int64               `ch:"upstream_pipeline_id"`
+	UpstreamPipelineIid       int64               `ch:"upstream_pipeline_iid"`
+	UpstreamPipelineProjectId int64               `ch:"upstream_pipeline_project_id"`
+	DownstreamPipelines       []pipelineReference `ch:"downstream_pipelines"`
 
 	MergeRequestId        int64 `ch:"merge_request_id"`
 	MergeRequestIid       int64 `ch:"merge_request_iid"`
 	MergeRequestProjectId int64 `ch:"merge_request_project_id"`
 
 	UserId int64 `ch:"user_id"`
+}
+
+type pipelineReference struct {
+	Id        int64 `ch:"id"`
+	Iid       int64 `ch:"iid"`
+	ProjectId int64 `ch:"project_id"`
 }
 
 type Job struct {
