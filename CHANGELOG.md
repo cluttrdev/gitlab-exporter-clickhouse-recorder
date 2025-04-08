@@ -1,7 +1,12 @@
 # Changelog
 
+## [0.13.2](https://gitlab.com/akun73/gitlab-exporter-clickhouse-recorder/-/compare/v0.13.1..v0.13.2)
+
+- 1c28a81 fix: Version number of add_pipelines_downstream migrations
+
 ## [0.13.1](https://gitlab.com/akun73/gitlab-exporter-clickhouse-recorder/-/compare/v0.13.0..v0.13.1)
 
+- 19c7523 chore(release): v0.13.1
 - 3a08e83 ci(github): Link to gitlab release assets instead of re-uploading to github
 - f700c76 patch: Record pipeline downstream references
 - 624dd4c fix: Update dependencies
