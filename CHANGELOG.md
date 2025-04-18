@@ -1,7 +1,14 @@
 # Changelog
 
+## [0.14.0](https://gitlab.com/akun73/gitlab-exporter-clickhouse-recorder/-/compare/v0.13.2..v0.14.0)
+
+- ab14a1f feat: Record issues
+- e85bb88 build: Set tag for build-image target
+- 4af0a72 fix: Update dependencies
+
 ## [0.13.2](https://gitlab.com/akun73/gitlab-exporter-clickhouse-recorder/-/compare/v0.13.1..v0.13.2)
 
+- 9ad70bf chore(release): v0.13.2
 - 1c28a81 fix: Version number of add_pipelines_downstream migrations
 
 ## [0.13.1](https://gitlab.com/akun73/gitlab-exporter-clickhouse-recorder/-/compare/v0.13.0..v0.13.1)
