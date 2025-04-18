@@ -39,6 +39,7 @@ var tables = []string{
 	"coverage_classes",
 	"coverage_methods",
 	"deployments",
+	"issues",
 	"jobs",
 	"mergerequest_noteevents",
 	"mergerequests",

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	otlp_comonpb "go.opentelemetry.io/proto/otlp/common/v1"
@@ -22,6 +23,7 @@ const (
 	CoverageClassesTable        string = "coverage_classes"
 	CoverageMethodsTable        string = "coverage_methods"
 	DeploymentsTable            string = "deployments"
+	IssuesTable                 string = "issues"
 	JobsTable                   string = "jobs"
 	MergeRequestNoteEventsTable string = "mergerequest_noteevents"
 	MergeRequestsTable          string = "mergerequests"
@@ -111,6 +113,59 @@ func InsertPipelines(c *Client, ctx context.Context, pipelines []*typespb.Pipeli
 
 	n := batch.Rows()
 	slog.Debug("Recorded pipelines", "received", len(pipelines), "inserted", n)
+
+	return n, nil
+}
+
+func InsertIssues(c *Client, ctx context.Context, issues []*typespb.Issue) (int, error) {
+	if c == nil {
+		return 0, errors.New("nil client")
+	}
+	const query string = `INSERT INTO {db:Identifier}.{table:Identifier} SETTINGS async_insert=1`
+	var params = map[string]string{
+		"db":    c.dbName,
+		"table": IssuesTable + "_in",
+	}
+
+	ctx = WithParameters(ctx, params)
+
+	batch, err := c.PrepareBatch(ctx, query)
+	if err != nil {
+		return 0, fmt.Errorf("prepare batch: %w", err)
+	}
+
+	for _, issue := range issues {
+		issueType := strings.ToLower(strings.TrimPrefix(issue.Type.String(), "ISSUE_TYPE_"))
+		issueSeverity := strings.ToLower(strings.TrimPrefix(issue.Severity.String(), "ISSUE_SEVERITY_"))
+		issueState := strings.ToLower(strings.TrimPrefix(issue.State.String(), "ISSUE_STATE_"))
+
+		err = batch.AppendStruct(&Issue{
+			Id:        issue.Id,
+			Iid:       issue.Iid,
+			ProjectId: issue.Project.GetId(),
+
+			CreatedAt: convertTimestamp(issue.Timestamps.GetCreatedAt()),
+			UpdatedAt: convertTimestamp(issue.Timestamps.GetUpdatedAt()),
+			ClosedAt:  convertTimestamp(issue.Timestamps.GetClosedAt()),
+
+			Title:  issue.Title,
+			Labels: issue.Labels,
+
+			Type:     issueType,
+			Severity: issueSeverity,
+			State:    issueState,
+		})
+		if err != nil {
+			return 0, fmt.Errorf("append batch: %w", err)
+		}
+	}
+
+	if err := batch.Send(); err != nil {
+		return -1, fmt.Errorf("send batch: %w", err)
+	}
+
+	n := batch.Rows()
+	slog.Debug("Recorded issues", "received", len(issues))
 
 	return n, nil
 }

@@ -84,6 +84,23 @@ type pipelineReference struct {
 	ProjectId int64 `ch:"project_id"`
 }
 
+type Issue struct {
+	Id        int64 `ch:"id"`
+	Iid       int64 `ch:"iid"`
+	ProjectId int64 `ch:"project_id"`
+
+	CreatedAt float64 `ch:"created_at"`
+	UpdatedAt float64 `ch:"updated_at"`
+	ClosedAt  float64 `ch:"closed_at"`
+
+	Title  string   `ch:"title"`
+	Labels []string `ch:"labels"`
+
+	Type     string `ch:"type"`
+	Severity string `ch:"severity"`
+	State    string `ch:"state"`
+}
+
 type Job struct {
 	Id         int64 `ch:"id"`
 	PipelineId int64 `ch:"pipeline_id"`
