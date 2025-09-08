@@ -38,7 +38,7 @@ import (
 var testUUID = uuid.NewString()[0:12]
 var testTimestamp = time.Now().UnixMilli()
 
-const defaultClickHouseVersion = "latest"
+const defaultClickHouseVersion = "24.8"
 
 func GetClickHouseTestVersion() string {
 	return GetEnv("CLICKHOUSE_VERSION", defaultClickHouseVersion)
