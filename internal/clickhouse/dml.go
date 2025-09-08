@@ -213,6 +213,7 @@ func InsertJobs(c *Client, ctx context.Context, jobs []*typespb.Job) (int, error
 			RefPath:       j.RefPath,
 			Status:        j.Status,
 			FailureReason: j.FailureReason,
+			ExitCode:      j.ExitCode,
 
 			CreatedAt:  convertTimestamp(j.Timestamps.GetCreatedAt()),
 			QueuedAt:   convertTimestamp(j.Timestamps.GetQueuedAt()),

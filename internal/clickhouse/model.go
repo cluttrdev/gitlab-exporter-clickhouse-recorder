@@ -111,6 +111,7 @@ type Job struct {
 	RefPath       string `ch:"ref_path"`
 	Status        string `ch:"status"`
 	FailureReason string `ch:"failure_reason"`
+	ExitCode      int64  `ch:"exit_code"`
 
 	CreatedAt  float64 `ch:"created_at"`
 	QueuedAt   float64 `ch:"queued_at"`
