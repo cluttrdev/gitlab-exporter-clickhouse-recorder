@@ -1,7 +1,17 @@
 # Changelog
 
+## [0.15.0](https://gitlab.com/akun73/gitlab-exporter-clickhouse-recorder/-/compare/v0.14.0..v0.15.0)
+
+- 7225aec ci: Use default.tags
+- 3d8d9c8 ci: Use hook to embed job properties
+- 0a49fd3 ci: Switch to buildkit for container image builds
+- aa8f535 test: Fix clickhouse testcontainer version
+- b6b1da8 feat: Record job exit_code
+- b361c03 fix(deps): Update dependencies
+
 ## [0.14.0](https://gitlab.com/akun73/gitlab-exporter-clickhouse-recorder/-/compare/v0.13.2..v0.14.0)
 
+- 7cbbdad chore(release): v0.14.0
 - ab14a1f feat: Record issues
 - e85bb88 build: Set tag for build-image target
 - 4af0a72 fix: Update dependencies
